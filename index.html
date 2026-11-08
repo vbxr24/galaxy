@@ -1473,6 +1473,7 @@ document.addEventListener('pointermove',e=>{const c=$('topCard');if(!c||e.button
 </script>
 <script>
 /* echte modus: geen nep-accounts */
+(function(){const g=window.go;if(typeof g!=='function')return;window.go=function(v){const r=g.apply(this,arguments);if(v==='map')[80,400,900].forEach(t=>setTimeout(()=>{try{LM&&LM.invalidateSize&&LM.invalidateSize()}catch(e){}},t));return r}})();
 function invite(){const u=location.href.split('#')[0],t='Kom op Galaxy, de nieuwe dating app voor BE & NL 💜 ';if(navigator.share)navigator.share({title:'Galaxy',text:t,url:u}).catch(()=>{});else{navigator.clipboard&&navigator.clipboard.writeText(t+u);toast('🔗 Link gekopieerd, stuur hem door!')}}
 function NOONE(){toast('🌌 Nog geen andere leden. Nodig vrienden uit!')}
 ['openStar','compliments','battle','double','wander','guess','pureYes','quickLike','darkLike','sendComet','twoTruths','coach','voice','game','listen','gameInv','story','pickBg','confirmDate','instantDate'].forEach(n=>{const f=window[n];if(typeof f!=='function')return;const chat=/^(twoTruths|coach|voice|game|listen|gameInv|story|pickBg|confirmDate|instantDate)$/.test(n);window[n]=function(){if(chat?(typeof curChat==='undefined'||curChat==null||!S.chats[curChat]):!P.length)return NOONE();try{return f.apply(this,arguments)}catch(e){console.warn(n,e);NOONE()}}});
