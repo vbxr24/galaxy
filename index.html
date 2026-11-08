@@ -327,19 +327,9 @@ input[type=range]{width:100%;accent-color:var(--a)}
 const G=[["#7c3aed","#db2777"],["#0ea5e9","#6366f1"],["#f59e0b","#ef4444"],["#10b981","#0ea5e9"],["#ec4899","#8b5cf6"],["#14b8a6","#84cc16"],["#f43f5e","#f97316"],["#6366f1","#a855f7"],["#06b6d4","#3b82f6"],["#d946ef","#f43f5e"]];
 const gr=i=>`linear-gradient(135deg,${G[i%G.length][0]},${G[i%G.length][1]})`;
 const P=[
- {n:"Lotte",a:23,e:"🌸",km:3,job:"Verpleegkundige",bio:"Festivals, honden en spontane roadtrips.",t:["🎧 Techno","🐶 Honden","✈️ Reizen"],v:1,live:1,pure:0,x:.35,y:.4},
- {n:"Yasmine",a:25,e:"🎨",km:6,job:"Grafisch ontwerper",bio:"Ik teken je in 5 minuten. Koffie eerst.",t:["🎨 Kunst","☕ Koffie","📚 Lezen"],v:1,live:0,pure:1,x:.6,y:.3},
- {n:"Emma",a:22,e:"🏐",km:2,job:"Student kiné",bio:"Volleybal, sushi en slechte woordgrapjes.",t:["🏐 Sport","🍣 Sushi","😂 Humor"],v:0,live:0,pure:0,x:.45,y:.62},
- {n:"Sara",a:27,e:"🎤",km:11,job:"Zangeres",bio:"Karaoke-koningin. Zoekt iemand die meezingt.",t:["🎤 Muziek","🌃 Uitgaan","🍕 Pizza"],v:1,live:1,pure:0,x:.72,y:.55},
- {n:"Inès",a:24,e:"🌿",km:8,job:"Barista",bio:"Plantenmama, vegetarisch, zondag = wandelen.",t:["🌿 Natuur","🥗 Veggie","🥾 Wandelen"],v:0,live:0,pure:1,x:.25,y:.7},
- {n:"Julie",a:26,e:"🎮",km:4,job:"Logistiek planner",bio:"Fortnite Zero Build duo gezocht 🎮",t:["🎮 Gaming","🚚 ETS2","🍔 Burgers"],v:1,live:1,pure:0,x:.55,y:.45},
- {n:"Noor",a:21,e:"📸",km:14,job:"Fotografe",bio:"Ik neem je beste foto ooit, beloofd.",t:["📸 Foto","🌅 Sunsets","🛹 Skate"],v:1,live:0,pure:0,x:.8,y:.25},
- {n:"Amber",a:28,e:"🏋️",km:5,job:"Personal trainer",bio:"Gym om 7u, brunch om 10u. Doe je mee?",t:["🏋️ Gym","🥞 Brunch","🐈 Katten"],v:0,live:1,pure:1,x:.3,y:.25},
- {n:"Lina",a:23,e:"🎬",km:9,job:"Filmstudent",bio:"Horror- en truckerfilms. Ja, dat bestaat.",t:["🎬 Film","👻 Horror","🍿 Snacks"],v:1,live:0,pure:0,x:.65,y:.75},
- {n:"Fien",a:25,e:"🧱",km:7,job:"Interieurarchitect",bio:"Ik renoveer huizen én harten 🧱",t:["🏠 Interieur","🧱 Bouw","🎶 DnB"],v:1,live:0,pure:0,x:.18,y:.48}
 ];
 P.forEach((p,i)=>{p.i=i;p.g=gr(i)});
-const S={coins:120,plan:"free",likes:15,matches:[],chats:{},swiped:[],idx:0,pure:[],boostUntil:0};
+const S={coins:120,plan:"free",likes:0,matches:[],chats:{},swiped:[],idx:0,pure:[],boostUntil:0};
 const PLANS={
  free:{n:"Gratis",p:0,likes:15},
  plus:{n:"Galaxy+",p:9.99,likes:Infinity,f:["Onbeperkt likes","5 super likes / week","Terugdraaien (↩️)","Geen advertenties","Pure-posts 2× per dag"]},
@@ -364,7 +354,7 @@ function setMode(m){document.querySelectorAll('[data-m]').forEach(b=>b.classList
  $('swipeMode').style.display=m==='swipe'?'':'none';$('pureMode').style.display=m==='pure'?'':'none';if(m==='pure')renderPure()}
 function renderDeck(){const d=$('deck');d.innerHTML='';
  const rest=P.filter(p=>!S.swiped.includes(p.i));
- if(!rest.length){d.innerHTML=`<div class="empty"><b>🌌</b>Je hebt iedereen in je buurt gezien.<br><br><button class="btn sm" onclick="resetDeck()">Opnieuw beginnen</button></div>`;return}
+ if(!rest.length){d.innerHTML=`<div class="empty"><b>🌌</b>Nog geen leden in je buurt.<br><span class="sub">Galaxy is net gestart. Nodig vrienden uit, dan groeit je sterrenstelsel!</span><br><br><button class="btn sm" onclick="invite()">🔗 Vrienden uitnodigen</button></div>`;return}
  rest.slice(0,3).reverse().forEach((p,k,arr)=>{const top=k===arr.length-1;const c=document.createElement('div');c.className='sc';c.style.background=p.g;
   c.style.transform=`scale(${1-(arr.length-1-k)*.04}) translateY(${(arr.length-1-k)*12}px)`;
   c.innerHTML=`<div class="bars"><i class="on"></i><i></i><i></i></div><div class="ph">${p.e}</div><div class="shade"></div>
@@ -401,20 +391,20 @@ function burst(){for(let k=0;k<24;k++){const s=document.createElement('div');s.t
  requestAnimationFrame(()=>{s.style.transform=`translate(${(Math.random()-.5)*360}px,${(Math.random()-.5)*480}px) rotate(${Math.random()*360}deg)`;s.style.opacity=0});setTimeout(()=>s.remove(),1300)}}
 
 /* ========== PURE ========== */
-S.pure=[{p:1,t:"Iemand zin om nu een terrasje te doen in Halle? ☀️",exp:Date.now()+42*60e3},{p:4,t:"Wandeling in het Hallerbos, vertrek over een uur 🌿",exp:Date.now()+18*60e3},{p:7,t:"Gym-buddy gezocht voor vanavond 19u 💪",exp:Date.now()+51*60e3}];
+S.pure=[];
 function renderPure(){$('pureList').innerHTML=S.pure.filter(x=>x.exp>Date.now()).map((x,k)=>{const me=x.p==='me';const p=me?null:P[x.p];
  return `<div class="pure-post"><div class="pp-top">${me?'<div class="av" style="width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#22d3ee)">X</div>':`<div class="av lock" style="width:40px;height:40px;background:${p.g}">${p.e}</div>`}
  <div><b>${me?'Jij':'Anoniem · '+p.a}</b><div class="sub">${me?'jouw post':'📍 '+p.km+' km'}</div></div><span class="timer" data-exp="${x.exp}"></span></div>
  <p>${x.t}</p>${me?'':`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm ghost" onclick="this.parentNode.parentNode.remove()">Nee</button><button class="btn sm" style="flex:1" onclick="pureYes(${x.p},this)">⚡ Ik ben erbij</button></div>`}</div>`}).join('')||'<div class="empty"><b>⚡</b>Nog niemand actief. Wees de eerste!</div>';tick()}
 function postPure(){const t=$('pureTxt').value.trim();if(!t)return toast('Schrijf eerst wat je wil doen');S.pure.unshift({p:'me',t,exp:Date.now()+60*60e3});$('pureTxt').value='';renderPure();toast('⚡ Je post is 60 minuten zichtbaar');
- setTimeout(()=>{toast('⚡ Iemand reageerde op je Pure-post!');match(P[2])},6000)}
+ }
 function pureYes(i,b){b.textContent='✓ Verstuurd';b.disabled=true;setTimeout(()=>match(P[i]),1200)}
 function tick(){document.querySelectorAll('[data-exp]').forEach(e=>{const s=Math.max(0,(+e.dataset.exp-Date.now())/1000|0);e.textContent='⏳ '+(s/60|0)+':'+String(s%60).padStart(2,'0')})}
 setInterval(tick,1000);
 
 /* ========== FEED (Instagram) ========== */
-const STO=[0,3,5,1,7,6,8].map((i,k)=>({p:i,seen:false,slides:[{e:P[i].e,c:["Goeiemorgen ☀️","Vanavond live! 🔴","Nieuwe look 💅","Koffie #3 ☕","Leg day 🦵","Sunset 🌅","Filmavond 🍿"][k]},{e:"✨",c:"Swipe up om te matchen"}]}));
-const POSTS=[{p:0,e:"🎧",c:"Charlotte de Witte was ONGELOOFLIJK 🖤",l:212},{p:5,e:"🎮",c:"Victory royale zonder te bouwen 😎",l:98},{p:6,e:"🌅",c:"Gouden uur in Brussel",l:431},{p:3,e:"🎤",c:"Karaoke-avond, wie komt er?",l:156},{p:8,e:"👻",c:"Top 3 horrorfilms van 2026, reageer!",l:77},{p:9,e:"🏠",c:"Voor/na renovatie, swipe ➡️",l:302}];
+const STO=[];
+const POSTS=[];
 function renderFeed(){$('stories').innerHTML=`<div class="st" onclick="toast('Story maken: kies een foto in de echte app')"><div class="ring seen"><div class="av" style="width:58px;height:58px;font-size:22px;background:linear-gradient(135deg,#6366f1,#22d3ee)">＋</div></div>Jouw story</div>`+
  STO.map((s,k)=>`<div class="st" onclick="openStory(${k})"><div class="ring ${s.seen?'seen':''}">${av(P[s.p],58)}</div>${P[s.p].n}</div>`).join('');
  $('posts').innerHTML=POSTS.map((x,k)=>{const p=P[x.p];return `<div class="post"><div class="hd">${av(p,36)}<div style="flex:1"><b>${p.n}</b>${p.v?'<span class="verified" style="width:16px;height:16px;font-size:9px">✓</span>':''}<div class="sub">${p.km} km van je</div></div><button class="btn sm ghost" onclick="openProfile(${p.i})">Profiel</button></div>
@@ -490,7 +480,7 @@ setInterval(()=>{if($('v-map').classList.contains('on'))drawMap()},60);
 addEventListener('resize',()=>{if($('v-map').classList.contains('on'))drawMap()});
 
 /* ========== LIVE ========== */
-const LIVES=[{p:0,t:"Late night techno set 🎧",v:1243,k:'all'},{p:5,t:"Fortnite duo's, kom erbij!",v:587,k:'near'},{p:3,t:"Karaoke verzoekjes 🎤",v:2310,k:'all'},{p:7,t:"Q&A: hoe ik 10 kg won in de gym",v:402,k:'near'},{p:9,t:"💘 Speed date: 3 min per persoon",v:156,k:'speed'},{p:1,t:"💘 Speed date-avond Halle",v:98,k:'speed'}];
+const LIVES=[];
 function liveTab(b,k){b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));renderLive(k)}
 function renderLive(k='all'){$('liveGrid').innerHTML=LIVES.filter(l=>k==='all'||l.k===k).map(l=>{const p=P[l.p];return `<button class="lcard anim" style="background-image:${p.g.replace('135deg','135deg')},${p.g}" onclick="openLive(${p.i},'${l.t.replace(/'/g,'')}')">${p.e}<span class="badge">LIVE</span><span class="viewers">👁 ${l.v.toLocaleString('nl-BE')}</span><span class="ln">${p.n}, ${p.a}<br><span style="font-weight:400;font-size:12px">${l.t}</span></span></button>`}).join('')}
 let liveIv;const NAMES=["tom_92","sanne.x","jens","marie_b","kevin_hll","ella","robbe","lucas.tbz","nina"],CHAT=["haha 😂","waar is dit?","goeie muziek 🔥","hey uit Halle!","hoe oud ben je?","💜💜💜","nog een nummer!","kom je naar Fuse?","je bent grappig","eerste keer hier 👋"];
@@ -502,7 +492,7 @@ function openLive(i,title,me){const p=me?{n:"Jij",e:"🎥",g:"linear-gradient(13
  <div id="lchat"></div>
  ${me?'':`<div class="gifts">${GIFTS.map(g=>`<button onclick="gift('${g[0]}',${g[1]},'${p.n}')">${g[0]}<small>${g[1]}🪙</small></button>`).join('')}</div>`}
  <div class="reply"><input class="inp" id="lin" placeholder="${me?'Zeg iets tegen je kijkers…':'Chat met '+p.n+'…'}" onkeydown="if(event.key==='Enter')liveSay()"><button class="send" onclick="${me?'liveSay()':'heart()'}">${me?'➤':'💜'}</button></div>`;
- let v=me?0:l?.v||300;clearInterval(liveIv);liveIv=setInterval(()=>{addLC(NAMES[Math.random()*9|0],CHAT[Math.random()*10|0]);v+=Math.random()*(me?6:20)-(me?1:8)|0;v=Math.max(0,v);const e=$('lvv');if(e)e.textContent='👁 '+v.toLocaleString('nl-BE');if(Math.random()<.3)heart(1)},1300)}
+ let v=me?0:l?.v||300;clearInterval(liveIv);if(me){const e=$('lvv');if(e)e.textContent='👁 0';return}liveIv=setInterval(()=>{addLC(NAMES[Math.random()*9|0],CHAT[Math.random()*10|0]);v+=Math.random()*(me?6:20)-(me?1:8)|0;v=Math.max(0,v);const e=$('lvv');if(e)e.textContent='👁 '+v.toLocaleString('nl-BE');if(Math.random()<.3)heart(1)},1300)}
 function addLC(n,t,cls){const c=$('lchat');if(!c)return;const d=document.createElement('div');if(cls)d.className=cls;d.innerHTML=`<b>${n}</b>${t}`;c.appendChild(d);while(c.children.length>12)c.firstChild.remove()}
 function liveSay(){const i=$('lin');if(!i.value.trim())return;addLC('jij',i.value);i.value=''}
 function heart(auto){const h=document.createElement('div');h.className='flyheart';h.textContent=['💜','💖','✨','💙'][Math.random()*4|0];h.style.setProperty('--x',(Math.random()*-80)+'px');$('liveStage').appendChild(h);setTimeout(()=>h.remove(),2200)}
@@ -537,7 +527,7 @@ function openProfile(i){const p=P[i];openO('profV');$('profSheet').innerHTML=`<d
  <div class="box" style="margin-top:12px"><b>💬 Mijn ideale eerste date</b><p class="sub" style="margin-top:4px">Iets drinken op een terras en dan zien waar de avond ons brengt.</p></div>
  <div class="grid3" style="margin-bottom:14px">${[0,1,2].map(k=>`<div style="background:${gr(i+k+1)}">${["✨","🌙","🪐"][k]}</div>`).join('')}</div>
  <div style="display:flex;gap:8px"><button class="btn ghost" onclick="closeO('profV')">✖️ Sluit</button>${p.live?`<button class="btn ghost" onclick="closeO('profV');openLive(${i})">🔴 Live</button>`:''}<button class="btn" onclick="closeO('profV');quickLike(${i})">💜 Like</button></div>`}
-function renderSeen(){const lock=rank[S.plan]<2;$('seenMe').innerHTML=[2,4,6,8].map(i=>`<div class="${lock?'lock':''}">${av(P[i],56)}</div>`).join('');$('seenNote').textContent=lock?'Upgrade naar Gold om te zien wie jou al leuk vindt.':'Deze mensen vinden jou leuk. Tik op Ontdek om te matchen! 💜'}
+function renderSeen(){const lock=rank[S.plan]<2;$('seenMe').innerHTML=(S.likedBy||[]).map(i=>`<div class="${lock?'lock':''}">${av(P[i],56)}</div>`).join('');$('seenNote').textContent=lock?'Nog niemand heeft je geliket. Met Gold zie je meteen wie dat doet.':'Nog niemand. Zodra iemand je liket, zie je het hier 💜'}
 function premToggle(b,need){if(rank[S.plan]<rank[need]){openPlans();return toast('Deze functie zit in '+PLANS[need].n)}b.classList.toggle('on')}
 
 /* ========== PLANS / BETAALABONNEMENTEN ========== */
@@ -593,7 +583,7 @@ function applyPlan(){const b=$('planBtn');b.textContent=PLANS[S.plan].n;b.classL
 const VIBES=[["😴","Chill"],["🔥","Uitgaan"],["🎮","Gamen"],["☕","Koffie"],["🌙","Nachtuil"]];
 const QS={1:{q:"Welke kleur krijg je als je blauw en geel mengt?",o:["Groen","Paars","Oranje"],a:0},7:{q:"Hoeveel dagen per week ga ik naar de gym? (hint: 'leg day' elke dag 😅)",o:["2","5","7"],a:1}};
 P.forEach(p=>{p.vibe=VIBES[p.i%5];p.compat=61+((p.i*17)%38);p.tonight=p.i%3===0?HOT[p.i%4].n:null;p.crossed=p.i%4===1;if(QS[p.i])p.q=QS[p.i]});
-Object.assign(S,{vibe:VIBES[1],star:{i:6,exp:Date.now()+3600e3,used:false},spun:false,groups:[],paused:false,night:false,city:"Tubize",quiz:null,badges:{first:false,night:false,chat:false,live:false,date:false}});
+Object.assign(S,{vibe:VIBES[1],star:{i:0,exp:0,used:true},spun:false,groups:[],paused:false,night:false,city:"Tubize",quiz:null,badges:{first:false,night:false,chat:false,live:false,date:false}});
 function vis(p){return M.f==='all'||M.f==='live'&&p.live||M.f==='pure'&&p.pure||M.f==='tonight'&&p.tonight||M.f==='crossed'&&p.crossed}
 function xs(title,html,back=true){openO('xV');$('xSheet').innerHTML=`<div class="xh">${back?'<button class="ico" onclick="openHub()">‹</button>':''}<h2>${title}</h2><button class="ico" onclick="closeO(\'xV\')">✕</button></div>`+html}
 function badge(k,name){if(!S.badges[k]){S.badges[k]=true;toast('🏅 Nieuwe badge: '+name);renderProfExtra()}}
@@ -611,7 +601,7 @@ function renderStar(){const s=S.star,b=$('starBanner');if(!b)return;if(s.used||s
 function openStar(){const p=P[S.star.i];xs('🌠 Vallende ster',`<div style="border-radius:18px;height:200px;display:grid;place-items:center;font-size:100px;background:${p.g}">${p.e}</div><h2 style="margin-top:10px">${p.n}, ${p.a}</h2><p class="sub">Elke dag kiest Galaxy één extra goede match voor jou. Je hebt 1 uur. Een ster-like geeft altijd een match.</p><p style="margin:10px 0">${p.bio}</p><button class="btn" onclick="S.star.used=true;closeO('xV');renderStar();if(!S.swiped.includes(${p.i}))S.swiped.push(${p.i});renderDeck();match(P[${p.i}],true)">💫 Ster-like</button>`,false)}
 
 /* ---------- blind date ---------- */
-const BL=[{i:2,h:"Sushi > pizza. Overtuig me van het tegendeel 🍣"},{i:8,h:"Ik ken alle horrorfilms van 2026 uit mijn hoofd 👻"},{i:4,h:"Zondagochtend = wandelen + croissant 🥐"}];
+const BL=[];
 function renderBlind(){$('blindMode').innerHTML=`<div class="pure-hero"><b>🔭 Blind date</b><p class="sub" style="margin-top:6px">Geen foto's, alleen persoonlijkheid. Hoe meer jullie chatten, hoe scherper de foto wordt. Na 5 berichten zie je elkaar volledig.</p></div>`+
  BL.map(b=>{const p=P[b.i];return `<div class="pure-post"><div class="pp-top"><div class="av" style="width:44px;height:44px;background:${p.g};filter:blur(10px)">${p.e}</div><div><b>Mysterie · ${p.a}</b><div class="sub">${p.vibe[0]} ${p.vibe[1]} · 🧩 ${p.compat}% match</div></div></div><p>"${b.h}"</p><div class="tags">${p.t.map(x=>`<span class="tag" style="background:var(--card2)">${x}</span>`).join('')}</div><button class="btn sm" style="margin-top:10px" onclick="startBlind(${p.i})">🔭 Start blind chat</button></div>`}).join('')}
 function startBlind(i){if(!S.chats[i]){S.matches.unshift(i);S.chats[i]={m:[{s:'sys',t:'🔭 Blind date gestart. Foto wordt scherper per bericht.'}],exp:Date.now()+864e5,unread:0}}S.chats[i].blind=true;openChat(i)}
@@ -653,13 +643,13 @@ function afterDate(i){xs('⭐ Na-date-check',`<p style="margin-bottom:10px">Hoe 
 function together(){xs('💑 We zijn samen',`<p class="sub" style="margin-bottom:12px">Zet allebei je profiel op pauze. Je matches en chats blijven bewaard.</p><button class="btn" onclick="S.paused=true;closeO('xV');closeO('chatV');burst();burst();toast('💑 Proficiat! Je profiel staat op pauze')">Ja, we zijn samen 🎉</button>`,false)}
 
 /* ---------- live: audio rooms ---------- */
-const ROOMS=[{n:"Techno talk Halle",e:"🎧",s:[0,9,3],l:84},{n:"Eerste date fails 😂",e:"😂",s:[2,7],l:213},{n:"Gamers zoeken duo",e:"🎮",s:[5,8],l:57}];
+const ROOMS=[];
 const _renderLive=renderLive;renderLive=function(k='all'){if(k!=='audio')return _renderLive(k);$('liveGrid').innerHTML=ROOMS.map((r,j)=>`<button class="lcard" style="aspect-ratio:auto;grid-column:1/-1;background:var(--card);border:1px solid var(--line);padding:14px;display:block;font-size:14px" onclick="openRoom(${j})"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:26px">${r.e}</span><b style="flex:1">${r.n}</b><span class="sub">🎧 ${r.l}</span></div><div style="display:flex;margin-top:10px">${r.s.map(i=>av(P[i],34)).join('')}<span class="sub" style="margin:8px">${r.s.map(i=>P[i].n).join(', ')} spreken</span></div></button>`).join('')};
 function openRoom(j){const r=ROOMS[j];openO('liveV');$('liveStage').className='stage';$('liveStage').style.backgroundImage='linear-gradient(160deg,#1e1b4b,#07061a)';
  $('liveStage').innerHTML=`<div style="text-align:center;font-size:16px;padding:20px"><div style="font-size:50px">${r.e}</div><h2>${r.n}</h2><p class="sub">🎤 Audio room · geen camera</p><div style="display:flex;justify-content:center;gap:16px;margin:24px 0;flex-wrap:wrap">${r.s.map(i=>`<div style="text-align:center">${av(P[i],70)}<div style="font-size:13px;margin-top:4px">${P[i].n} 🎙️</div></div>`).join('')}</div><button class="btn sm" onclick="this.textContent='✋ Hand opgestoken';toast('De host ziet dat je wilt spreken')">✋ Ik wil iets zeggen</button></div>`;clearInterval(liveIv)}
 
 /* ---------- feed ranking ---------- */
-const _renderFeed=renderFeed;renderFeed=function(){_renderFeed();const top=[...POSTS].sort((a,b)=>b.l-a.l).slice(0,3);$('posts').insertAdjacentHTML('afterbegin',`<div class="box"><b>🏆 Galaxy-ranking · top van de week in ${S.city}</b>${top.map((x,k)=>`<div class="set"><span>${['🥇','🥈','🥉'][k]} ${P[x.p].n}: ${x.c.slice(0,28)}…</span><span class="sub">${x.l} 💜</span></div>`).join('')}</div>`)};
+const _renderFeed=renderFeed;renderFeed=function(){_renderFeed();if(!POSTS.length)return;const top=[...POSTS].sort((a,b)=>b.l-a.l).slice(0,3);$('posts').insertAdjacentHTML('afterbegin',`<div class="box"><b>🏆 Galaxy-ranking · top van de week in ${S.city}</b>${top.map((x,k)=>`<div class="set"><span>${['🥇','🥈','🥉'][k]} ${P[x.p].n}: ${x.c.slice(0,28)}…</span><span class="sub">${x.l} 💜</span></div>`).join('')}</div>`)};
 
 /* ---------- profile extras ---------- */
 function renderProfExtra(){const B=[['first','Eerste match 💘',S.matches.length>0],['chat','Goede chatter 💬'],['date','Eerste date 📅'],['night','Nachtuil 🌙'],['live','Live-ster 🔴']];
@@ -704,8 +694,8 @@ const _match=match;match=function(p,s){_match(p,s);if(S.matches.length===1)setTi
 
 /* ---------- INIT ---------- */
 renderDeck();renderFeed();renderLive();renderChats();renderSeen();renderProfExtra();
-setTimeout(()=>{match(P[5])},4000);
-setTimeout(()=>toast('🎂 Noor is vandaag jarig! Stuur een cadeautje via haar profiel'),14000);
+
+
 setInterval(()=>{if(S.star.exp<Date.now())renderStar()},5000);
 </script>
 
@@ -727,9 +717,7 @@ setInterval(()=>{if(S.star.exp<Date.now())renderStar()},5000);
 const INT=["💍 Iets serieus","✨ Zien wat komt","🍻 Iets luchtigs","🤝 Vrienden"];
 P.forEach(p=>p.intent=INT[p.i%4]);
 Object.assign(S,{intent:INT[1],comet:false,bff:false,earned:0,respect:92,avatar:null});
-ROOMS.unshift({n:"🎙️ Galaxy Podcast live",e:"🎙️",s:[3,6],l:431});
 /* ghosting-demo: oude chat met Sara */
-S.matches.push(3);S.chats[3]={m:[{s:'sys',t:'Match · 3 dagen geleden'},{s:'me',t:'Hey Sara! Karaoke deze week? 🎤'},{s:'them',t:'Misschien! Ik laat het weten'}],exp:Infinity,unread:0,ghost:true,streak:2};
 
 /* ---------- anti-ghosting ---------- */
 const _rc2=renderChats;renderChats=function(){_rc2();document.querySelectorAll('#clist .cl').forEach((el,k)=>{const i=S.matches[k];if(S.chats[i]?.ghost)el.insertAdjacentHTML('afterend',`<div class="ghostb">👻 Al 3 dagen stil met ${P[i].n}. Netjes afsluiten of verder praten?<div style="display:flex;gap:6px;margin-top:8px"><button class="btn sm ghost" onclick="unghost(${i},0)">👋 Netjes afsluiten</button><button class="btn sm" onclick="unghost(${i},1)">💬 Verder praten</button></div></div>`)})};
@@ -745,7 +733,6 @@ function capsule(){xs('📮 Tijdcapsule',`<p class="sub" style="margin-bottom:10
 const _sb2=startBlind;startBlind=function(i){if(S.avatar)return _sb2(i);xs('🎭 Kies je avatar',`<p class="sub" style="margin-bottom:10px">In blind date chat je als avatar tot jullie foto's onthuld zijn.</p><div class="tiles">${["🧑‍🚀","👽","🤖","🦊","🐼","🦄"].map(a=>`<button class="tile" onclick="S.avatar='${a}';closeO('xV');setTimeout(()=>{startBlind(${i});push('🎭 Je chat als ${a}')},250)"><span>${a}</span></button>`).join('')}</div>`,false)};
 
 /* ---------- live: creator-verdiensten ---------- */
-let gIv;const _gl2=goLive;goLive=function(){_gl2();clearInterval(gIv);gIv=setInterval(()=>{if(!$('liveV').classList.contains('on'))return clearInterval(gIv);const g=GIFTS[Math.random()*3|0];S.earned+=g[1];addLC(NAMES[Math.random()*9|0],`stuurde je ${g[0]} (+${g[1]} 🪙)`,'gift');heart()},3500)};
 function creator(){const eur=(S.earned*0.012*0.7).toFixed(2).replace('.',',');xs('📊 Creator-dashboard',`<div class="box"><div class="sub">Verdiend met cadeautjes</div><div style="font-size:30px;font-weight:800">${S.earned} 🪙</div><div class="sub">≈ €${eur} voor jou (70%), Galaxy houdt 30%</div></div>
  <div class="box"><b>Hoe werkt het?</b><p class="sub" style="margin-top:4px">Ga live, kijkers sturen cadeautjes en jij verdient munten. Vanaf €50 kun je uitbetalen naar je rekening.</p></div>
  <button class="btn" onclick="${S.earned?`toast('💸 Uitbetaling aangevraagd (demo)')`:`closeO('xV');goLive()`}">${S.earned?'💸 Uitbetalen':'🔴 Ga live en verdien'}</button>`,false)}
@@ -801,12 +788,12 @@ function showPromise(){$('promiseSheet').innerHTML=`<div style="text-align:cente
 setTimeout(showPromise,1500);
 
 /* 2. Wie jou leuk vindt = gratis voor iedereen */
-renderSeen=function(){$('seenMe').innerHTML=[2,4,6,8].map(i=>`<button onclick="openProfile(${i})">${av(P[i],56)}</button>`).join('');$('seenNote').textContent='💜 Deze mensen vinden jou leuk. Gratis, altijd: dat is de Galaxy-belofte.'};
+renderSeen=function(){$('seenMe').innerHTML=(S.likedBy||[]).map(i=>`<button onclick="openProfile(${i})">${av(P[i],56)}</button>`).join('');$('seenNote').textContent=(S.likedBy||[]).length?'💜 Deze mensen vinden jou leuk. Gratis, altijd: dat is de Galaxy-belofte.':'Nog niemand heeft je geliket. Zodra dat gebeurt, zie je het hier, gratis 💜'};
 PLANS.gold.f=PLANS.gold.f.map(f=>f==='Zie wie jou leuk vindt'?'Onbeperkt Pure-posts':f);
 PLANS.free.likes=25;S.likes=25;
 
 /* 3. Dagelijkse selectie in plaats van eindeloos swipen */
-const _rd3=renderDeck;renderDeck=function(){_rd3();const e=document.querySelector('#deck .empty');if(e)e.innerHTML=`<b>🌙</b><b style="font-size:18px;margin-bottom:6px">Je selectie van vandaag is op</b>Morgen 25 nieuwe mensen, gekozen op wat jullie echt delen. Tijd om te leven: check de <a href="#" onclick="go('map');mapFilter('hot');return false" style="color:var(--b)">hotspots</a> of een <a href="#" onclick="openHub();events();return false" style="color:var(--b)">event</a>.<br><br><button class="btn sm ghost" onclick="resetDeck()">Demo: opnieuw</button>`};
+const _rd3=renderDeck;renderDeck=function(){_rd3();const e=document.querySelector('#deck .empty');if(e&&P.length)e.innerHTML=`<b>🌙</b><b style="font-size:18px;margin-bottom:6px">Je selectie van vandaag is op</b>Morgen 25 nieuwe mensen, gekozen op wat jullie echt delen. Tijd om te leven: check de <a href="#" onclick="go('map');mapFilter('hot');return false" style="color:var(--b)">hotspots</a> of een <a href="#" onclick="openHub();events();return false" style="color:var(--b)">event</a>.<br><br><button class="btn sm ghost" onclick="resetDeck()">Demo: opnieuw</button>`};
 let swipeCount=0;const _sw4=swipe;swipe=function(d){swipeCount++;if(swipeCount===12)setTimeout(()=>toast('🌙 Je swipet al even. Misschien tijd om een van je matches te berichten?'),900);return _sw4(d)};
 
 /* 4. Small talk overslaan na een match */
@@ -819,7 +806,7 @@ setTimeout(()=>{if(S.chats[5])nsfw(5)},9000);
 /* 7. Verdien profielen door te praten: start 25, +5 per bericht aan een match (max +50/dag) */
 PROM[1]=["🌙","Praten > swipen","25 profielen per dag. Stuur je matches een bericht en verdien er telkens 5 bij."];
 Object.assign(S,{daily:25,bonus:0});
-const _ul=updLikes;updLikes=function(){_ul();$('likesLeft').innerHTML=`🌙 <b>${S.daily}</b> profielen over vandaag · 💬 +5 per bericht aan een match`};
+const _ul=updLikes;updLikes=function(){_ul();$('likesLeft').innerHTML=P.length?`🌙 <b>${S.daily}</b> profielen over vandaag · 💬 +5 per bericht aan een match`:''};
 const _sw5=swipe;swipe=function(d){if(S.daily<=0){toast('🌙 Je profielen zijn op. Stuur een match een bericht voor +5!');go('chat');return}if($('topCard'))S.daily--;const r=_sw5(d);updLikes();return r};
 const _sm5=sendMsg;sendMsg=function(t){const before=S.chats[curChat]?.m.length;_sm5(t);if(S.chats[curChat]?.m.length>before&&S.bonus<50){S.bonus+=5;S.daily+=5;updLikes();toast('💬 +5 profielen verdiend! ('+S.daily+' over)')}};
 updLikes();
@@ -846,7 +833,7 @@ function instantDate(){const sel=[...$('xSheet').querySelectorAll('.box .tag')].
 
 /* --- Breeze: elke avond 19u nieuwe selectie --- */
 function to19(){const n=new Date(),t=new Date(n);t.setHours(19,0,0,0);if(t<=n)t.setDate(t.getDate()+1);const m=(t-n)/6e4|0;return `${m/60|0}u ${m%60}min`}
-const _rd6=renderDeck;renderDeck=function(){_rd6();const e=document.querySelector('#deck .empty');if(e)e.innerHTML=e.innerHTML.replace(/Morgen 25 nieuwe mensen/,`Nieuwe selectie vanavond om 19:00 (over ${to19()})`)};
+const _rd6=renderDeck;renderDeck=function(){_rd6();const e=document.querySelector('#deck .empty');if(e&&P.length)e.innerHTML=e.innerHTML.replace(/Morgen 25 nieuwe mensen/,`Nieuwe selectie vanavond om 19:00 (over ${to19()})`)};
 
 /* --- Breeze: betalen per date i.p.v. abonnement --- */
 const _rp6=renderPlans;renderPlans=function(tab){_rp6(tab);if(tab!=='coins')$('planSheet').insertAdjacentHTML('beforeend',`<div class="box" style="margin-top:12px"><b>🎟️ Liever geen abonnement?</b><p class="sub" style="margin:4px 0 8px">Betaal alleen als je écht afspreekt: €4,99 per date, inclusief een gratis drankje bij een partnerzaak.</p><button class="btn sm ghost" onclick="toast('🎟️ Pay-per-date geactiveerd (demo)')">Kies betalen per date</button></div>`)};
@@ -1171,7 +1158,7 @@ const FN=["Lotte","Emma","Noor","Julie","Lina","Fien","Sara","Inès","Amber","Ya
 const EM=["🌸","🎧","🎨","🏐","🎤","🌿","🎮","📸","🏋️","🎬","☕","🐶","✈️","🍕","🧘","🎸","🌊","🌙"];
 const rr=(s=>()=>(s=(s*48271)%2147483647)/2147483647)(42);
 const GEO=[];
-CITIES.forEach(([c,la,ln,w])=>{for(let k=0;k<Math.round(w*7)+1;k++){const id=GEO.length;GEO.push({n:FN[(id*7)%FN.length],a:19+((id*13)%14),e:EM[id%EM.length],g:gr(id),lat:la+(rr()-.5)*.06,lng:ln+(rr()-.5)*.09,city:c,live:rr()<.12,pure:rr()<.15,tonight:rr()<.25?c:null,crossed:rr()<.1,km:0})}});
+
 P.forEach(p=>{p.lat=50.692+(.5-p.y)*.09;p.lng=4.205+(p.x-.5)*.13;p.city=p.i%2?'Tubize':'Halle';GEO.push(Object.assign({}, {n:p.n,a:p.a,e:p.e,g:p.g,lat:p.lat,lng:p.lng,city:p.city,live:p.live,pure:p.pure,tonight:p.tonight,crossed:p.crossed,pi:p.i}))});
 const HOTG=[{n:"Hallerbos",e:"🌳",lat:50.734,lng:4.262},{n:"Grote Markt Halle",e:"🍻",lat:50.7352,lng:4.2373},{n:"Fuse Brussel",e:"🎧",lat:50.8365,lng:4.3366},{n:"Centrum Tubize",e:"☕",lat:50.691,lng:4.204},{n:"Grote Markt Brussel",e:"🏛️",lat:50.8467,lng:4.3524},{n:"Vrijdagmarkt Gent",e:"🍺",lat:51.0573,lng:3.7259},{n:"Groenplaats Antwerpen",e:"⛪",lat:51.2194,lng:4.4011},{n:"Oude Markt Leuven",e:"🍻",lat:50.8777,lng:4.7006},{n:"Vondelpark",e:"🌳",lat:52.358,lng:4.8686},{n:"Markthal Rotterdam",e:"🛍️",lat:51.92,lng:4.4866},{n:"Neude Utrecht",e:"☕",lat:52.0932,lng:5.1185},{n:"Strand Scheveningen",e:"🏖️",lat:52.1124,lng:4.2799}];
 const ME_LL={lat:50.6919,lng:4.2041};
@@ -1186,13 +1173,13 @@ function showCity(c){const n=GEO.filter(u=>u.city===c[0]&&gvis(u)).length;$('map
 /* ===== 1) Echte kaart (Google Maps of OpenStreetMap/CARTO) — werkt op je eigen website ===== */
 let LM=null,LMODE=null,lLayer=null;
 function tryRealMap(){
- const t=new Image();t.onload=()=>{GOOGLE_MAPS_KEY?initGoogle():initLeaflet()};t.onerror=()=>{};t.src='https://a.basemaps.cartocdn.com/dark_all/7/65/43.png?'+Date.now()}
+ const t=new Image();t.onload=()=>{GOOGLE_MAPS_KEY?initGoogle():initLeaflet()};t.onerror=()=>{};t.src='https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/7/43/65?'+Date.now()}
 function loadJS(src,cb){const s=document.createElement('script');s.src=src;s.onload=cb;s.onerror=()=>{};document.head.appendChild(s)}
 function lmapDiv(){let d=$('lmap');if(!d){$('map').insertAdjacentHTML('afterend','<div id="lmap" style="position:absolute;inset:0;z-index:1;background:#0b0a24"></div>');d=$('lmap');d.addEventListener('pointerdown',e=>e.stopPropagation());d.addEventListener('wheel',e=>e.stopPropagation(),{passive:true})}$('map').style.display='none';return d}
 function initLeaflet(){if(LM)return;loadJS('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',()=>{
  document.head.insertAdjacentHTML('beforeend',`<style>.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-layer{position:absolute;left:0;top:0}.leaflet-container{overflow:hidden;touch-action:none;outline:0;font:inherit}.leaflet-tile{visibility:hidden;user-select:none}.leaflet-tile-loaded{visibility:inherit}.leaflet-container img.leaflet-tile{max-width:none!important;width:256px;height:256px}.leaflet-zoom-animated{transform-origin:0 0}.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-bottom,.leaflet-top{position:absolute;z-index:1000;pointer-events:none}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-control{pointer-events:auto;font-size:10px;background:#0009;color:#ccc;padding:2px 6px;border-radius:6px;margin:4px}.leaflet-control a{color:#a5b4fc}.leaflet-marker-icon{display:block;background:none;border:0}.gpin{border-radius:50%;display:grid;place-items:center;border:3px solid #fff;box-shadow:0 4px 14px #0008;font-size:18px}.gclu{border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:12px;border:2px solid #fff8;box-shadow:0 0 20px #ec489988}</style>`);
  LM=L.map(lmapDiv(),{zoomControl:false,attributionControl:true,minZoom:6,maxZoom:18,maxBounds:[[49,1.5],[54.2,8]]}).setView([51.6,4.9],7);LMODE='leaflet';
- L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap · © CARTO',subdomains:'abcd'}).addTo(LM);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri, HERE, Garmin, © OpenStreetMap',maxNativeZoom:16}).addTo(LM);L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxNativeZoom:16,pane:'overlayPane'}).addTo(LM);
  L.circle([ME_LL.lat,ME_LL.lng],{radius:500,color:'#22d3ee',weight:1,fillOpacity:.15}).addTo(LM);
  L.marker([ME_LL.lat,ME_LL.lng],{icon:L.divIcon({html:'<div class="gpin" style="width:18px;height:18px;background:#22d3ee"></div>',iconSize:[18,18]})}).addTo(LM);
  LM.on('zoomend moveend',renderReal);renderReal()})}
@@ -1484,5 +1471,27 @@ const _setCoins=setCoins;setCoins=function(d){const from=S.coins;_setCoins(d);co
 document.addEventListener('pointermove',e=>{const c=$('topCard');if(!c||e.buttons||e.pointerType!=='mouse')return;const r=c.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){c.style.transform='';return}
  const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transition='transform .2s';c.style.transform=`perspective(900px) rotateY(${x*8}deg) rotateX(${-y*8}deg)`});
 </script>
+<script>
+/* echte modus: geen nep-accounts */
+function invite(){const u=location.href.split('#')[0],t='Kom op Galaxy, de nieuwe dating app voor BE & NL 💜 ';if(navigator.share)navigator.share({title:'Galaxy',text:t,url:u}).catch(()=>{});else{navigator.clipboard&&navigator.clipboard.writeText(t+u);toast('🔗 Link gekopieerd, stuur hem door!')}}
+function NOONE(){toast('🌌 Nog geen andere leden. Nodig vrienden uit!')}
+['openStar','compliments','battle','double','wander','guess','pureYes','quickLike','darkLike','sendComet','twoTruths','coach','voice','game','listen','gameInv','story','pickBg','confirmDate','instantDate'].forEach(n=>{const f=window[n];if(typeof f!=='function')return;const chat=/^(twoTruths|coach|voice|game|listen|gameInv|story|pickBg|confirmDate|instantDate)$/.test(n);window[n]=function(){if(chat?(typeof curChat==='undefined'||curChat==null||!S.chats[curChat]):!P.length)return NOONE();try{return f.apply(this,arguments)}catch(e){console.warn(n,e);NOONE()}}});
+(function(){
+ const E=(t,b)=>`<div class="empty" style="grid-column:1/-1;text-align:center;padding:36px 16px;color:var(--mut,#a5a3c9)"><b style="font-size:42px;display:block;margin-bottom:8px">🌌</b>${t}${b?`<br><br><button class="btn sm" onclick="${b[1]}">${b[0]}</button>`:''}</div>`;
+ const w=(n,fn)=>{const f=window[n];if(typeof f!=='function')return;window[n]=function(){let r;try{r=f.apply(this,arguments)}catch(e){console.warn(n,e)}try{fn()}catch(e){}return r}};
+ w('renderFeed',()=>{const f=$('posts');if(f&&!f.children.length)f.innerHTML=E('Nog geen posts. Wees de eerste!')});
+ w('renderLive',()=>{const g=$('liveGrid');if(g&&!g.children.length)g.innerHTML=E('Er is nu niemand live.<br>Start zelf een live en wees de eerste ✨')});
+ w('renderBlind',()=>{const b=$('blindMode');if(b&&!BL.length&&!b.querySelector('.empty'))b.insertAdjacentHTML('beforeend',E('Nog geen blind dates beschikbaar.'))});
+ w('renderPure',()=>{const b=$('pureList');if(b&&!b.children.length)b.innerHTML=E('Nog geen Pure-oproepen. Plaats er zelf een!')});
+ ['renderFeed','renderLive','renderBlind','renderPure','renderSeen','renderDeck','renderChats'].forEach(n=>{try{window[n]&&window[n]()}catch(e){}});
+})();
+</script>
+<style>
+header{gap:5px;padding:10px 10px}
+header .pill{padding:6px 9px;font-size:13px;flex:none}header .ico{flex:none}
+.lgTxt{background:none!important;-webkit-text-fill-color:#fff!important;color:#fff!important;text-shadow:0 0 14px rgba(236,72,153,.5)}
+@media (max-width:420px){.lgTxt{font-size:18px}.lgIco{width:22px;height:22px}header .pill{padding:5px 7px;font-size:12px}header .ico{width:32px;height:32px;font-size:15px}}
+@media (max-width:360px){.lgTxt{display:none}}
+</style>
 </body>
 </html>
