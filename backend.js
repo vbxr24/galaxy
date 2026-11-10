@@ -1,0 +1,120 @@
+/* Galaxy – koppeling met de server (Supabase).
+   Testfase: elk toestel krijgt automatisch een eigen account (geen e-mail of wachtwoord).
+   Privacy: je exacte locatie verlaat je toestel niet. De app rondt eerst af naar een zone
+   van ±300 m en stuurt alleen die zone door; de server rondt nog eens af en wacht 15 minuten. */
+(function () {
+  'use strict';
+  const CFG = window.GALAXY_BACKEND = { url: 'https://dqodwuemdpzyvvvxvgtz.supabase.co', key: 'sb_publishable_nxc3zbKKIR6zpx8iYz4fFA_9yN0JY6p' };
+  const LIB = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
+  const Z = 0.003, T = m => { try { toast(m) } catch (e) { } }, $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  let sb = null, uid = null, state = 'uit', lastZone = '', lastSent = 0, pollT = null, target = null;
+  const st = s => { state = s; try { localStorage.glxNet = s } catch (e) { } window.dispatchEvent(new CustomEvent('glx-net', { detail: s })) };
+  const ghost = () => { try { return !!localStorage.glxGhost } catch (e) { return false } };
+  const cut = (s, n) => (s == null ? null : String(s).slice(0, n));
+
+  function loadLib() { return new Promise((ok, no) => { if (window.supabase) return ok(); const s = document.createElement('script'); s.src = LIB; s.onload = ok; s.onerror = () => no(new Error('bibliotheek laadt niet')); document.head.appendChild(s) }) }
+
+  /* ---------- profiel ---------- */
+  function row() {
+    let av = null; try { av = window.GLXAV && GLXAV.has() ? GLXAV.config() : null } catch (e) { }
+    const sp = /^https:\/\/open\.spotify\.com\//.test(ME.music || '') ? cut(ME.music, 300) : null, h = s => String(s || '').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 30);
+    return {
+      name: cut(ME.name, 24), city: cut(ME.city || '', 40), bio: cut(ME.bio || '', 500), cat: ME.cat || null, gender: cut(ME.gender || null, 30), pron: cut(ME.pron || null, 20), orient: cut(ME.orient || null, 30),
+      show_orient: !!ME.showOrient, seek: (ME.seek || []).slice(0, 6), ints: (ME.ints || []).slice(0, 12), basics: ME.basics || {}, music: sp, ig: h(ME.ig), snap: h(ME.snap),
+      social_vis: ['verborgen', 'matches', 'iedereen'].includes(ME.socialVis) ? ME.socialVis : 'verborgen', ptheme: cut(ME.ptheme || 'Galaxy', 30), avatar: av, ghost: ghost()
+    };
+  }
+  let syncT = null, syncing = false;
+  async function syncProfile() {
+    if (!sb || !uid || syncing || !ME.name || !ME.born) return; syncing = true;
+    try {
+      const r = row(); let q = await sb.from('profiles').update(r).eq('id', uid).select('id');
+      if (q.error) throw q.error;
+      if (!q.data || !q.data.length) { q = await sb.from('profiles').insert(Object.assign({ id: uid, birth: ME.born }, r)).select('id'); if (q.error) throw q.error }
+      st('verbonden'); if (ghost()) { await sb.rpc('clear_presence'); lastZone = '' }
+    } catch (e) { console.error('profiel', e); st('fout'); if (/18 jaar/.test(e.message || '')) T('Galaxy is alleen voor 18 jaar en ouder') }
+    syncing = false;
+  }
+  const later = () => { clearTimeout(syncT); syncT = setTimeout(syncProfile, 1500) };
+
+  /* ---------- zone doorgeven ---------- */
+  async function sendZone(lat, lng) {
+    if (!sb || !uid || state !== 'verbonden' || ghost()) return;
+    const zlat = Math.round(lat / Z) * Z, zlng = Math.round(lng / Z) * Z, k = zlat.toFixed(4) + ',' + zlng.toFixed(4), now = Date.now();
+    if (k === lastZone && now - lastSent < 10 * 60e3) return; if (now - lastSent < 20e3) return;
+    lastZone = k; lastSent = now;
+    const { error } = await sb.rpc('set_presence', { lat: zlat, lng: zlng }); if (error) console.error('zone', error);
+  }
+
+  /* ---------- mensen in zones ophalen ---------- */
+  const CAT = () => { const o = {}; try { GLXPROFILE.cats.forEach(c => o[c[0]] = c[1] + ' ' + c[2]) } catch (e) { } return o };
+  async function poll() {
+    if (!sb || !uid || state !== 'verbonden' || document.hidden) return;
+    const me = window.GLXMAP && GLXMAP._me && GLXMAP._me(); let c = me; try { if (!c && GLXMAP._center) c = GLXMAP._center() } catch (e) { } if (!c) return;
+    const z = await sb.rpc('zones_near', { lat: c.lat, lng: c.lng }); if (z.error) { console.error('zones', z.error); return }
+    const zones = {}; (z.data || []).forEach(r => zones[r.zlat + ',' + r.zlng] = [r.zlat, r.zlng]);
+    const cat = CAT(), people = [];
+    for (const zz of Object.values(zones).slice(0, 12)) {
+      const p = await sb.rpc('zone_people', { z_lat: zz[0], z_lng: zz[1] }); if (p.error) continue;
+      (p.data || []).forEach(c => { if (c && c.id) people.push({ id: c.id, name: c.name, age: c.age, intent: cat[c.cat] || '', zone: zz, card: c }) });
+    }
+    const L = window.GLXLIVE; if (L) { L.people = people; if (L.on) L.on() }
+  }
+
+  /* ---------- profielkaart van een ander ---------- */
+  function toCard(c) {
+    return {
+      id: c.id, name: c.name, age: c.age, city: c.city, bio: c.bio, cat: c.cat, gender: c.gender, pron: c.pron, orient: c.orient, showOrient: !!c.orient, ints: c.ints || [], basics: c.basics || {}, music: c.music || '',
+      ptheme: c.ptheme, respect: c.respect, matched: !!c.matched, socialVis: c.ig || c.snap ? 'iedereen' : 'verborgen', ig: c.ig || (c.hasSocials && !c.snap ? '•' : ''), snap: c.snap || '',
+      badges: [['🪐', 'Galaxy-lid']].concat(c.ageVerified ? [['🔞', 'Leeftijd gecontroleerd']] : []).concat(c.matched ? [['💜', 'Jullie zwaaiden naar elkaar']] : [])
+    };
+  }
+  async function openOther(id) {
+    const hit = ((window.GLXLIVE || {}).people || []).find(p => p.id === id); let c = hit && hit.card;
+    if (!c) { const r = await sb.rpc('profile_card', { target: id }); c = r.data }
+    if (!c) return T('Dit profiel is niet beschikbaar');
+    target = c.id; GLXPROFILE.show(toCard(c));
+    const sh = $('xSheet'); if (sh) sh.insertAdjacentHTML('beforeend', `<button class="btn ghost" style="width:100%;margin-top:8px;color:#fb7185" onclick="GLXNET.block()">🚫 Blokkeer ${esc(c.name)}</button>`);
+  }
+  const REASON = ['Lijkt minderjarig', 'Nepprofiel of oplichting', 'Intimidatie of bedreiging', 'Ongepaste foto of tekst', 'Vraagt geld of biedt seks tegen betaling', 'Iets anders'];
+  const api = window.GLXNET = {
+    get state() { return state }, get uid() { return uid }, sync: syncProfile, poll,
+    async wave() {
+      if (!target || !sb) return; const w = await sb.from('waves').insert({ from_id: uid, to_id: target });
+      if (w.error && w.error.code !== '23505') { console.error(w.error); return T('Zwaaien lukte niet') }
+      const m = await sb.rpc('is_match', { a: uid, b: target });
+      T(m.data ? '💜 Jullie zwaaiden naar elkaar! Chatten komt in de volgende update.' : '👋 Zwaai verstuurd');
+    },
+    report() { if (!target) return; xs('🚩 Melden', '<p class="sub" style="margin-bottom:10px">Wat is er aan de hand? De ander ziet niet dat jij meldt.</p>' + REASON.map((r, k) => `<button class="opt" style="width:100%;text-align:left;margin-bottom:8px" onclick="GLXNET.sendReport(${k})">${r}</button>`).join(''), false) },
+    async sendReport(k) { const r = await sb.from('reports').insert({ reporter: uid, target, reason: REASON[k] }); try { closeO('xV') } catch (e) { } T(r.error ? 'Melden lukte niet, probeer opnieuw' : '🚩 Bedankt, je melding is verstuurd') },
+    async block() { if (!target) return; const r = await sb.from('blocks').insert({ blocker: uid, blocked: target }); try { closeO('xV') } catch (e) { } if (r.error && r.error.code !== '23505') return T('Blokkeren lukte niet'); T('🚫 Geblokkeerd. Jullie zien elkaar niet meer.'); poll() },
+    async wipe() { try { if (sb && uid) { await sb.from('profiles').delete().eq('id', uid); await sb.auth.signOut() } } catch (e) { } }
+  };
+
+  /* ---------- haken in de app ---------- */
+  function hooks() {
+    const sm = window.saveMe; window.saveMe = function () { const r = sm && sm.apply(this, arguments); later(); return r };
+    window.addEventListener('glx-avatar', later);
+    document.addEventListener('click', e => { if (e.target && e.target.id === 'ghostTg') setTimeout(syncProfile, 300) });
+    const L = window.GLXLIVE = window.GLXLIVE || { people: [], send() { }, on: null }, snd = L.send;
+    L.send = function (m) { try { snd && snd.apply(this, arguments) } catch (e) { } if (m && m.t === 'pos') sendZone(m.lat, m.lng); if (m && (m.t === 'avatar' || m.t === 'cat')) later() };
+    if (window.GLXPROFILE) { GLXPROFILE.wave = () => api.wave(); GLXPROFILE.report = () => api.report() }
+    window.openProfile = function (id) { if (typeof id === 'string' && id.length > 20) return openOther(id) };
+    if (typeof window.reallyDelete === 'function') { const rd = window.reallyDelete; window.reallyDelete = async function () { await api.wipe(); return rd.apply(this, arguments) } }
+    clearInterval(pollT); pollT = setInterval(poll, 60e3); document.addEventListener('visibilitychange', () => { if (!document.hidden) poll() });
+  }
+
+  async function start() {
+    if (typeof ME === 'undefined' || !ME.name || !ME.born) return st('wacht');           /* eerst het welkomstscherm */
+    try {
+      await loadLib(); if (!sb) sb = window.supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } });
+      let s = (await sb.auth.getSession()).data.session;
+      if (!s) { const r = await sb.auth.signInAnonymously(); if (r.error) throw r.error; s = r.data.session }
+      uid = s.user.id; await syncProfile(); if (state === 'verbonden') setTimeout(poll, 1500);
+    } catch (e) { console.error('server', e); st('offline') }
+  }
+  hooks(); st('uit');
+  const wg = window.welcomeGo; if (typeof wg === 'function') window.welcomeGo = function () { const r = wg.apply(this, arguments); setTimeout(start, 400); return r };
+  start();
+})();
