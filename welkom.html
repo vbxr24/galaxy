@@ -28,12 +28,15 @@ section{padding:54px 0}h2{font-size:clamp(26px,4vw,36px);margin:0 0 8px;letter-s
 .steps{counter-reset:s;display:grid;gap:14px;max-width:680px}.steps div{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px 16px 62px;position:relative}
 .steps div:before{content:counter(s);position:absolute;left:16px;top:14px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,var(--a),var(--b))}
 .safe{background:linear-gradient(135deg,rgba(34,211,238,.1),rgba(139,92,246,.14));border:1px solid var(--line);border-radius:22px;padding:28px}
-.safe li{margin:8px 0}.note{font-size:14px;color:var(--sub)}
+.safe li{margin:8px 0}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.two .card h3{margin-top:0}.no li{list-style:"✕  ";color:var(--sub)}.yes li{list-style:"✓  "}.no,.yes{padding-left:22px;margin:8px 0 0}
+.price{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}.price .card b.p{font-size:26px;display:block;margin:4px 0 8px}.price ul{padding-left:18px;margin:0;color:var(--sub);font-size:15px}.price li{margin:5px 0}.pop{border-color:var(--b)!important}
+details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:10px}summary{cursor:pointer;font-weight:700}details p{color:var(--sub);margin:10px 0 0}
+nav.top a{color:var(--sub);text-decoration:none;font-size:15px;margin-right:16px}@media(max-width:780px){.two{grid-template-columns:1fr}nav.top{display:none}}.note{font-size:14px;color:var(--sub)}
 footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--sub);font-size:14px}footer a{margin-right:16px;color:var(--sub)}
 @media(max-width:780px){.hero{grid-template-columns:1fr;padding-top:20px}}@media(prefers-reduced-motion:reduce){.me,.me:after{animation:none}}
 </style></head><body>
 <div class="wrap">
-<header><img src="icons/icon-192.png" width="38" height="38" alt="Galaxy-logo"><b>Galaxy</b><span style="flex:1"></span><a class="btn g" href="./" style="padding:9px 16px">Open de app</a></header>
+<header><img src="icons/icon-192.png" width="38" height="38" alt="Galaxy-logo"><b>Galaxy</b><span style="flex:1"></span><nav class="top"><a href="#waarom">Waarom</a><a href="#hoe">Hoe werkt het</a><a href="#prijs">Prijzen</a><a href="#veilig">Veiligheid</a><a href="#vragen">Vragen</a></nav><a class="btn g" href="./" style="padding:9px 16px">Open de app</a></header>
 <div class="hero"><div>
 <span class="badge">🧪 Testversie · alleen 18+</span>
 <h1>Ontmoet mensen <em>waar je bent</em>, niet door te swipen.</h1>
@@ -43,6 +46,12 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--sub);fon
 </div>
 <div class="phone" aria-hidden="true"><div class="map"></div><span class="chip">🔥 Drukte</span><span class="pin" style="left:20%;top:24%">🍸</span><span class="pin" style="left:68%;top:30%">☕</span><span class="pin" style="left:74%;top:66%">🎢</span><span class="pin" style="left:18%;top:70%">🌳</span><span class="pin" style="left:44%;top:16%">🏛️</span><div class="me">🧍</div><div class="bar">📍 Inchecken · 👥 Groepsdate plannen</div></div>
 </div>
+
+<section id="waarom"><h2>Waarom Galaxy?</h2><p class="kick">Dating-apps beloven ontmoetingen, maar houden je vooral op je scherm. Galaxy draait het om: eerst de plek, dan de mensen.</p>
+<div class="two">
+<div class="card"><h3>Hoe het nu vaak gaat</h3><ul class="no"><li>Uren swipen door foto's</li><li>Gesprekken die nergens heen gaan</li><li>Geen idee wie echt in de buurt is</li><li>Alleen afspreken met een onbekende</li></ul></div>
+<div class="card pop"><h3>Hoe het met Galaxy gaat</h3><ul class="yes"><li>Je ziet waar het vanavond leeft</li><li>Je gaat erheen en checkt in</li><li>Je ontmoet mensen die er ook echt zijn</li><li>Je spreekt af in groep, op een openbare plek</li></ul></div>
+</div></section>
 
 <section><h2>Wat je kunt doen</h2><p class="kick">Geen eindeloze rij profielen. Wel een kaart van de echte wereld.</p>
 <div class="grid">
@@ -55,9 +64,27 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--sub);fon
 <section id="hoe"><h2>Zo werkt het</h2><p class="kick">In een minuut ben je vertrokken.</p>
 <div class="steps"><div><b>Open Galaxy</b> en vul je voornaam en geboortedatum in. Alleen 18+.</div><div><b>Maak je mannetje</b> en zet je locatie aan als je wilt meelopen op de kaart.</div><div><b>Kijk waar het druk is</b>, check in bij een plek of plan een groepsdate.</div></div></section>
 
-<section><div class="safe"><h2>Veiligheid eerst</h2>
+<section id="prijs"><h2>Gratis, met extra's voor wie meer wil</h2><p class="kick">De kaart, je mannetje, inchecken en onzichtbaar zijn gratis en blijven gratis. Tijdens de testversie kun je ook alle abonnementen gratis uitproberen; er wordt niets afgerekend.</p>
+<div class="price">
+<div class="card"><h3>Gratis</h3><b class="p">€0</b><ul><li>Live wereldkaart en drukte</li><li>Je eigen 3D-mannetje</li><li>Inchecken binnen 150 m</li><li>1 groepsdate tegelijk</li><li>Onzichtbaar-knop</li></ul></div>
+<div class="card"><h3>Galaxy+</h3><b class="p">€9,99<small style="font-size:14px;color:var(--sub)"> /maand</small></b><ul><li>Inchecken binnen 300 m</li><li>Zie welk type mensen er per zone is</li><li>Onbeperkt groepsdates</li></ul></div>
+<div class="card pop"><h3>Gold</h3><b class="p">€19,99<small style="font-size:14px;color:var(--sub)"> /maand</small></b><ul><li>Alles van Galaxy+</li><li>Voorspelling: waar wordt het druk later vanavond</li><li>Gouden rand rond je mannetje</li></ul></div>
+<div class="card"><h3>Cosmic</h3><b class="p">€34,99<small style="font-size:14px;color:var(--sub)"> /maand</small></b><ul><li>Alles van Gold</li><li>Inchecken binnen 500 m</li><li>1× per dag op afstand inchecken</li><li>Kosmische aura</li></ul></div>
+</div><p class="note" style="margin-top:14px">Prijzen zijn de geplande prijzen en kunnen nog wijzigen. Geen enkel abonnement toont waar iemand precies is.</p></section>
+
+<section id="veilig"><div class="safe"><h2>Veiligheid eerst</h2>
 <ul><li><b>Nooit je exacte plek.</b> Anderen zien hooguit een zone van ongeveer 300 meter.</li><li><b>Onzichtbaar kan altijd</b>, gratis, met één knop.</li><li><b>Alleen 18+.</b> Een controle met identiteitsbewijs wordt toegevoegd voor de officiële lancering.</li><li><b>Melden en blokkeren</b> met één tik.</li><li><b>Spreek af op een openbare plek</b> en vertel iemand waar je bent.</li></ul>
 <p class="note">Meer lezen: <a href="veiligheid.html">veiligheid</a> · <a href="privacy.html">privacy</a></p></div></section>
+
+<section id="vragen"><h2>Veelgestelde vragen</h2><p class="kick"></p>
+<details><summary>Kan iemand zien waar ik precies ben?</summary><p>Nee. Anderen zien hooguit een zone van ongeveer 300 meter, of de plek waar je zelf incheckt. Met de onzichtbaar-knop zien ze niets.</p></details>
+<details><summary>Moet ik iets installeren?</summary><p>Nee. Galaxy werkt in de browser van je telefoon. Je kunt het wel op je startscherm zetten zodat het als een app opent. Een versie in de Play Store is in voorbereiding.</p></details>
+<details><summary>Is het een spel?</summary><p>Nee. Het ziet er speels uit door de kaart en je mannetje, maar het doel is echte mensen ontmoeten op echte plekken.</p></details>
+<details><summary>Waarom alleen 18+?</summary><p>Galaxy is gemaakt om te daten en nieuwe mensen te leren kennen. Dat hoort bij volwassenen. Minderjarigen worden geweigerd en verwijderd.</p></details>
+<details><summary>Hoe weet de kaart waar het druk is?</summary><p>Nu is het een schatting op basis van het soort plek en het uur. Zodra er leden zijn, telt Galaxy per zone hoeveel mensen er zijn, zonder te tonen wie waar staat.</p></details>
+<details><summary>Kost het geld?</summary><p>Nee. De testversie is volledig gratis. Later komen er abonnementen voor extra's; de basis blijft gratis.</p></details>
+<details><summary>Werkt het in mijn stad?</summary><p>De kaart werkt overal ter wereld. Andere leden tegenkomen lukt pas waar genoeg mensen Galaxy gebruiken. We beginnen in België.</p></details>
+</section>
 
 <section><h2>Eerlijk over waar we staan</h2><p class="kick">Galaxy is in opbouw. De kaart, de drukte, je mannetje, inchecken en groepsdates werken nu al. Andere leden zien, chatten en betalen komen in een volgende versie. Tot dan is alles gratis.</p><a class="btn" href="./">Probeer de testversie</a></section>
 </div>
