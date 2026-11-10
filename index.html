@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <script src="contact.js"></script>
 <meta name="theme-color" content="#07061a">
-<meta name="description" content="Galaxy: dating in België en Nederland. Swipen, Pure, blind dates, live en een kaart van heel BE & NL.">
+<meta name="description" content="Galaxy: de live wereldkaart om nieuwe mensen te ontmoeten. Zie waar het druk is, maak je eigen 3D-mannetje en spreek af. Alleen 18+.">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -273,10 +273,10 @@ input[type=range]{width:100%;accent-color:var(--a)}
     <!-- PROFILE -->
     <section class="view" id="v-profile">
       <div class="prof-top">
-        <div class="ring"><div class="av" style="width:96px;height:96px;font-size:40px;background:linear-gradient(135deg,#6366f1,#22d3ee)">X</div></div>
-        <h2 style="margin:4px 0 0">Xander, 24 <span class="verified">✓</span></h2>
-        <p class="sub">Tubize · Techno, DnB & gaming 🎧🎮</p>
-        <div class="stats"><div><b id="stLikes">48</b><span>Likes</span></div><div><b id="stMatch">0</b><span>Matches</span></div><div><b>312</b><span>Volgers</span></div></div>
+        <div class="ring"><div class="av" style="width:96px;height:96px;font-size:40px;background:linear-gradient(135deg,#6366f1,#22d3ee)">?</div></div>
+        <h2 style="margin:4px 0 0">Jouw profiel</h2>
+        <p class="sub"></p>
+        <div class="stats" style="display:none"><b id="stLikes">0</b><b id="stMatch">0</b></div>
         <div style="display:flex;gap:8px;width:100%"><button class="btn ghost" onclick="toast('Profiel bewerken komt in de echte app')">✏️ Bewerk</button><button class="btn" onclick="openPlans()">✦ Upgrade</button></div>
       </div>
       <div class="box">
@@ -289,21 +289,13 @@ input[type=range]{width:100%;accent-color:var(--a)}
         <b>Zoekinstellingen</b>
         <div class="set" style="display:block"><div style="display:flex;justify-content:space-between"><span>Afstand</span><span id="distV">25 km</span></div><input type="range" min="1" max="150" value="25" oninput="distV.textContent=this.value+' km'"></div>
         <div class="set" style="display:block"><div style="display:flex;justify-content:space-between"><span>Leeftijd</span><span id="ageV">18 – 32</span></div><input type="range" min="19" max="60" value="32" oninput="ageV.textContent='18 – '+this.value"></div>
-        <div class="set"><span>Eerste bericht door haar (Bumble-stijl)</span><button class="tg" onclick="this.classList.toggle('on')"></button></div>
         <div class="set"><span>Incognito (alleen wie jij liket ziet jou)</span><button class="tg" onclick="premToggle(this,'gold')"></button></div>
         <div class="set"><span>Verberg afstand op kaart</span><button class="tg on" onclick="this.classList.toggle('on')"></button></div>
       </div>
       <div class="box">
-        <b>Mijn posts</b>
-        <div class="grid3" style="margin-top:10px">
-          <div style="background:linear-gradient(135deg,#4c1d95,#be185d)">🎧</div><div style="background:linear-gradient(135deg,#0e7490,#1e3a8a)">🚚</div><div style="background:linear-gradient(135deg,#065f46,#0f766e)">🐕</div>
-          <div style="background:linear-gradient(135deg,#7c2d12,#a21caf)">🧱</div><div style="background:linear-gradient(135deg,#1e293b,#6d28d9)">🎮</div><div style="background:linear-gradient(135deg,#9d174d,#f59e0b)">🧇</div>
-        </div>
-      </div>
-      <div class="box">
         <b>Veiligheid</b>
-        <div class="set"><span>🛡️ Fotoverificatie</span><span class="sub">Geverifieerd</span></div>
-        <div class="set"><span>📍 Deel date met vriend(in)</span><button class="btn sm ghost" onclick="toast('Je date-info wordt gedeeld met je contact')">Instellen</button></div>
+        <div class="set"><span>🔞 Leeftijdscontrole</span><span class="sub">Zelf bevestigd</span></div>
+        <div class="set"><span>📍 Deel date met vriend(in)</span><button class="btn sm ghost" onclick="(navigator.share?navigator.share({title:'Mijn date',text:'Ik heb een date via Galaxy. Ik laat weten waar en wanneer:'}).catch(()=>{}):toast('Delen lukt niet op dit toestel'))">Delen</button></div>
         <div class="set"><span>🚫 Geblokkeerde gebruikers</span><span class="sub">0</span></div>
       </div>
     </section>
@@ -341,9 +333,9 @@ P.forEach((p,i)=>{p.i=i;p.g=gr(i)});
 const S={coins:120,plan:"free",likes:0,matches:[],chats:{},swiped:[],idx:0,pure:[],boostUntil:0};
 const PLANS={
  free:{n:"Gratis",p:0,likes:15},
- plus:{n:"Galaxy+",p:9.99,likes:Infinity,f:["Onbeperkt likes","5 super likes / week","Terugdraaien (↩️)","Geen advertenties","Pure-posts 2× per dag"]},
- gold:{n:"Galaxy Gold",p:19.99,likes:Infinity,f:["Alles van Galaxy+","Zie wie jou leuk vindt","1 gratis boost / maand","Incognito-modus","Lees-bevestigingen","Exacte zones op de kaart"]},
- cosmic:{n:"Cosmic",p:34.99,likes:Infinity,f:["Alles van Gold","Bericht vóór de match","Prioriteit: altijd bovenaan","Onbeperkt live speed dates","200 🪙 per maand gratis","Cosmic-badge op profiel"]}
+ plus:{n:"Galaxy+",p:9.99,likes:Infinity,f:["Inchecken tot op 300 m","Zie per zone welk type mensen er is","Onbeperkt groepsdates plaatsen","Geen advertenties"]},
+ gold:{n:"Galaxy Gold",p:19.99,likes:Infinity,f:["Alles van Galaxy+","Voorspelling: waar wordt het druk vanavond","Zie wie jou leuk vindt","Onzichtbaar-modus","Lees-bevestigingen"]},
+ cosmic:{n:"Cosmic",p:34.99,likes:Infinity,f:["Alles van Gold","Inchecken tot op 500 m","1× per dag op afstand inchecken","Bovenaan bij hotspots","Gouden aura rond je mannetje","200 🪙 per maand gratis"]}
 };
 const rank={free:0,plus:1,gold:2,cosmic:3};
 const $=id=>document.getElementById(id);
@@ -512,7 +504,7 @@ function goLive(){openLive(null,'Mijn eerste Galaxy-live ✦',true);toast('🔴 
 /* ========== CHAT ========== */
 const REPL=["Haha, leuk dat je iets stuurt 😄","Wat doe jij in het dagelijks leven?","Oh nice! Ik ben ook vaak in Halle","Zin om eens iets te gaan drinken? ☕","Techno of DnB? Belangrijke vraag 😂","Hihi, jij bent grappig","Ik ben net thuis van het werk, en jij?"];
 function renderChats(){const ms=S.matches;let un=0;
- $('mrow').innerHTML=ms.length?ms.map(i=>`<button class="st" onclick="openChat(${i})"><div class="ring ${S.chats[i]?.m.length>1?'seen':''}">${av(P[i],58)}</div>${P[i].n}</button>`).join(''):'<p class="sub">Nog geen matches. Begin met swipen! 🔥</p>';
+ $('mrow').innerHTML=ms.length?ms.map(i=>`<button class="st" onclick="openChat(${i})"><div class="ring ${S.chats[i]?.m.length>1?'seen':''}">${av(P[i],58)}</div>${P[i].n}</button>`).join(''):'<p class="sub">Nog geen matches. Kijk op de kaart wie er in de buurt is 🌍</p>';
  $('clist').innerHTML=ms.map(i=>{const c=S.chats[i];un+=c.unread;const last=c.m[c.m.length-1];const h=Math.max(0,(c.exp-Date.now())/3600e3|0);
   return `<button class="cl" onclick="openChat(${i})">${av(P[i],52)}<div class="t"><b>${P[i].n}</b>${c.unread?` <i class="dot" style="position:static;display:inline-grid">${c.unread}</i>`:''}<p>${last.s==='me'?'Jij: ':''}${last.t}</p></div>${c.m.length<=1?`<span class="expire">⏳ ${h}u</span>`:''}</button>`}).join('');
  updDot()}
@@ -544,7 +536,7 @@ let per=1,selPlan='gold';
 function openPlans(tab){openO('planV');renderPlans(tab)}
 function renderPlans(tab){const disc={1:1,6:.7,12:.5};
  $('planSheet').innerHTML=`<div class="seg"><button class="${tab!=='coins'?'on':''}" onclick="renderPlans()">✦ Abonnementen</button><button class="${tab==='coins'?'on':''}" onclick="renderPlans('coins')">🪙 Munten</button></div>`+
- (tab==='coins'?`<p class="sub" style="margin-bottom:10px">Munten gebruik je voor super likes (10), boosts (30) en cadeautjes tijdens live streams.</p>`+
+ (tab==='coins'?`<p class="sub" style="margin-bottom:10px">Munten gebruik je voor extra's op de kaart, zoals een boost van je zone.</p>`+
   [[100,1.99],[550,8.99,'+10% extra'],[1200,17.99,'Populair'],[3000,39.99,'Beste deal']].map(([c,pr,tg])=>`<button class="set" style="width:100%" onclick="buyCoins(${c},${pr})"><span>🪙 <b>${c}</b> munten ${tg?`<span class="pill" style="font-size:11px;padding:2px 8px">${tg}</span>`:''}</span><span class="btn sm">€${pr.toFixed(2).replace('.',',')}</span></button>`).join(''):
  `<h2 style="margin:0 0 4px">Kies je Galaxy</h2><p class="sub">Altijd maandelijks opzegbaar. Geen verborgen kosten.</p>
  <div class="per">${[[1,'1 maand'],[6,'6 mnd · −30%'],[12,'12 mnd · −50%']].map(([m,t])=>`<button class="${per===m?'on':''}" onclick="per=${m};renderPlans()">${t}</button>`).join('')}</div>
@@ -592,7 +584,7 @@ function applyPlan(){const b=$('planBtn');b.textContent=PLANS[S.plan].n;b.classL
 const VIBES=[["😴","Chill"],["🔥","Uitgaan"],["🎮","Gamen"],["☕","Koffie"],["🌙","Nachtuil"]];
 const QS={1:{q:"Welke kleur krijg je als je blauw en geel mengt?",o:["Groen","Paars","Oranje"],a:0},7:{q:"Hoeveel dagen per week ga ik naar de gym? (hint: 'leg day' elke dag 😅)",o:["2","5","7"],a:1}};
 P.forEach(p=>{p.vibe=VIBES[p.i%5];p.compat=61+((p.i*17)%38);p.tonight=p.i%3===0?HOT[p.i%4].n:null;p.crossed=p.i%4===1;if(QS[p.i])p.q=QS[p.i]});
-Object.assign(S,{vibe:VIBES[1],star:{i:0,exp:0,used:true},spun:false,groups:[],paused:false,night:false,city:"Tubize",quiz:null,badges:{first:false,night:false,chat:false,live:false,date:false}});
+Object.assign(S,{vibe:VIBES[1],star:{i:0,exp:0,used:true},spun:false,groups:[],paused:false,night:false,city:"",quiz:null,badges:{first:false,night:false,chat:false,live:false,date:false}});
 function vis(p){return M.f==='all'||M.f==='live'&&p.live||M.f==='pure'&&p.pure||M.f==='tonight'&&p.tonight||M.f==='crossed'&&p.crossed}
 function xs(title,html,back=true){openO('xV');$('xSheet').innerHTML=`<div class="xh">${back?'<button class="ico" onclick="openHub()">‹</button>':''}<h2>${title}</h2><button class="ico" onclick="closeO(\'xV\')">✕</button></div>`+html}
 function badge(k,name){if(!S.badges[k]){S.badges[k]=true;toast('🏅 Nieuwe badge: '+name);renderProfExtra()}}
@@ -661,12 +653,10 @@ function openRoom(j){const r=ROOMS[j];openO('liveV');$('liveStage').className='s
 const _renderFeed=renderFeed;renderFeed=function(){_renderFeed();if(!POSTS.length)return;const top=[...POSTS].sort((a,b)=>b.l-a.l).slice(0,3);$('posts').insertAdjacentHTML('afterbegin',`<div class="box"><b>🏆 Galaxy-ranking · top van de week in ${S.city}</b>${top.map((x,k)=>`<div class="set"><span>${['🥇','🥈','🥉'][k]} ${P[x.p].n}: ${x.c.slice(0,28)}…</span><span class="sub">${x.l} 💜</span></div>`).join('')}</div>`)};
 
 /* ---------- profile extras ---------- */
-function renderProfExtra(){const B=[['first','Eerste match 💘',S.matches.length>0],['chat','Goede chatter 💬'],['date','Eerste date 📅'],['night','Nachtuil 🌙'],['live','Live-ster 🔴']];
+function renderProfExtra(){const B=[['first','Eerste match 💘',S.matches.length>0],['chat','Goede chatter 💬'],['date','Eerste date 📅'],['night','Nachtuil 🌙']];
  $('profExtra').innerHTML=`<div class="box"><b>Mijn vibe vandaag</b><div class="tags" style="margin-top:8px">${VIBES.map(v=>`<button class="tag" style="background:${S.vibe[1]===v[1]?'var(--a)':'var(--card2)'}" onclick="S.vibe=VIBES[${VIBES.indexOf(v)}];renderProfExtra();toast('Vibe: ${v[0]} ${v[1]}')">${v[0]} ${v[1]}</button>`).join('')}</div></div>
  <div class="box"><b>🏅 Badges</b><div class="badges">${B.map(b=>`<span class="bdg ${(S.badges[b[0]]||b[2])?'':'off'}">${b[1]}</span>`).join('')}</div></div>
- <div class="box"><b>🎬 Video- & voice-intro</b><p class="sub" style="margin:4px 0 8px">Een clip van 5 sec of 15 sec stem: profielen met video krijgen 3× meer matches.</p><div style="display:flex;gap:8px"><label class="btn sm ghost" style="flex:1">🎬 Video<input type="file" accept="video/*" hidden onchange="toast('🎬 '+this.files[0].name+' toegevoegd')"></label><label class="btn sm ghost" style="flex:1">🎙️ Stem<input type="file" accept="audio/*" hidden onchange="toast('🎙️ '+this.files[0].name+' toegevoegd')"></label><button class="btn sm ghost" style="flex:1" onclick="toast('📸 AI-foto-tip: foto 1 (🎧) werkt het best: lach + licht!')">✨ Foto-tip</button></div></div>
- <div class="box"><b>🎵 Spotify & 🎮 games</b><div class="set"><span>Top-artiesten</span><span class="sub">Charlotte de Witte, Netsky</span></div><div class="set"><span>PSN / Epic</span><span class="sub">vb_xr_</span></div><div class="set"><span>🐶 Huisdier op profiel</span><button class="tg on" onclick="this.classList.toggle('on')"></button></div></div>
- <div class="box"><b>🛡️ Video-check</b><p class="sub" style="margin:4px 0 8px">Bewijs dat je echt bent met een selfie-video van 3 sec.</p><button class="btn sm" onclick="toast('✅ Video-check geslaagd, je krijgt het blauwe vinkje')">Start video-check</button></div>`}
+`}
 
 /* ---------- HUB ---------- */
 const HUB=[["🎰","Dagelijks rad","wheel()"],["💌","Complimenten","compliments()"],["💬","Openingszin-battle","battle()"],["👥","Groepen","groups()"],["🎉","Events","events()"],["👯","Dubbel-date","double()"],["🧭","Zwerver","wander()"],["🌍","Reismodus","travel()"],["🌙","Nachtmodus","night()"],["🧩","Match-quiz","quiz(0)"],["🎨","Thema","themes()"],["💎","Spotlight","spotlight()"],["🎤","Audio rooms","closeO('xV');go('live');liveTab(document.querySelectorAll('#v-live .seg button')[3],'audio')"],["👣","Gekruiste paden","closeO('xV');go('map');mapFilter('crossed')"],["🏆","Ranking","closeO('xV');go('feed')"]];
@@ -747,9 +737,8 @@ function creator(){const eur=(S.earned*0.012*0.7).toFixed(2).replace('.',',');xs
  <button class="btn" onclick="${S.earned?`toast('💸 Uitbetaling aangevraagd (demo)')`:`closeO('xV');goLive()`}">${S.earned?'💸 Uitbetalen':'🔴 Ga live en verdien'}</button>`,false)}
 
 /* ---------- profiel: respect-score, intentie, AI-profielcheck ---------- */
-const _rpe2=renderProfExtra;renderProfExtra=function(){_rpe2();$('profExtra').insertAdjacentHTML('afterbegin',`<div class="box"><div style="display:flex;justify-content:space-between"><b>✅ Respect-score</b><b style="color:var(--ok)">${S.respect}/100</b></div><div class="bar"><i style="width:${S.respect}%"></i></div><p class="sub" style="margin-top:6px">Je antwoordt snel en ghost niemand. Hoge score = hoger in de lijst.</p></div>
- <div class="box"><b>🎯 Wat zoek ik?</b><div class="tags" style="margin-top:8px">${INT.map((t,k)=>`<button class="tag" style="background:${S.intent===t?'var(--a)':'var(--card2)'}" onclick="S.intent=INT[${k}];renderProfExtra()">${t}</button>`).join('')}</div></div>
- <div class="box"><b>📝 AI-profielcheck</b><p class="sub" style="margin:4px 0 8px">Laat AI je profiel nakijken en verbeteren.</p><div style="display:flex;gap:8px"><button class="btn sm" style="flex:1" onclick="profCheck()">Check mijn profiel</button><button class="btn sm ghost" style="flex:1" onclick="friendsRate()">🗳️ Vrienden laten stemmen</button></div></div>`)};
+const _rpe2=renderProfExtra;renderProfExtra=function(){_rpe2();$('profExtra').insertAdjacentHTML('afterbegin',`<div class="box"><b>🎯 Wat zoek ik?</b><div class="tags" style="margin-top:8px">${INT.map((t,k)=>`<button class="tag" style="background:${S.intent===t?'var(--a)':'var(--card2)'}" onclick="S.intent=INT[${k}];renderProfExtra()">${t}</button>`).join('')}</div></div>
+`)};
 function profCheck(){xs('📝 AI-profielcheck',`<div class="box"><div style="display:flex;justify-content:space-between"><b>Profielscore</b><b>78/100</b></div><div class="bar"><i style="width:78%"></i></div></div>`+[["✅","Je eerste foto is duidelijk en vrolijk"],["⚠️","Je bio is kort: vertel iets grappigs of specifieks (bv. je favoriete festival)"],["⚠️","Voeg een video-intro toe: 3× meer matches"],["💡","Zet je intentie op je profiel zodat mensen weten wat je zoekt"]].map(x=>`<div class="set"><span>${x[0]} ${x[1]}</span></div>`).join(''),false)}
 function friendsRate(){xs('🗳️ Vrienden laten stemmen',`<p class="sub" style="margin-bottom:10px">Deel een link: vrienden kiezen je beste foto en geven tips. Niemand anders ziet het.</p><button class="btn" onclick="try{navigator.clipboard.writeText('https://galaxy.app/vote/xander').then(()=>toast('🔗 Link gekopieerd'),()=>toast('🔗 galaxy.app/vote/xander'))}catch(e){toast('🔗 galaxy.app/vote/xander')};setTimeout(fr2,1800)">🔗 Kopieer stem-link</button><div id="frRes"></div>`,false)}
 function fr2(){const r=$('frRes');if(!r)return;r.innerHTML=`<div class="box" style="margin-top:12px"><b>3 vrienden stemden 🗳️</b>${[["Sanne","Foto 1 als eerste! 🎧","⭐⭐⭐⭐⭐"],["Robbe","Meer lachen op foto 3 😄","⭐⭐⭐⭐"],["Ella","Zet je hond erbij 🐶","⭐⭐⭐⭐⭐"]].map(x=>`<div class="set"><span><b>${x[0]}</b><br><span class="sub">${x[1]}</span></span><span>${x[2]}</span></div>`).join('')}</div>`}
@@ -792,8 +781,8 @@ renderDeck();renderChats();renderProfExtra();
 <div class="ov" id="promiseV" style="z-index:150"><div class="sheet" id="promiseSheet"></div></div>
 <script>
 /* 1. Galaxy-belofte (onboarding) */
-const PROM=[["💜","Gratis zien wie jou leuk vindt","Bij ons nooit achter een betaalmuur."],["🌙","Geen eindeloos swipen","25 profielen per dag, gekozen op wat jullie echt delen. Daarna: ga leven."],["📅","Sneller naar een echte date","Sla de small talk over met één tik."],["✍️","Echte mensen, echte woorden","AI geeft tips, maar schrijft nooit berichten in jouw naam."],["🛡️","Veilig voor iedereen","Ongevraagde naaktfoto's worden automatisch vervaagd."]];
-function showPromise(){$('promiseSheet').innerHTML=`<div style="text-align:center"><div style="font-size:42px">✦</div><h2 style="margin:6px 0 2px">De Galaxy-belofte</h2><p class="sub" style="margin-bottom:12px">Waarom Galaxy anders is dan Tinder en Bumble</p></div>`+PROM.map(p=>`<div class="set" style="justify-content:flex-start;gap:12px;align-items:flex-start"><span style="font-size:24px">${p[0]}</span><span><b>${p[1]}</b><br><span class="sub">${p[2]}</span></span></div>`).join('')+`<button class="btn" style="margin-top:14px" onclick="closeO('promiseV')">Ik ben erbij ✦</button>`;openO('promiseV')}
+const PROM=[["🌍","Een live kaart in plaats van swipen","Zie waar het druk is en wie er in de buurt is, overal ter wereld."],["🧍","Je eigen 3D-mannetje","Maak het zoals jij wilt. Het loopt met je mee op de kaart."],["📍","Echt afspreken","Check in bij een plek of plan een groepsdate op een openbare plaats."],["🛡️","Jouw locatie blijft van jou","Anderen zien alleen een zone van ±300 m, nooit je exacte plek. Onzichtbaar kan altijd."],["🔞","Alleen voor 18+","Meld en blokkeer met één tik. Ongepaste profielen worden verwijderd."]];
+function showPromise(){$('promiseSheet').innerHTML=`<div style="text-align:center"><div style="font-size:42px">✦</div><h2 style="margin:6px 0 2px">De Galaxy-belofte</h2><p class="sub" style="margin-bottom:12px">Zo werkt Galaxy</p></div>`+PROM.map(p=>`<div class="set" style="justify-content:flex-start;gap:12px;align-items:flex-start"><span style="font-size:24px">${p[0]}</span><span><b>${p[1]}</b><br><span class="sub">${p[2]}</span></span></div>`).join('')+`<button class="btn" style="margin-top:14px" onclick="closeO('promiseV')">Ik ben erbij ✦</button>`;openO('promiseV')}
 setTimeout(showPromise,1500);
 
 /* 2. Wie jou leuk vindt = gratis voor iedereen */
@@ -813,7 +802,7 @@ function nsfw(i){const c=S.chats[i];if(!c)return;c.m.push({s:'them',t:`<span onc
 setTimeout(()=>{if(S.chats[5])nsfw(5)},9000);
 
 /* 7. Verdien profielen door te praten: start 25, +5 per bericht aan een match (max +50/dag) */
-PROM[1]=["🌙","Praten > swipen","25 profielen per dag. Stuur je matches een bericht en verdien er telkens 5 bij."];
+
 Object.assign(S,{daily:25,bonus:0});
 const _ul=updLikes;updLikes=function(){_ul();$('likesLeft').innerHTML=P.length?`🌙 <b>${S.daily}</b> profielen over vandaag · 💬 +5 per bericht aan een match`:''};
 const _sw5=swipe;swipe=function(d){if(S.daily<=0){toast('🌙 Je profielen zijn op. Stuur een match een bericht voor +5!');go('chat');return}if($('topCard'))S.daily--;const r=_sw5(d);updLikes();return r};
@@ -977,12 +966,12 @@ function bgImg(inp){const f=inp.files&&inp.files[0];if(!f)return;S.chats[curChat
 .fld{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:4px 0 10px;outline:none}
 </style>
 <script>
-const ME={name:"Xander",age:24,city:"Tubize",bio:"Techno, DnB & gaming 🎧🎮",photos:[],ints:["🎧 Techno","🎮 Gaming","🐶 Honden"],prompts:[[PQ[0],""],[PQ[1],""],[PQ[2],""]],frame:"Geen",bubble:"Galaxy",font:100};
+const ME={name:"",age:0,city:"",bio:"",photos:[],ints:[],prompts:[[PQ[0],""],[PQ[1],""],[PQ[2],""]],frame:"Geen",bubble:"Galaxy",font:100};
 const INTS=["🎧 Techno","🎶 DnB","🎤 Rap","🎮 Gaming","🐶 Honden","🐱 Katten","🏋️ Gym","⚽ Voetbal","🍕 Pizza","🍣 Sushi","☕ Koffie","🍻 Uitgaan","✈️ Reizen","🎬 Film","📚 Lezen","🎨 Kunst","📸 Foto","🚚 Trucks","🧱 Bouwen","🌿 Natuur","🧩 LEGO","🛹 Skaten"];
 const BUB={"Galaxy":"","Blauw":"linear-gradient(135deg,#2563eb,#06b6d4)","Groen":"linear-gradient(135deg,#059669,#84cc16)","Roze":"linear-gradient(135deg,#db2777,#f472b6)","Goud":"linear-gradient(135deg,#d97706,#fbbf24)","Rood":"linear-gradient(135deg,#be123c,#f97316)","Grijs":"linear-gradient(135deg,#475569,#334155)"};
 const FR=["Geen","Neon","Goud","Regenboog"];
-function meAv(sz){return ME.photos[0]?`<div class="av fr-${ME.frame.toLowerCase()}" style="width:${sz}px;height:${sz}px;background:url(${ME.photos[0]}) center/cover"></div>`:`<div class="av fr-${ME.frame.toLowerCase()}" style="width:${sz}px;height:${sz}px;font-size:${sz*.42}px;background:linear-gradient(135deg,#6366f1,#22d3ee)">${ME.name[0]}</div>`}
-function applyMe(){const t=document.querySelector('.prof-top');t.querySelector('.ring').innerHTML=meAv(96);t.querySelector('h2').innerHTML=`${ME.name}, ${ME.age} <span class="verified">✓</span>`;t.querySelector('p.sub').textContent=`${ME.city} · ${ME.bio}`;
+function meAv(sz){return ME.photos[0]?`<div class="av fr-${ME.frame.toLowerCase()}" style="width:${sz}px;height:${sz}px;background:url(${ME.photos[0]}) center/cover"></div>`:`<div class="av fr-${ME.frame.toLowerCase()}" style="width:${sz}px;height:${sz}px;font-size:${sz*.42}px;background:linear-gradient(135deg,#6366f1,#22d3ee)">${(ME.name||'?')[0]}</div>`}
+function applyMe(){const t=document.querySelector('.prof-top');t.querySelector('.ring').innerHTML=meAv(96);t.querySelector('h2').textContent=ME.name?`${ME.name}${ME.age?', '+ME.age:''}`:'Jouw profiel';t.querySelector('p.sub').textContent=[ME.city,ME.bio].filter(Boolean).join(' · ');
  const g=document.querySelector('#v-profile .grid3');if(ME.photos.length)g.innerHTML=ME.photos.map(u=>`<div style="background:url(${u}) center/cover"></div>`).join('');
  document.documentElement.style.setProperty('--me',BUB[ME.bubble]||'var(--grad)');document.documentElement.style.fontSize=ME.font+'%';document.body.style.zoom=ME.font/100}
 /* match-scherm gebruikt jouw foto */
@@ -1537,6 +1526,30 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
  if(typeof HUB!=='undefined')for(let k=HUB.length-1;k>=0;k--)if(/live|Audio rooms/i.test(HUB[k][1]+HUB[k][2]))HUB.splice(k,1)})();
 </script>
 <style>#nav [data-v="live"],#v-live,[data-f="live"]{display:none!important}#nav{grid-template-columns:repeat(4,1fr)!important}</style>
+<script>
+/* ===== Welkom: naam, 18+-check en akkoord. Bewaard op dit toestel. ===== */
+(function(){
+ try{const m=JSON.parse(localStorage.glxMe||'null');if(m)Object.assign(ME,m)}catch(e){}
+ window.saveMe=function(){try{const c=Object.assign({},ME);c.photos=(c.photos||[]).filter(u=>u.length<200000).slice(0,3);localStorage.glxMe=JSON.stringify(c)}catch(e){}};
+ if(typeof saveProfile==='function'){const sp=saveProfile;saveProfile=function(){const r=sp.apply(this,arguments);saveMe();return r}}
+ try{applyMe()}catch(e){}
+ const KEEP=/^(Groepen|Events|Thema|Nachtmodus)$/;if(typeof HUB!=='undefined')for(let k=HUB.length-1;k>=0;k--)if(!KEEP.test(HUB[k][1]))HUB.splice(k,1);
+ function age(d){const b=new Date(d),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
+ window.welcomeGo=function(){const n=$('wN').value.trim(),d=$('wD').value,ok=$('wOk').checked,e=$('wErr');
+  if(n.length<2)return e.textContent='Vul je voornaam in.';if(!d)return e.textContent='Vul je geboortedatum in.';
+  const a=age(d);if(!(a>=18&&a<110)){e.textContent='Galaxy is alleen voor 18 jaar en ouder.';return}
+  if(!ok)return e.textContent='Vink aan dat je akkoord gaat met de voorwaarden.';
+  ME.name=n.slice(0,24);ME.age=a;ME.city=$('wC').value.trim().slice(0,40);ME.born=d;saveMe();try{applyMe()}catch(x){}
+  $('welV').classList.remove('on');try{showPromise()}catch(x){}};
+ if(!ME.name||!ME.age){document.body.insertAdjacentHTML('beforeend',`<div class="ov on" id="welV" style="z-index:200"><div class="sheet"><div style="text-align:center"><img src="icons/icon-192.png" alt="" style="width:64px;height:64px;border-radius:16px"><h2 style="margin:8px 0 2px">Welkom bij Galaxy</h2><p class="sub" style="margin-bottom:14px">De live kaart om nieuwe mensen te ontmoeten.</p></div>
+<label class="sub">Voornaam</label><input id="wN" maxlength="24" autocomplete="given-name" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);margin:4px 0 10px">
+<label class="sub">Geboortedatum (alleen 18+)</label><input id="wD" type="date" autocomplete="bday" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);margin:4px 0 10px">
+<label class="sub">Stad of gemeente (optioneel)</label><input id="wC" maxlength="40" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);margin:4px 0 12px">
+<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px"><input id="wOk" type="checkbox" style="margin-top:3px"><span>Ik ben 18 jaar of ouder en ga akkoord met de <a href="voorwaarden.html" target="_blank" style="color:#67e8f9">voorwaarden</a> en het <a href="privacy.html" target="_blank" style="color:#67e8f9">privacybeleid</a>.</span></label>
+<p id="wErr" style="color:#fb7185;font-size:13px;min-height:18px;margin:8px 0"></p><button class="btn" style="width:100%" onclick="welcomeGo()">Start</button></div></div>`);
+  document.querySelectorAll('.ov.on:not(#welV)').forEach(o=>o.classList.remove('on'))}
+})();
+</script>
 <script src="galaxy-map.js"></script>
 <script src="avatar.js"></script>
 </body>
