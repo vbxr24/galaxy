@@ -387,6 +387,20 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     el.onclick = () => window.GLXAV ? GLXAV.open() : null; return el;
   }
   let av3d = null, av3dLoading = false, heading = 0, follow = false;
+  /* ---------- niet tijdens het rijden ----------
+     Sneller dan ±30 km/u: scherm op slot, tenzij je bevestigt dat je passagier bent (1 uur geldig).
+     Boven ±16 km/u tellen stappen niet mee. */
+  let curSpeed = 0, fastN = 0, slowN = 0;
+  const passenger = () => { try { return Date.now() - (+sessionStorage.glxPass || 0) < 3600e3 } catch (e) { return false } };
+  function speedCheck(sp) {
+    curSpeed = sp || 0;
+    if (curSpeed > 8.3) { fastN++; slowN = 0 } else { slowN++; if (slowN >= 3) fastN = 0 }
+    const lock = document.getElementById('gmDrive');
+    if (fastN >= 2 && !passenger()) {
+      if (!lock) document.body.insertAdjacentHTML('beforeend', `<div id="gmDrive" role="alertdialog" aria-label="Niet gebruiken tijdens het rijden" style="position:fixed;inset:0;z-index:500;background:rgba(8,6,24,.96);display:grid;place-items:center;padding:24px;text-align:center"><div style="max-width:340px"><div style="font-size:64px">🚗</div><h2 style="margin:8px 0">Je beweegt te snel</h2><p class="sub" style="font-size:15px">Gebruik Galaxy niet terwijl je rijdt of fietst. Hou je ogen op de weg.</p><button class="btn" style="width:100%;margin-top:18px" onclick="GLXMAP.passenger()">Ik ben passagier</button><p class="sub" style="margin-top:12px;font-size:12px">Dit scherm verdwijnt vanzelf als je stilstaat. Stappen tellen niet mee in een voertuig.</p></div></div>`);
+    } else if (lock && (fastN === 0 || passenger())) lock.remove();
+  }
+
   function onMe() {
     if (!map || !me) return;
     if (!meMarker) {
@@ -395,7 +409,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
       if (window.GLXAV && GLXAV.has() && !av3dLoading) { av3dLoading = true; GLXAV.mapAvatar().then(a => { av3d = a; const el = meMarker.getElement(); el.innerHTML = ''; el.appendChild(a.el); el.classList.add('live3d') }).catch(() => { }) }
     } else meMarker.setLngLat([me.lng, me.lat]);
     const moved = lastPos ? dist(lastPos.lat, lastPos.lng, me.lat, me.lng) : 0;
-    if (moved > 2.5 && moved < 150) { G.walked = (G.walked || 0) + moved; save() }
+    if (moved > 2.5 && moved < 150 && curSpeed < 4.5) { G.walked = (G.walked || 0) + moved; save() }
     if (follow) map.easeTo({ center: [me.lng, me.lat], duration: 900 });
     if (moved > 2.5) {
       const e = meMarker.getElement(), dy = me.lat - lastPos.lat, dx = (me.lng - lastPos.lng) * Math.cos(me.lat * Math.PI / 180);
@@ -415,7 +429,10 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     if (watchId != null) { if (me && map) map.flyTo({ center: [me.lng, me.lat], zoom: Math.max(map.getZoom(), 17.6), pitch: 68 }); return }
     let first = true;
     watchId = navigator.geolocation.watchPosition(p => {
-      me = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy };
+      const prev = me, now = Date.now();
+      me = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, t: now };
+      let sp = p.coords.speed; if (sp == null || isNaN(sp)) sp = prev && now > prev.t ? dist(prev.lat, prev.lng, me.lat, me.lng) / ((now - prev.t) / 1000) : 0;
+      speedCheck(sp);
       if (!map) return;
       if (first && !silent) map.flyTo({ center: [me.lng, me.lat], zoom: 17.6, pitch: 68 }); first = false;
       onMe();
@@ -482,7 +499,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
   }
 
   /* ---------- koppelen aan de app ---------- */
-  window.GLXMAP = { legend: () => xs('📍 Soorten plekken', Object.values(CAT).map(c => `<div class="gmRow"><span><span style="color:${c[0]}">●</span> ${c[1]} ${c[2]}</span></div>`).join('') + '<p class="sub" style="margin-top:8px">Cafés en restaurants verschijnen als je inzoomt tot op straatniveau.</p>'), locate: () => locate(), checkin, checkout, group, avatar: () => openAvatar(), saveGroup, fly: (lng, lat) => { try { closeO('xV') } catch (e) { } map && map.flyTo({ center: [lng, lat], zoom: 17, pitch: 55 }) }, power: openPower, state: G, _venues: venues, _setMe: (lat, lng) => { me = { lat, lng }; onMe() } };
+  window.GLXMAP = { legend: () => xs('📍 Soorten plekken', Object.values(CAT).map(c => `<div class="gmRow"><span><span style="color:${c[0]}">●</span> ${c[1]} ${c[2]}</span></div>`).join('') + '<p class="sub" style="margin-top:8px">Cafés en restaurants verschijnen als je inzoomt tot op straatniveau.</p>'), locate: () => locate(), checkin, checkout, group, avatar: () => openAvatar(), saveGroup, fly: (lng, lat) => { try { closeO('xV') } catch (e) { } map && map.flyTo({ center: [lng, lat], zoom: 17, pitch: 55 }) }, power: openPower, state: G, _venues: venues, passenger() { try { sessionStorage.glxPass = Date.now() } catch (e) { } const l = document.getElementById('gmDrive'); if (l) l.remove(); T('👍 Veilige rit. Als passagier kun je verder.') }, _speed: speedCheck, _setMe: (lat, lng) => { me = { lat, lng }; onMe() } };
   const og = window.go;
   /* Galaxy is een live kaart-app: geen swipen meer, de kaart is het startscherm */
   window.go = function (v) { if (v === 'discover') v = 'map'; const r = og.call(this, v); if (v === 'map') setTimeout(init, 30); return r };
