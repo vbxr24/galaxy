@@ -1530,5 +1530,14 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
  v.insertAdjacentHTML('beforeend',`<div class="box" id="helpBox" style="margin-top:16px"><b>🛟 Help & veiligheid</b>${L('veiligheid.html','🛡️ Veilig daten & melden')}${L('privacy.html','🔒 Privacybeleid')}${L('voorwaarden.html','📜 Gebruiksvoorwaarden')}${CONTACT_EMAIL?L('mailto:'+CONTACT_EMAIL,'✉️ Contact'):''}<button onclick="deleteAccount()" style="display:block;width:100%;text-align:left;padding:12px 2px;color:#fb7185">🗑️ Account verwijderen</button><p class="sub" style="margin-top:8px">Galaxy is alleen voor 18+. Noodgeval: 112 · Child Focus: 116 000</p></div>`)})();
 </script>
 <style>.play [data-m="dark"],.play #darkMode{display:none!important}</style>
+<script>
+/* Live-optie verwijderd */
+(function(){const g=window.go;window.go=function(v){return g.call(this,v==='live'?'map':v)};
+ window.openLive=window.goLive=window.creator=function(){};
+ if(typeof HUB!=='undefined')for(let k=HUB.length-1;k>=0;k--)if(/live|Audio rooms/i.test(HUB[k][1]+HUB[k][2]))HUB.splice(k,1)})();
+</script>
+<style>#nav [data-v="live"],#v-live,[data-f="live"]{display:none!important}#nav{grid-template-columns:repeat(4,1fr)!important}</style>
+<script src="galaxy-map.js"></script>
+<script src="avatar.js"></script>
 </body>
 </html>
