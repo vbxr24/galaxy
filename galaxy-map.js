@@ -135,19 +135,20 @@
   }
 
   /* ---------- kaart ---------- */
-  let map, me = null, watchId = null, mode = 'heat', intent = 'all', pitched = true, venues = new Map(), markers = [], loading = false;
+  let map, me = null, watchId = null, mode = 'heat', intent = 'all', pitched = true, venues = new Map(), markers = [];
   async function init() {
     build();
     if (map) { setTimeout(() => map.resize(), 60); return }
     $('gmBar').innerHTML = '🌍 De kaart laadt…';
     try { if (!window.maplibregl) { loadCss(ML_CSS); await loadJs(ML_JS) } }
     catch (e) { $('gmBar').innerHTML = '⚠️ De kaart kon niet laden. Controleer je internet en probeer opnieuw.'; return }
-    let start = [4.3517, 50.8503], z = 12.5; // Brussel
+    let start = [4.3517, 50.8467], z = 15.2; // Brussel
     try { const l = JSON.parse(localStorage.glxLast || 'null'); if (l) { start = [l[0], l[1]]; z = l[2] } } catch (e) { }
     map = new maplibregl.Map({ container: 'glxMap', style: STYLE, center: start, zoom: z, pitch: 50, bearing: -12, maxPitch: 75, attributionControl: { compact: true }, dragRotate: true });
     map.touchZoomRotate.enableRotation();
     map.on('load', () => { restyle(); addLayers(); refresh(); bar() });
     map.on('dragstart', () => { follow = false });
+    map.on('sourcedata', e => { if (e.isSourceLoaded && e.sourceId !== 'stops' && e.sourceId !== 'heat' && e.sourceId !== 'range') { clearTimeout(poiT); poiT = setTimeout(refresh, 400) } });
     map.on('moveend', () => { try { const c = map.getCenter(); localStorage.glxLast = JSON.stringify([c.lng, c.lat, map.getZoom()]) } catch (e) { } refresh() });
     map.on('error', e => { if (e && e.error && /Failed to fetch|NetworkError/i.test(e.error.message || '')) $('gmBar').innerHTML = '⚠️ Geen verbinding met de kaartserver.' });
     if (navigator.permissions) navigator.permissions.query({ name: 'geolocation' }).then(p => { if (p.state === 'granted') locate(true) }).catch(() => { });
@@ -196,8 +197,8 @@
     const before = firstSymbol();
     map.addSource('heat', { type: 'geojson', data: fc() });
     map.addLayer({ id: 'gm-heat', type: 'heatmap', source: 'heat', layout: { visibility: 'none' }, paint: {
-      'heatmap-weight': ['get', 'w'], 'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 11, .7, 16, 1.6],
-      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 11, 12, 14, 26, 17, 55],
+      'heatmap-weight': ['get', 'w'], 'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 13, .9, 17, 1.8],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 13, 18, 15, 34, 18, 70],
       'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', .15, 'rgba(76,29,149,.55)', .4, '#a21caf', .65, '#ec4899', .85, '#fda4af', 1, '#ffffff'],
       'heatmap-opacity': .85 } }, before);
     map.addSource('range', { type: 'geojson', data: fc() });
@@ -205,63 +206,42 @@
     map.addLayer({ id: 'gm-range-l', type: 'line', source: 'range', paint: { 'line-color': '#22d3ee', 'line-opacity': .6, 'line-width': 1.5, 'line-dasharray': [2, 2] } }, before);
     map.addSource('stops', { type: 'geojson', data: fc() });
     const big = ['==', ['get', 'm'], 0], small = ['==', ['get', 'm'], 1];
-    map.addLayer({ id: 'gm-stops-glow', type: 'circle', source: 'stops', minzoom: 12, filter: big, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 6, 17, 18], 'circle-color': ['get', 'col'], 'circle-blur': 1, 'circle-opacity': .5 } });
-    map.addLayer({ id: 'gm-stops', type: 'circle', source: 'stops', minzoom: 12, filter: big, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3, 17, 8], 'circle-color': ['get', 'col'], 'circle-stroke-color': '#fff', 'circle-stroke-width': ['case', ['==', ['get', 'done'], 1], 3, 1.5] } });
+    map.addLayer({ id: 'gm-stops-glow', type: 'circle', source: 'stops', minzoom: 13, filter: big, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 6, 17, 18], 'circle-color': ['get', 'col'], 'circle-blur': 1, 'circle-opacity': .5 } });
+    map.addLayer({ id: 'gm-stops', type: 'circle', source: 'stops', minzoom: 13, filter: big, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 3, 17, 8], 'circle-color': ['get', 'col'], 'circle-stroke-color': '#fff', 'circle-stroke-width': ['case', ['==', ['get', 'done'], 1], 3, 1.5] } });
     map.addLayer({ id: 'gm-small', type: 'circle', source: 'stops', minzoom: 15.5, filter: small, paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 15.5, 2.5, 18, 6], 'circle-color': ['get', 'col'], 'circle-stroke-color': '#0a0820', 'circle-stroke-width': 1 } });
     map.addLayer({ id: 'gm-stops-t', type: 'symbol', source: 'stops', minzoom: 14.5, filter: big, layout: { 'text-field': ['get', 'n'], 'text-font': ['Noto Sans Regular'], 'text-size': 11.5, 'text-offset': [0, 1.2], 'text-anchor': 'top', 'text-max-width': 9, 'text-optional': true }, paint: { 'text-color': ['get', 'col'], 'text-halo-color': '#07061a', 'text-halo-width': 1.4 } });
     map.addLayer({ id: 'gm-small-t', type: 'symbol', source: 'stops', minzoom: 16.5, filter: small, layout: { 'text-field': ['get', 'n'], 'text-font': ['Noto Sans Regular'], 'text-size': 10.5, 'text-offset': [0, .9], 'text-anchor': 'top', 'text-max-width': 8, 'text-optional': true }, paint: { 'text-color': ['get', 'col'], 'text-halo-color': '#07061a', 'text-halo-width': 1.3 } });
     map.on('click', 'gm-small', e => { const f = e.features && e.features[0]; if (f) openStop(f.properties.id) });
-    map.on('click', e => { if (mode !== 'heat' || map.getZoom() < 12.5) return; const hit = map.queryRenderedFeatures(e.point, { layers: ['gm-stops', 'gm-small'] }); if (!hit.length) openZone(e.lngLat.lat, e.lngLat.lng) });
+    map.on('click', e => { if (mode !== 'heat' || map.getZoom() < 13.5) return; const hit = map.queryRenderedFeatures(e.point, { layers: ['gm-stops', 'gm-small'] }); if (!hit.length) openZone(e.lngLat.lat, e.lngLat.lng) });
     map.on('click', 'gm-stops', e => { const f = e.features && e.features[0]; if (f) openStop(f.properties.id) });
     map.on('mouseenter', 'gm-stops', () => map.getCanvas().style.cursor = 'pointer');
     map.on('mouseleave', 'gm-stops', () => map.getCanvas().style.cursor = '');
   }
 
-  /* ---------- plekken uit OpenStreetMap (Overpass) ---------- */
-  const CELL = 0.04, cellDone = new Set(), queue = [];
-  function cellsInView() {
-    const b = map.getBounds(), out = [];
-    const x0 = Math.floor(b.getWest() / CELL), x1 = Math.floor(b.getEast() / CELL), y0 = Math.floor(b.getSouth() / CELL), y1 = Math.floor(b.getNorth() / CELL);
-    if ((x1 - x0 + 1) * (y1 - y0 + 1) > 9) return out;
-    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) out.push([x, y]);
-    return out;
-  }
-  function loadCached(k) { try { const c = JSON.parse(sessionStorage['glxC' + k] || 'null'); return c } catch (e) { return null } }
-  async function fetchCell([x, y]) {
-    const k = x + '_' + y; if (cellDone.has(k)) return; cellDone.add(k);
-    const c = loadCached(k); if (c) { c.forEach(addVenue); return }
-    const s = y * CELL, w = x * CELL, n = s + CELL, e = w + CELL, bb = `${s},${w},${n},${e}`;
-    const q = `[out:json][timeout:30];(nwr["amenity"~"^(bar|pub|nightclub|biergarten|cafe|restaurant|university|college|cinema|theatre|arts_centre)$"](${bb});nwr["tourism"~"^(attraction|museum|gallery|viewpoint|zoo|aquarium|theme_park)$"]["name"](${bb});nwr["historic"~"^(monument|castle|memorial|ruins|city_gate|fort|palace)$"]["name"](${bb});nwr["leisure"~"^(park|water_park|stadium|amusement_arcade|beach_resort)$"]["name"](${bb});nwr["shop"~"^(mall|department_store)$"](${bb});nwr["natural"="beach"]["name"](${bb});nwr["amenity"="place_of_worship"]["wikidata"](${bb}););out center tags 4000;`;
-    let data = null;
-    for (const ep of OVERPASS) { try { const r = await fetch(ep, { method: 'POST', body: 'data=' + encodeURIComponent(q) }); if (r.ok) { data = await r.json(); break } } catch (e) { } }
-    if (!data) { cellDone.delete(k); return }
-    const list = [];
-    data.elements.forEach(el => {
-      const t = el.tags || {}, lat = el.lat || (el.center && el.center.lat), lng = el.lon || (el.center && el.center.lon); if (lat == null) return;
-      const a = t.amenity || '', tu = t.tourism || '', hi = t.historic || '', le = t.leisure || '', sh = t.shop || '';
-      let c = /^(bar|pub|nightclub|biergarten)$/.test(a) ? 'night' : a === 'cafe' ? 'cafe' : a === 'restaurant' ? 'food' : /^(university|college)$/.test(a) ? 'student'
-        : /^(theme_park|water_park)$/.test(tu + le) || le === 'water_park' || tu === 'theme_park' ? 'fun' : /^(zoo|aquarium)$/.test(tu) ? 'zoo'
-        : /^(mall|department_store)$/.test(sh) ? 'shop' : /^(museum|gallery)$/.test(tu) ? 'museum' : /^(cinema|theatre|arts_centre)$/.test(a) ? 'culture'
-        : /^(stadium|amusement_arcade)$/.test(le) ? 'sport' : le === 'park' ? 'park' : (t.natural === 'beach' || le === 'beach_resort') ? 'beach' : 'sight';
-      const land = !!(t.wikidata || t.wikipedia) && /^(sight|museum|zoo|fun)$/.test(c) && !!(hi || tu || a === 'place_of_worship');
-      if (land && c === 'sight') c = 'land';
+  /* ---------- plekken: rechtstreeks uit de kaartgegevens (wereldwijd, geen extra server) ---------- */
+  const SUB = { bar: 'night', pub: 'night', nightclub: 'night', biergarten: 'night', cafe: 'cafe', restaurant: 'food', fast_food: 'food', food_court: 'food', university: 'student', college: 'student',
+    theme_park: 'fun', water_park: 'fun', amusement_arcade: 'fun', zoo: 'zoo', aquarium: 'zoo', mall: 'shop', department_store: 'shop', museum: 'museum', gallery: 'museum', art_gallery: 'museum',
+    cinema: 'culture', theatre: 'culture', arts_centre: 'culture', stadium: 'sport', park: 'park', beach: 'beach', monument: 'land', castle: 'land', ruins: 'land', attraction: 'sight', viewpoint: 'sight', memorial: 'sight' };
+  const CLS = { bar: 'night', beer: 'night', cafe: 'cafe', restaurant: 'food', fast_food: 'food', college: 'student', zoo: 'zoo', museum: 'museum', cinema: 'culture', theatre: 'culture', stadium: 'sport', park: 'park', castle: 'land', monument: 'land', attraction: 'sight' };
+  let loading = false, poiT;
+  function scanPois() {
+    if (!map || map.getZoom() < 13.5) return;
+    let feats = []; const st = map.getStyle();
+    Object.keys(st.sources).forEach(src => { if (st.sources[src].type === 'vector') { try { feats = feats.concat(map.querySourceFeatures(src, { sourceLayer: 'poi' })) } catch (e) { } } });
+    feats.forEach(f => {
+      const p = f.properties || {}, c = SUB[p.subclass] || CLS[p.class]; if (!c || f.geometry.type !== 'Point') return;
+      const [lng, lat] = f.geometry.coordinates, n = p['name:nl'] || p.name || p['name:latin'] || '';
+      if (!n && !/^(night|cafe|food)$/.test(c)) return;
+      const id = 'p' + (f.id != null ? f.id : hash(n + lat.toFixed(5) + lng.toFixed(5)));
+      if (venues.has(id)) return;
       const kind = c === 'night' ? 'night' : c === 'student' ? 'student' : /^(cafe|food)$/.test(c) ? 'chill' : 'sight';
-      list.push({ id: el.type[0] + el.id, n: t['name:nl'] || t.name || (sh ? 'Winkelcentrum' : ''), lat, lng, kind, c, land, hot: kind === 'night' && !!t.name, cat: hi || tu || a || le || sh || '' });
+      venues.set(id, { id, n, lat, lng, kind, c, land: c === 'land', hot: kind === 'night' && !!n, cat: p.subclass || p.class || '' });
     });
-    try { sessionStorage['glxC' + k] = JSON.stringify(list) } catch (e) { }
-    list.forEach(addVenue);
-  }
-  function addVenue(v) { venues.set(v.id, v) }
-  async function pump() {
-    if (loading) return; loading = true;
-    while (queue.length) { await fetchCell(queue.shift()); drawStops(); drawHeat() }
-    loading = false; bar();
+    if (venues.size > 6000) { let k = 0; for (const key of venues.keys()) { if (k++ > 2000) break; venues.delete(key) } }
   }
   function refresh() {
     if (!map) return;
-    const z = map.getZoom();
-    if (z >= 13) { cellsInView().forEach(c => { const k = c[0] + '_' + c[1]; if (!cellDone.has(k) && !queue.some(q => q[0] === c[0] && q[1] === c[1])) queue.push(c) }); pump() }
-    drawStops(); drawHeat(); drawPeople(); bar();
+    scanPois(); drawStops(); drawHeat(); drawPeople(); bar();
   }
   function inView(v, pad = 0) { const b = map.getBounds(); return v.lng >= b.getWest() - pad && v.lng <= b.getEast() + pad && v.lat >= b.getSouth() - pad && v.lat <= b.getNorth() + pad }
   function stopKind(v) { return v.land ? 'land' : v.hot ? 'hot' : 'stop' }
@@ -388,7 +368,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     if (m === 'groups') return groupsList();
     mode = m; document.querySelectorAll('.gmChips button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
     document.querySelector('.gmIntents').classList.toggle('on', m === 'heat');
-    if (map && m === 'heat' && map.getZoom() > 15) map.easeTo({ zoom: 13.5, pitch: 30 });
+    if (map && m === 'heat' && map.getZoom() > 16) map.easeTo({ zoom: 14.5, pitch: 40 });
     drawStops(); drawHeat(); drawPeople(); bar();
   }
   function setIntent(i) {
@@ -490,7 +470,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
   function bar() {
     const e = $('gmBar'); if (!e || !map) return; const z = map.getZoom();
     const n = peopleInView();
-    if (z < 12.5) { e.innerHTML = '🔍 Zoom in op een stad om drukte, plekken en mensen te zien'; return }
+    if (z < 13.5) { e.innerHTML = '🔍 Zoom in op een stad of buurt om drukte, plekken en mensen te zien'; return }
     const ppl = n ? `👥 <b>${n}</b> ${n === 1 ? 'lid' : 'leden'} in beeld` : '👥 Nog niemand in de buurt';
     if (!me) { e.innerHTML = `${ppl} · 📍 <button onclick="GLXMAP.locate()">Zet locatie aan</button>`; return }
     if (mode === 'heat') { e.innerHTML = `${ppl} · 🔥 <span>Tik op een zone om te zien wie er zit</span>${loading ? ' · laden…' : ''}`; return }
