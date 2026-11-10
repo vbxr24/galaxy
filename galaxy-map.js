@@ -402,7 +402,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     }
     lastPos = { lat: me.lat, lng: me.lng };
     if (map.getSource('range')) map.getSource('range').setData(fc([circle(me.lng, me.lat, pw().r)]));
-    drawPeople(); bar(); live.send({ t: 'pos', lat: me.lat, lng: me.lng });
+    drawPeople(); bar(); if (!localStorage.glxGhost) live.send({ t: 'pos', lat: me.lat, lng: me.lng });
   }
   window.addEventListener('glx-avatar', () => { if (meMarker && !av3d) { meMarker.remove(); meMarker = null; onMe() } });
   function locate(silent) {
