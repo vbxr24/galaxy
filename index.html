@@ -279,7 +279,7 @@ input[type=range]{width:100%;accent-color:var(--a)}
         <div class="stats" style="display:none"><b id="stLikes">0</b><b id="stMatch">0</b></div>
         <div style="display:flex;gap:8px;width:100%"><button class="btn ghost" onclick="toast('Profiel bewerken komt in de echte app')">✏️ Bewerk</button><button class="btn" onclick="openPlans()">✦ Upgrade</button></div>
       </div>
-      <div class="box">
+      <div class="box" style="display:none">
         <b>Wie zag jou? 👀</b>
         <div style="display:flex;gap:8px;margin-top:10px" id="seenMe"></div>
         <p class="sub" style="margin-top:8px" id="seenNote">Upgrade naar Gold om te zien wie jou al leuk vindt.</p>
@@ -327,9 +327,9 @@ P.forEach((p,i)=>{p.i=i;p.g=gr(i)});
 const S={coins:120,plan:"free",likes:0,matches:[],chats:{},swiped:[],idx:0,pure:[],boostUntil:0};
 const PLANS={
  free:{n:"Gratis",p:0,likes:15},
- plus:{n:"Galaxy+",p:9.99,likes:Infinity,f:["Inchecken tot op 300 m","Zie per zone welk type mensen er is","Onbeperkt groepsdates plaatsen","Geen advertenties"]},
- gold:{n:"Galaxy Gold",p:19.99,likes:Infinity,f:["Alles van Galaxy+","Voorspelling: waar wordt het druk vanavond","Zie wie jou leuk vindt","Lees-bevestigingen"]},
- cosmic:{n:"Cosmic",p:34.99,likes:Infinity,f:["Alles van Gold","Inchecken tot op 500 m","1× per dag op afstand inchecken","Bovenaan bij hotspots","Gouden aura rond je mannetje","200 🪙 per maand gratis"]}
+ plus:{n:"Galaxy+",p:9.99,likes:Infinity,f:["Inchecken tot op 300 m (gratis: 150 m)","Zie per zone welk type mensen er vooral is","Onbeperkt groepsdates plaatsen (gratis: 1)"]},
+ gold:{n:"Galaxy Gold",p:19.99,likes:Infinity,f:["Alles van Galaxy+","Voorspelling: waar wordt het druk later vanavond","Gouden rand rond je mannetje"]},
+ cosmic:{n:"Cosmic",p:34.99,likes:Infinity,f:["Alles van Gold","Inchecken tot op 500 m","1× per dag op afstand inchecken","Kosmische aura rond je mannetje"]}
 };
 const rank={free:0,plus:1,gold:2,cosmic:3};
 const $=id=>document.getElementById(id);
@@ -532,14 +532,14 @@ function renderPlans(tab){const disc={1:1,6:.7,12:.5};
  $('planSheet').innerHTML=`<div class="seg"><button class="${tab!=='coins'?'on':''}" onclick="renderPlans()">✦ Abonnementen</button><button class="${tab==='coins'?'on':''}" onclick="renderPlans('coins')">🪙 Munten</button></div>`+
  (tab==='coins'?`<p class="sub" style="margin-bottom:10px">Munten gebruik je voor extra's op de kaart, zoals een boost van je zone.</p>`+
   [[100,1.99],[550,8.99,'+10% extra'],[1200,17.99,'Populair'],[3000,39.99,'Beste deal']].map(([c,pr,tg])=>`<button class="set" style="width:100%" onclick="buyCoins(${c},${pr})"><span>🪙 <b>${c}</b> munten ${tg?`<span class="pill" style="font-size:11px;padding:2px 8px">${tg}</span>`:''}</span><span class="btn sm">€${pr.toFixed(2).replace('.',',')}</span></button>`).join(''):
- `<h2 style="margin:0 0 4px">Kies je Galaxy</h2><p class="sub">Altijd maandelijks opzegbaar. Geen verborgen kosten.</p>
+ `<h2 style="margin:0 0 4px">Kies je Galaxy</h2><p class="sub">Altijd maandelijks opzegbaar. Geen verborgen kosten.<br><b style="color:#fbbf24">Testversie:</b> abonnementen zijn nog niet te koop. Je kunt ze nu gratis uitproberen.</p>
  <div class="per">${[[1,'1 maand'],[6,'6 mnd · −30%'],[12,'12 mnd · −50%']].map(([m,t])=>`<button class="${per===m?'on':''}" onclick="per=${m};renderPlans()">${t}</button>`).join('')}</div>
  <div class="plans">${['plus','gold','cosmic'].map(k=>{const p=PLANS[k],pm=(p.p*disc[per]);return `<div class="plan ${selPlan===k?'sel':''}" onclick="selPlan='${k}';renderPlans()">${k==='gold'?'<span class="hot">POPULAIRST</span>':''}
   <h3>${k==='cosmic'?'🌌':k==='gold'?'⭐':'✦'} ${p.n}</h3><div class="pr">€${pm.toFixed(2).replace('.',',')}<small> /maand</small></div>${per>1?`<div class="sub">€${(pm*per).toFixed(2).replace('.',',')} per ${per} maanden</div>`:''}<ul>${p.f.map(f=>`<li>${f}</li>`).join('')}</ul></div>`}).join('')}</div>
- <button class="btn" style="margin-top:6px" onclick="buyPlan()">${S.plan===selPlan?'✓ Dit is je huidige plan':'Start '+PLANS[selPlan].n}</button>
+ <button class="btn" style="margin-top:6px" onclick="buyPlan()">${S.plan===selPlan?'✓ Dit is je huidige plan':'Probeer '+PLANS[selPlan].n+' gratis'}</button>
  ${S.plan!=='free'?`<button class="btn ghost" style="margin-top:8px" onclick="S.plan='free';S.likes=15;applyPlan();renderPlans();toast('Abonnement opgezegd')">Opzeggen</button>`:''}
- <p class="sub" style="text-align:center;margin-top:10px;font-size:11px">Demo: er wordt niets betaald. In de echte app gaat dit via App Store / Google Play of Stripe.</p>`)}
-function buyPlan(){if(S.plan===selPlan)return;S.plan=selPlan;if(selPlan==='cosmic')setCoins(200);applyPlan();closeO('planV');burst();toast('✦ Welkom bij '+PLANS[selPlan].n+'!')}
+ <p class="sub" style="text-align:center;margin-top:10px;font-size:11px">Er wordt nu niets afgerekend. Betalen komt later via Google Play. Geen enkel abonnement toont waar iemand precies is.</p>`)}
+function buyPlan(){if(S.plan===selPlan)return;S.plan=selPlan;applyPlan();closeO('planV');burst();toast('✦ Welkom bij '+PLANS[selPlan].n+'!')}
 function buyCoins(c,pr){setCoins(c);closeO('planV');toast(`🪙 +${c} munten (demo)`)}
 function applyPlan(){const b=$('planBtn');b.textContent=PLANS[S.plan].n;b.classList.toggle('prem',S.plan!=='free');updLikes();renderSeen()}
 
@@ -1087,9 +1087,9 @@ if(!PARTNERS_LIVE){
 const _rp13=renderPlans;renderPlans=function(tab){_rp13(tab);if(tab==='coins')return;const sh=$('planSheet');
  if(!PARTNERS_LIVE)sh.querySelectorAll('.box p.sub').forEach(p=>{p.textContent=p.textContent.replace(', inclusief een gratis drankje bij een partnerzaak','')});
  /* --- 2. Lifetime-abonnement --- */ PLANS.lifetime=PLANS.lifetime||{n:"Galaxy Forever",p:149.99,f:[]};
- const owned=S.lifetime;sh.querySelector('.plans').insertAdjacentHTML('afterend',`<div class="plan ${selPlan==='lifetime'?'sel':''}" style="width:100%;margin:6px 0 10px;background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(139,92,246,.25));border-color:${selPlan==='lifetime'?'var(--gold)':'rgba(251,191,36,.5)'}" onclick="selPlan='lifetime';renderPlans()"><span class="hot">EENMALIG</span><h3>♾️ Galaxy Forever</h3><div class="pr">€149,99<small> eenmalig</small></div><div class="sub">Nooit meer betalen. Alles van Cosmic, voor altijd.</div><ul><li>Alles van Cosmic, levenslang</li><li>Gouden ♾️ Forever-badge</li><li>Elke nieuwe functie gratis</li><li>500 🪙 welkomstbonus</li></ul></div>`);
- const btn=[...sh.querySelectorAll('.btn')].find(b=>/Start|huidige/.test(b.textContent));if(btn&&selPlan==='lifetime'){btn.textContent=owned?'✓ Je hebt Galaxy Forever ♾️':'Koop Galaxy Forever · €149,99';btn.onclick=buyLifetime}};
-function buyLifetime(){if(S.lifetime)return;S.lifetime=true;S.plan='cosmic';setCoins(500);applyPlan();$('planBtn').textContent='Forever ♾️';closeO('planV');burst();burst();toast('♾️ Welkom bij Galaxy Forever!')}
+ const owned=S.lifetime;sh.querySelector('.plans').insertAdjacentHTML('afterend',`<div class="plan ${selPlan==='lifetime'?'sel':''}" style="width:100%;margin:6px 0 10px;background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(139,92,246,.25));border-color:${selPlan==='lifetime'?'var(--gold)':'rgba(251,191,36,.5)'}" onclick="selPlan='lifetime';renderPlans()"><span class="hot">EENMALIG</span><h3>♾️ Galaxy Forever</h3><div class="pr">€149,99<small> eenmalig</small></div><div class="sub">Nooit meer betalen. Alles van Cosmic, voor altijd.</div><ul><li>Alles van Cosmic, levenslang</li><li>Eén keer betalen, geen maandbedrag</li></ul></div>`);
+ const btn=[...sh.querySelectorAll('.btn')].find(b=>/Start|huidige/.test(b.textContent));if(btn&&selPlan==='lifetime'){btn.textContent=owned?'✓ Je hebt Galaxy Forever ♾️':'Probeer Galaxy Forever gratis';btn.onclick=buyLifetime}};
+function buyLifetime(){if(S.lifetime)return;S.lifetime=true;S.plan='cosmic';applyPlan();$('planBtn').textContent='Forever ♾️';closeO('planV');burst();burst();toast('♾️ Welkom bij Galaxy Forever!')}
 const _ap13=applyPlan;applyPlan=function(){_ap13();if(S.lifetime){$('planBtn').textContent='Forever ♾️';$('planBtn').classList.add('prem')}};
 
 /* --- 3. "Over mij"-basics (zoals Hinge/Bumble) --- */
@@ -1545,6 +1545,18 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
   document.querySelectorAll('.ov.on:not(#welV)').forEach(o=>o.classList.remove('on'))}
 })();
 </script>
+<style>#coinsBtn,#planSheet>.seg{display:none!important}
+#songBtn.on{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff}</style>
+<script>
+/* fouten bijhouden voor het dev-venster (blijft op dit toestel) */
+(function(){function log(m){try{const a=JSON.parse(localStorage.glxErr||'[]');a.push({t:Date.now(),m:String(m).slice(0,300)});localStorage.glxErr=JSON.stringify(a.slice(-40))}catch(e){}}
+ addEventListener('error',e=>log((e.message||'fout')+' @'+(e.filename||'').split('/').pop()+':'+(e.lineno||'')));
+ addEventListener('unhandledrejection',e=>log('promise: '+(e.reason&&e.reason.message||e.reason)));
+ try{localStorage.glxSeen=Date.now()}catch(e){}
+ const h=document.querySelector('header .sp');if(h)h.insertAdjacentHTML('afterend','<button class="ico" id="songBtn" title="Themalied" onclick="GLXSONG&&GLXSONG.toggle()">🎵</button>');
+})();
+</script>
+<script src="theme.js"></script>
 <script src="galaxy-map.js"></script>
 <script src="avatar.js"></script>
 </body>

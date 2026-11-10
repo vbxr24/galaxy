@@ -1,0 +1,49 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Galaxy – dev-venster</title><link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#0b0a1f;--card:#16143a;--line:#2b2760;--tx:#ece9ff;--sub:#a5a0d6;--ok:#34d399;--bad:#fb7185;--warn:#fbbf24;--a:#8b5cf6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:920px;margin:0 auto;padding:18px 14px 60px}h1{font-size:22px;margin:0}h2{font-size:16px;margin:0 0 10px}
+.sub{color:var(--sub);font-size:13px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.kpi b{display:block;font-size:22px}.row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}.row:first-of-type{border-top:0}
+.row span:last-child{text-align:right;color:var(--sub);flex:none;max-width:60%}.ok{color:var(--ok)!important}.bad{color:var(--bad)!important}.warn{color:var(--warn)!important}
+a{color:#67e8f9}button{background:var(--a);color:#fff;border:0;border-radius:10px;padding:9px 14px;font:inherit;cursor:pointer}button.g{background:transparent;border:1px solid var(--line)}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid currentColor;margin-left:6px}code{font-size:12px;color:var(--sub);word-break:break-all}
+</style></head><body><main>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><img src="icons/icon-192.png" width="40" height="40" style="border-radius:10px" alt=""><div style="flex:1"><h1>Galaxy · dev-venster</h1><div class="sub" id="when">laden…</div></div><button onclick="run()">↻ Vernieuw</button><a href="./"><button class="g">Open app</button></a></div>
+<div class="grid" id="kpi"></div>
+<div class="card"><h2>🩺 Werkt alles?</h2><div id="health"><p class="sub">controleren…</p></div></div>
+<div class="card"><h2>🧭 Stand van zaken</h2><div id="road"></div><p class="sub" style="margin-top:8px">Deze lijst wordt bij elke update bijgewerkt.</p></div>
+<div class="card"><h2>📦 Laatste updates</h2><div id="commits"><p class="sub">laden…</p></div></div>
+<div class="card"><h2>📱 Dit toestel</h2><div id="local"></div><p class="sub" style="margin-top:8px">Dit zijn alleen de gegevens van het toestel waarop je nu kijkt. Cijfers van alle gebruikers komen er pas als de server er is.</p></div>
+<div class="card"><h2>🐞 Fouten op dit toestel</h2><div id="errs"></div><button class="g" style="margin-top:10px" onclick="localStorage.removeItem('glxErr');local()">Wis lijst</button></div>
+</main><script>
+const REPO='vbxr24/galaxy',$=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const FILES=['index.html','galaxy-map.js','avatar.js','theme.js','places.js','contact.js','sw.js','manifest.webmanifest','welkom.html','privacy.html','voorwaarden.html','veiligheid.html','verwijderen.html','icons/icon-192.png'];
+const EXT=[['Kaart (OpenFreeMap)','https://tiles.openfreemap.org/styles/liberty'],['Plaats zoeken (Nominatim)','https://nominatim.openstreetmap.org/search?format=json&limit=1&q=Brussel'],['Kaart-software (MapLibre)','https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'],['3D-software (three.js)','https://unpkg.com/three@0.160.0/build/three.min.js']];
+const ROAD=[['Live wereldkaart met straten en plekken','ok','werkt'],['Verwachte drukte per zone','ok','werkt (schatting)'],['Eigen 3D-mannetje dat meeloopt','ok','werkt'],['Inchecken en groepsdates','ok','werkt op je toestel'],['Welkomstscherm 18+','ok','werkt (zelf ingevuld)'],['Stappen tellen','warn','schatting via gps'],['Themalied','ok','werkt'],['Website en stickers','ok','klaar'],
+['Echte accounts en inloggen','bad','server nodig'],['Andere mensen zien op de kaart','bad','server nodig'],['Chatten','bad','server nodig'],['Leeftijdscontrole met ID','bad','server + controlepartner'],['Betalen via Google Play','bad','Play-account nodig'],['Meldingen behandelen','bad','server nodig'],['In de Play Store','warn','account + 12 testers nodig'],['Contact-e-mail invullen','warn','wacht op jouw adres']];
+async function ping(u,opt){const t=performance.now();try{const r=await fetch(u,Object.assign({cache:'no-store'},opt));return{ok:r.ok,ms:Math.round(performance.now()-t),r}}catch(e){return{ok:false,ms:0}}}
+const row=(a,b,c)=>`<div class="row"><span>${a}</span><span class="${c||''}">${b}</span></div>`;
+async function health(){let h='',bad=0,size=0;
+ const fs=await Promise.all(FILES.map(f=>ping(f+'?d='+Date.now()).then(async x=>{let kb='';if(x.ok&&x.r){try{const b=await x.r.blob();kb=Math.round(b.size/1024)+' kB';size+=b.size}catch(e){}}return[f,x,kb]})));
+ fs.forEach(([f,x,kb])=>{if(!x.ok)bad++;h+=row('<code>'+f+'</code>',x.ok?`✓ ${kb} · ${x.ms} ms`:'✗ niet gevonden',x.ok?'ok':'bad')});
+ const es=await Promise.all(EXT.map(([n,u])=>ping(u).then(x=>[n,x])));
+ es.forEach(([n,x])=>{if(!x.ok)bad++;h+=row(n,x.ok?`✓ bereikbaar · ${x.ms} ms`:'✗ niet bereikbaar',x.ok?'ok':'bad')});
+ let sw='niet actief';try{const r=await navigator.serviceWorker.getRegistration('./');if(r)sw='actief'}catch(e){}
+ h+=row('Offline-werking (service worker)',sw,sw==='actief'?'ok':'warn');
+ $('health').innerHTML=h;return{bad,size}}
+async function commits(){try{const r=await fetch(`https://api.github.com/repos/${REPO}/commits?per_page=12`);if(!r.ok)throw 0;const a=await r.json();
+ $('commits').innerHTML=a.map(c=>row(esc(c.commit.message.split('\n')[0]),new Date(c.commit.author.date).toLocaleString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))).join('')+`<p class="sub" style="margin-top:8px"><a href="https://github.com/${REPO}/commits/main" target="_blank" rel="noopener">Alle updates op GitHub</a></p>`;return a}
+ catch(e){$('commits').innerHTML='<p class="sub">GitHub is even niet bereikbaar (of te vaak ververst). Probeer over een paar minuten opnieuw.</p>';return[]}}
+function local(){const J=k=>{try{return JSON.parse(localStorage[k]||'null')}catch(e){return null}},me=J('glxMe')||{},g=J('glxGame')||{},er=J('glxErr')||[];
+ $('local').innerHTML=row('Profiel',me.name?esc(me.name)+', '+me.age:'nog niet ingevuld')+row('Mannetje gemaakt',localStorage.glxAvatar||localStorage.glxAvatarImg?'ja':'nee')+row('Gewandeld',((g.walked||0)/1000).toFixed(2)+' km · ±'+Math.round((g.walked||0)/.75)+' stappen')+row('Check-ins',g.nCheck||0)+row('Groepsdates',(g.groups||[]).length)+row('Onzichtbaar',localStorage.glxGhost?'aan':'uit')+row('Themalied',localStorage.glxSong?'aan':'uit')+row('App laatst geopend',localStorage.glxSeen?new Date(+localStorage.glxSeen).toLocaleString('nl-BE'):'nog niet');
+ $('errs').innerHTML=er.length?er.slice().reverse().map(e=>row(esc(e.m),new Date(e.t).toLocaleString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),'bad')).join(''):'<p class="ok">Geen fouten geregistreerd ✓</p>';return er.length}
+function road(){const n={ok:0,warn:0,bad:0};$('road').innerHTML=ROAD.map(([t,s,d])=>{n[s]++;return row((s==='ok'?'✅ ':s==='warn'?'🟡 ':'⛔ ')+t,d,s)}).join('');return n}
+async function run(){$('when').textContent='controleren…';const n=road(),e=local();const[h,c]=await Promise.all([health(),commits()]);
+ const last=c[0]?new Date(c[0].commit.author.date):null;
+ $('kpi').innerHTML=[[h.bad?'⚠️ '+h.bad+' probleem':'✓ Alles ok','Status',h.bad?'bad':'ok'],[last?last.toLocaleDateString('nl-BE',{day:'numeric',month:'short'})+' '+last.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit'}):'–','Laatste update'],[Math.round(h.size/1024)+' kB','Grootte app'],[n.ok+' / '+ROAD.length,'Onderdelen klaar'],[e,'Fouten (dit toestel)',e?'warn':'ok']].map(([v,l,c])=>`<div class="card kpi" style="margin:0"><b class="${c||''}">${v}</b><span class="sub">${l}</span></div>`).join('');
+ $('when').textContent='Laatst gecontroleerd: '+new Date().toLocaleTimeString('nl-BE')}
+run();
+</script></body></html>

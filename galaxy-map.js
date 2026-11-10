@@ -25,8 +25,8 @@
   const POWER = {
     free: { n: 'Gratis', r: 150, fc: false, mix: false, remote: 0, spot: false, see: 'Inchecken binnen 150 m · drukte nu' },
     plus: { n: 'Plus', r: 300, fc: false, mix: true, remote: 0, spot: false, see: 'Inchecken binnen 300 m · wie er zit per zone' },
-    gold: { n: 'Gold', r: 300, fc: true, mix: true, remote: 0, spot: false, see: '300 m · wie er zit · voorspelling voor later op de avond' },
-    cosmic: { n: 'Cosmic', r: 500, fc: true, mix: true, remote: 1, spot: true, see: '500 m · voorspelling · 1× per dag op afstand inchecken · bovenaan bij hotspots' },
+    gold: { n: 'Gold', r: 300, fc: true, mix: true, remote: 0, spot: false, see: '300 m · wie er zit · voorspelling voor later op de avond · gouden rand' },
+    cosmic: { n: 'Cosmic', r: 500, fc: true, mix: true, remote: 1, spot: true, see: '500 m · voorspelling · 1× per dag op afstand inchecken · kosmische aura' },
     lifetime: { n: 'Galaxy Forever', r: 500, fc: true, mix: true, remote: 1, spot: true, see: 'Alles van Cosmic, voor altijd' }
   };
   function plan() { const p = (window.S && S.plan) || 'free'; return POWER[p] ? p : 'free' }
@@ -88,6 +88,8 @@
 .gmAv img{width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
 .gmAv.me img{width:76px;height:76px}
 .gmAv.me:after{content:'';width:34px;height:10px;border-radius:50%;background:radial-gradient(rgba(34,211,238,.6),transparent 70%);margin-top:-6px}
+.gmAv.me.goud:after{background:radial-gradient(rgba(251,191,36,.55),transparent 70%);width:40px}
+.gmAv.me.aura{filter:drop-shadow(0 0 10px rgba(244,114,182,.9))}
 .gmAv.me.aura:after{background:radial-gradient(rgba(251,191,36,.8),transparent 70%);width:48px}
 .gmAv.live3d:after{margin-top:-22px;width:60px;height:16px}.gmAv.walk img{animation:gmWalk .45s ease-in-out infinite}.gmAv.walk.left img{transform:scaleX(-1)}
 @keyframes gmWalk{0%,100%{translate:0 0;rotate:-4deg}50%{translate:0 -5px;rotate:4deg}}
@@ -289,7 +291,7 @@ ${busyLabel(v) ? `<p style="margin:10px 0">${busyLabel(v)}</p>` : ''}
 ${mixHtml(v.lat, v.lng)}
 <div class="gmRow"><span>Afstand</span><b>${d == null ? 'zet je locatie aan' : d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(1) + ' km'}</b></div>
 <div class="gmRow"><span>Galaxy-leden hier nu</span><b>${peopleNear(v.lat, v.lng, 150).length || 'nog niemand'}</b></div>
-<p class="sub" style="margin-top:6px">Check je in, dan zien Galaxy-leden op deze plek 2 uur lang je profiel bovenaan${p.spot ? ' (Cosmic: helemaal bovenaan)' : ''}. Je exacte locatie blijft verborgen.</p>
+<p class="sub" style="margin-top:6px">Wie hier ook incheckt, ziet 2 uur lang je profiel. Je exacte locatie blijft verborgen.</p>
 <br>${cooldown(v) ? `<button class="btn ghost" style="width:100%" onclick="GLXMAP.checkout('${id}')">✔️ Ingecheckt · tik om uit te checken</button>` :
       inR || remote ? `<button class="btn" style="width:100%" onclick="GLXMAP.checkin('${id}',${remote ? 1 : 0})">${remote ? '🛰️ Check in op afstand (Cosmic, 1× per dag)' : '📍 Check hier in'}</button>` :
         d == null ? `<button class="btn" style="width:100%" onclick="GLXMAP.locate()">📍 Zet locatie aan om in te checken</button>` : `<button class="btn ghost" style="width:100%" disabled>Kom binnen ${p.r} m om in te checken</button>`}
@@ -326,7 +328,7 @@ ${pw().fc ? `<div class="gmRow"><span>Later vanavond</span><b>${h < 21 ? '🔥 d
     const v = venues.get(id); if (!v) return;
     if (remote) G.remoteDay = today();
     G.checkins = {}; G.checkins[id] = Date.now(); G.nCheck = (G.nCheck || 0) + 1; save(); drawStops(); live.send && live.send({ t: 'checkin', place: id });
-    xs('📍 Ingecheckt bij ' + esc(v.n), `<p>Galaxy-leden op deze plek zien de komende 2 uur je profiel bovenaan. Je exacte locatie blijft verborgen.</p><br><button class="btn" style="width:100%" onclick="closeO('xV')">Top</button>`);
+    xs('📍 Ingecheckt bij ' + esc(v.n), `<p>Wie hier ook incheckt, ziet de komende 2 uur je profiel. Je exacte locatie blijft verborgen.</p><br><button class="btn" style="width:100%" onclick="closeO('xV')">Top</button>`);
   }
   function checkout(id) { delete G.checkins[id]; save(); drawStops(); try { closeO('xV') } catch (e) { } T('Uitgecheckt') }
 
@@ -341,6 +343,7 @@ ${pw().fc ? `<div class="gmRow"><span>Later vanavond</span><b>${h < 21 ? '🔥 d
 <br><br><button class="btn" style="width:100%" onclick="GLXMAP.saveGroup('${id}')">Plaats groepsdate</button>`);
   }
   function saveGroup(id) {
+    if (!pw().mix && G.groups.filter(x => new Date(x.at) > Date.now()).length >= 1) { closeO('xV'); try { toast('Gratis kun je 1 groepsdate tegelijk plaatsen') } catch (e) { } return openPower() }
     const v = venues.get(id) || {}; const g = { id: 'g' + Date.now(), at: $('gmGT').value, kind: $('gmGK').value, max: +$('gmGN').value, place: v.n || '', lat: v.lat, lng: v.lng };
     G.groups.push(g); save(); closeO('xV');
     xs('👥 Geplaatst!', `<p>${esc(g.kind)} bij <b>${esc(g.place)}</b>, ${new Date(g.at).toLocaleString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}.</p><p class="sub" style="margin-top:8px">Deel de link met vrienden. Zodra Galaxy live is, zien leden in de buurt je groepsdate op de kaart.</p><br><button class="btn" style="width:100%" onclick="typeof invite==='function'&&invite()">🔗 Deel</button>`);
@@ -353,7 +356,7 @@ ${pw().fc ? `<div class="gmRow"><span>Later vanavond</span><b>${h < 21 ? '🔥 d
 
   /* ---------- power-ups ---------- */
   function openPower() {
-    const cur = plan(), rows = [['Inchecken binnen', p => p.r + ' m'], ['Wie zit er per zone', p => p.mix ? '✓' : '–'], ['Voorspelling vanavond', p => p.fc ? '✓' : '–'], ['Op afstand inchecken', p => p.remote ? '1/dag' : '–'], ['Bovenaan bij hotspots', p => p.spot ? '✓' : '–']];
+    const cur = plan(), rows = [['Inchecken binnen', p => p.r + ' m'], ['Wie zit er per zone', p => p.mix ? '✓' : '–'], ['Voorspelling vanavond', p => p.fc ? '✓' : '–'], ['Op afstand inchecken', p => p.remote ? '1/dag' : '–'], ['Groepsdates plaatsen', p => p.mix ? 'onbeperkt' : '1'], ['Rand rond je mannetje', p => p.spot ? 'aura' : p.fc ? 'goud' : '–']];
     const cols = ['free', 'plus', 'gold', 'cosmic'];
     xs('⚡ Power-ups', `<p class="sub">Gratis zie je de drukte en kun je inchecken. Met een abonnement zie je meer en kom je beter in beeld.</p>
 <table class="gmPlans"><tr><th></th>${cols.map(c => `<th class="${c === cur || (cur === 'lifetime' && c === 'cosmic') ? 'cur' : ''}">${POWER[c].n}</th>`).join('')}</tr>
@@ -379,7 +382,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
   /* ---------- jij op de kaart: je eigen 3D-mannetje ---------- */
   let meMarker, lastPos = null, walkT;
   function meEl() {
-    const el = document.createElement('div'); el.className = 'gmAv me' + (pw().spot ? ' aura' : '');
+    const el = document.createElement('div'); el.className = 'gmAv me' + (pw().spot ? ' aura' : pw().fc ? ' goud' : '');
     const src = window.GLXAV && GLXAV.image(); el.innerHTML = src ? `<img src="${src}" alt="">` : '<div class="gmMe"></div>';
     el.onclick = () => window.GLXAV ? GLXAV.open() : null; return el;
   }

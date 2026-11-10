@@ -1,0 +1,65 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Galaxy – de live kaart om nieuwe mensen te ontmoeten</title>
+<meta name="description" content="Galaxy is een live wereldkaart om nieuwe mensen te ontmoeten. Zie waar het druk is, maak je eigen 3D-mannetje en spreek af op een openbare plek. Alleen 18+.">
+<meta property="og:title" content="Galaxy – de live kaart om nieuwe mensen te ontmoeten"><meta property="og:description" content="Zie waar het druk is, maak je eigen 3D-mannetje en spreek af. Alleen 18+."><meta property="og:image" content="https://vbxr24.github.io/galaxy/icons/icon-512.png"><meta property="og:type" content="website">
+<link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="theme-color" content="#0b0a1f">
+<style>
+:root{--bg:#0b0a1f;--card:#15133a;--line:#2b2760;--tx:#f1eeff;--sub:#b3aee0;--a:#8b5cf6;--b:#ec4899;--c:#22d3ee}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:hidden}
+a{color:#67e8f9}.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{display:flex;align-items:center;gap:10px;padding:18px 0}header b{font-size:20px;letter-spacing:.3px}header img{border-radius:10px}
+.btn{display:inline-block;background:linear-gradient(135deg,var(--a),var(--b));color:#fff;text-decoration:none;font-weight:700;padding:14px 26px;border-radius:14px;box-shadow:0 10px 30px rgba(236,72,153,.35)}
+.btn.g{background:transparent;border:1px solid var(--line);box-shadow:none;font-weight:600}
+.hero{position:relative;padding:44px 0 70px;display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
+.hero:before{content:"";position:absolute;inset:-120px -40vw auto;height:560px;background:radial-gradient(closest-side,rgba(139,92,246,.45),transparent),radial-gradient(closest-side at 75% 40%,rgba(236,72,153,.3),transparent);z-index:-1}
+h1{font-size:clamp(34px,6vw,58px);line-height:1.06;margin:0 0 16px;letter-spacing:-1px}h1 em{font-style:normal;background:linear-gradient(90deg,#a78bfa,#f472b6,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--sub);font-size:19px;max-width:520px;margin:0 0 26px}.cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:5px 12px;font-size:13px;color:var(--sub);margin-bottom:18px}
+.phone{justify-self:center;width:min(300px,78vw);aspect-ratio:9/18.5;border-radius:38px;border:8px solid #1d1a48;background:#0d0b26;position:relative;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px #3a3580}
+.map{position:absolute;inset:0;background:linear-gradient(115deg,transparent 48%,#2a2466 48% 52%,transparent 52%),linear-gradient(25deg,transparent 46%,#2a2466 46% 49%,transparent 49%),linear-gradient(160deg,transparent 60%,#231e5a 60% 62%,transparent 62%),radial-gradient(circle at 30% 30%,rgba(236,72,153,.55),transparent 28%),radial-gradient(circle at 72% 62%,rgba(139,92,246,.6),transparent 30%),radial-gradient(circle at 40% 82%,rgba(34,211,238,.35),transparent 22%),#100e2e}
+.pin{position:absolute;font-size:22px;filter:drop-shadow(0 4px 8px #000)}.me{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);font-size:46px;animation:bob 1.2s ease-in-out infinite}
+.me:after{content:"";position:absolute;left:50%;bottom:-6px;width:60px;height:60px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(167,139,250,.7);animation:ring 2s infinite}
+@keyframes bob{50%{transform:translate(-50%,-56%)}}@keyframes ring{from{opacity:1;scale:.4}to{opacity:0;scale:1.6}}
+.chip{position:absolute;left:12px;top:14px;background:rgba(139,92,246,.9);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:700}
+.bar{position:absolute;left:10px;right:10px;bottom:12px;background:rgba(22,20,58,.92);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:12px;color:var(--sub)}
+section{padding:54px 0}h2{font-size:clamp(26px,4vw,36px);margin:0 0 8px;letter-spacing:-.5px}.kick{color:var(--sub);margin:0 0 28px;max-width:640px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}.card .i{font-size:30px}.card h3{margin:10px 0 6px;font-size:19px}.card p{margin:0;color:var(--sub);font-size:15.5px}
+.steps{counter-reset:s;display:grid;gap:14px;max-width:680px}.steps div{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px 16px 62px;position:relative}
+.steps div:before{content:counter(s);position:absolute;left:16px;top:14px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,var(--a),var(--b))}
+.safe{background:linear-gradient(135deg,rgba(34,211,238,.1),rgba(139,92,246,.14));border:1px solid var(--line);border-radius:22px;padding:28px}
+.safe li{margin:8px 0}.note{font-size:14px;color:var(--sub)}
+footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--sub);font-size:14px}footer a{margin-right:16px;color:var(--sub)}
+@media(max-width:780px){.hero{grid-template-columns:1fr;padding-top:20px}}@media(prefers-reduced-motion:reduce){.me,.me:after{animation:none}}
+</style></head><body>
+<div class="wrap">
+<header><img src="icons/icon-192.png" width="38" height="38" alt="Galaxy-logo"><b>Galaxy</b><span style="flex:1"></span><a class="btn g" href="./" style="padding:9px 16px">Open de app</a></header>
+<div class="hero"><div>
+<span class="badge">🧪 Testversie · alleen 18+</span>
+<h1>Ontmoet mensen <em>waar je bent</em>, niet door te swipen.</h1>
+<p class="lead">Galaxy is een live wereldkaart. Je ziet waar het druk is, je loopt rond met je eigen 3D-mannetje en je spreekt af op een openbare plek.</p>
+<div class="cta"><a class="btn" href="./">Open Galaxy</a><a class="btn g" href="#hoe">Hoe werkt het?</a></div>
+<p class="note" style="margin-top:16px">Werkt in je browser, je hoeft niets te installeren. Tip: kies "Toevoegen aan startscherm".</p>
+</div>
+<div class="phone" aria-hidden="true"><div class="map"></div><span class="chip">🔥 Drukte</span><span class="pin" style="left:20%;top:24%">🍸</span><span class="pin" style="left:68%;top:30%">☕</span><span class="pin" style="left:74%;top:66%">🎢</span><span class="pin" style="left:18%;top:70%">🌳</span><span class="pin" style="left:44%;top:16%">🏛️</span><div class="me">🧍</div><div class="bar">📍 Inchecken · 👥 Groepsdate plannen</div></div>
+</div>
+
+<section><h2>Wat je kunt doen</h2><p class="kick">Geen eindeloze rij profielen. Wel een kaart van de echte wereld.</p>
+<div class="grid">
+<div class="card"><div class="i">🌍</div><h3>Live wereldkaart</h3><p>Straten, cafés, parken, musea en pretparken, overal ter wereld, in 3D.</p></div>
+<div class="card"><div class="i">🔥</div><h3>Waar is het druk?</h3><p>Zie welke buurten leven en welk soort plek het is: studenten, uitgaan of rustig.</p></div>
+<div class="card"><div class="i">🧍</div><h3>Je eigen mannetje</h3><p>Kies haar, kleren en stijl. Je mannetje wandelt mee op de kaart terwijl jij loopt.</p></div>
+<div class="card"><div class="i">👥</div><h3>Groepsdates</h3><p>Plan iets bij een café of park en nodig anderen uit. Samen is veiliger en leuker.</p></div>
+</div></section>
+
+<section id="hoe"><h2>Zo werkt het</h2><p class="kick">In een minuut ben je vertrokken.</p>
+<div class="steps"><div><b>Open Galaxy</b> en vul je voornaam en geboortedatum in. Alleen 18+.</div><div><b>Maak je mannetje</b> en zet je locatie aan als je wilt meelopen op de kaart.</div><div><b>Kijk waar het druk is</b>, check in bij een plek of plan een groepsdate.</div></div></section>
+
+<section><div class="safe"><h2>Veiligheid eerst</h2>
+<ul><li><b>Nooit je exacte plek.</b> Anderen zien hooguit een zone van ongeveer 300 meter.</li><li><b>Onzichtbaar kan altijd</b>, gratis, met één knop.</li><li><b>Alleen 18+.</b> Een controle met identiteitsbewijs wordt toegevoegd voor de officiële lancering.</li><li><b>Melden en blokkeren</b> met één tik.</li><li><b>Spreek af op een openbare plek</b> en vertel iemand waar je bent.</li></ul>
+<p class="note">Meer lezen: <a href="veiligheid.html">veiligheid</a> · <a href="privacy.html">privacy</a></p></div></section>
+
+<section><h2>Eerlijk over waar we staan</h2><p class="kick">Galaxy is in opbouw. De kaart, de drukte, je mannetje, inchecken en groepsdates werken nu al. Andere leden zien, chatten en betalen komen in een volgende versie. Tot dan is alles gratis.</p><a class="btn" href="./">Probeer de testversie</a></section>
+</div>
+<footer><div class="wrap"><p><a href="privacy.html">Privacy</a><a href="voorwaarden.html">Voorwaarden</a><a href="veiligheid.html">Veiligheid</a><a href="verwijderen.html">Account verwijderen</a></p><p>Galaxy is een app uit België · Alleen voor 18 jaar en ouder · Kaartgegevens © <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap</a>-bijdragers, kaart via OpenFreeMap</p></div></footer>
+</body></html>
