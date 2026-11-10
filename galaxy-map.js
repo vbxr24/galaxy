@@ -53,7 +53,8 @@
 
   /* ---------- opbouw van het scherm ---------- */
   const CSS = `
-#v-map>h2,#mapWrap,#mapInfo{display:none!important}
+#v-map>h2,#mapWrap,#mapInfo,#mapSearch,#v-discover,#nav [data-v="discover"]{display:none!important}
+#nav{grid-template-columns:repeat(3,1fr)!important}
 #gmHead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 #gmHead h2{flex:1;margin:0;font-size:20px}
 #gmStreak{font-size:12px;color:var(--mut);white-space:nowrap}
@@ -500,6 +501,8 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
   /* ---------- koppelen aan de app ---------- */
   window.GLXMAP = { legend: () => xs('📍 Soorten plekken', Object.values(CAT).map(c => `<div class="gmRow"><span><span style="color:${c[0]}">●</span> ${c[1]} ${c[2]}</span></div>`).join('') + '<p class="sub" style="margin-top:8px">Cafés en restaurants verschijnen als je inzoomt tot op straatniveau.</p>'), locate: () => locate(), checkin, checkout, group, avatar: () => openAvatar(), saveGroup, fly: (lng, lat) => { try { closeO('xV') } catch (e) { } map && map.flyTo({ center: [lng, lat], zoom: 17, pitch: 55 }) }, power: openPower, state: G, _venues: venues, _setMe: (lat, lng) => { me = { lat, lng }; onMe() } };
   const og = window.go;
-  window.go = function (v) { const r = og.apply(this, arguments); if (v === 'map') setTimeout(init, 30); return r };
-  if (document.querySelector('#v-map.on, #v-map.active')) init();
+  /* Galaxy is een live kaart-app: geen swipen meer, de kaart is het startscherm */
+  window.go = function (v) { if (v === 'discover') v = 'map'; const r = og.call(this, v); if (v === 'map') setTimeout(init, 30); return r };
+  const boot = () => { const st = document.createElement('style'); st.textContent = '#v-discover,#nav [data-v="discover"]{display:none!important}#nav{grid-template-columns:repeat(3,1fr)!important}'; document.head.appendChild(st); const b = document.querySelector('#nav [data-v="map"]'); if (b) b.innerHTML = '<span>🌍</span>Live'; window.go('map') };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
