@@ -84,13 +84,61 @@
       if (!target || !sb) return; const w = await sb.from('waves').insert({ from_id: uid, to_id: target });
       if (w.error && w.error.code !== '23505') { console.error(w.error); return T('Zwaaien lukte niet') }
       const m = await sb.rpc('is_match', { a: uid, b: target });
-      T(m.data ? '💜 Jullie zwaaiden naar elkaar! Chatten komt in de volgende update.' : '👋 Zwaai verstuurd');
+      if (m.data) { T('💜 Jullie zwaaiden naar elkaar! Je kunt nu chatten.'); loadMatches() } else T('👋 Zwaai verstuurd');
     },
     report() { if (!target) return; xs('🚩 Melden', '<p class="sub" style="margin-bottom:10px">Wat is er aan de hand? De ander ziet niet dat jij meldt.</p>' + REASON.map((r, k) => `<button class="opt" style="width:100%;text-align:left;margin-bottom:8px" onclick="GLXNET.sendReport(${k})">${r}</button>`).join(''), false) },
     async sendReport(k) { const r = await sb.from('reports').insert({ reporter: uid, target, reason: REASON[k] }); try { closeO('xV') } catch (e) { } T(r.error ? 'Melden lukte niet, probeer opnieuw' : '🚩 Bedankt, je melding is verstuurd') },
     async block() { if (!target) return; const r = await sb.from('blocks').insert({ blocker: uid, blocked: target }); try { closeO('xV') } catch (e) { } if (r.error && r.error.code !== '23505') return T('Blokkeren lukte niet'); T('🚫 Geblokkeerd. Jullie zien elkaar niet meer.'); poll() },
+    chat(id) { openChat2(id) }, sendMsg, matches: () => loadMatches(),
     async wipe() { try { if (sb && uid) { await sb.from('profiles').delete().eq('id', uid); await sb.auth.signOut() } } catch (e) { } }
   };
+
+  /* ---------- matches en chat ---------- */
+  let matchList = [], chatWith = null, chatT = null, lastSeen = {};
+  try { lastSeen = JSON.parse(localStorage.glxSeenMsg || '{}') } catch (e) { }
+  const hm = d => { try { return new Date(d).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) } catch (e) { return '' } };
+  async function loadMatches() {
+    if (!sb || !uid || state !== 'verbonden') return;
+    const r = await sb.rpc('my_matches'); if (r.error) { console.error('matches', r.error); return }
+    matchList = (r.data || []).filter(c => c && c.id);
+    const m = await sb.from('messages').select('sender,to_id,body,at').order('at', { ascending: false }).limit(200); const last = {}; let unread = 0;
+    (m.data || []).forEach(x => { const o = x.sender === uid ? x.to_id : x.sender; if (!last[o]) last[o] = x });
+    matchList.forEach(c => { c.last = last[c.id] || null; c.unread = !!(c.last && c.last.sender !== uid && (!lastSeen[c.id] || new Date(c.last.at) > new Date(lastSeen[c.id]))); if (c.unread) unread++ });
+    matchList.sort((a, b) => new Date((b.last || {}).at || 0) - new Date((a.last || {}).at || 0));
+    drawMatches(unread);
+  }
+  function drawMatches(unread) {
+    const cl = $('clist'), mr = $('mrow'); if (!cl) return; if (mr) mr.innerHTML = '';
+    document.querySelectorAll('#v-chat > h2').forEach((h, i) => { h.style.display = i === 0 ? 'none' : ''; if (i === 1) h.textContent = 'Matches en berichten' });
+    cl.innerHTML = matchList.length ? matchList.map(c => `<button class="gmRow" style="width:100%;text-align:left;margin-bottom:8px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line);display:flex;gap:12px;align-items:center" onclick="GLXNET.chat('${esc(c.id)}')">
+<span style="flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:20px;background:linear-gradient(135deg,#8b5cf6,#ec4899)">${esc((c.name || '?')[0])}</span>
+<span style="flex:1;min-width:0"><b>${esc(c.name)}${c.age ? ', ' + c.age : ''}</b><br><small class="sub" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.last ? (c.last.sender === uid ? 'Jij: ' : '') + esc(c.last.body) : 'Jullie zwaaiden naar elkaar. Zeg hallo 👋'}</small></span>
+${c.unread ? '<span style="flex:none;width:10px;height:10px;border-radius:50%;background:#ec4899"></span>' : ''}</button>`).join('')
+      : '<div class="box"><p class="sub">Nog geen matches. Zwaai naar iemand in een zone op de kaart. Zwaait die terug, dan kunnen jullie hier chatten.</p></div>';
+    const b = document.getElementById('chatDot'); if (b) { b.textContent = unread || ''; b.style.display = unread ? '' : 'none' }
+  }
+  async function loadMsgs() {
+    if (!chatWith || !sb) return; const o = chatWith;
+    const r = await sb.from('messages').select('id,sender,body,at').or(`and(sender.eq.${uid},to_id.eq.${o}),and(sender.eq.${o},to_id.eq.${uid})`).order('at', { ascending: true }).limit(300);
+    if (r.error || chatWith !== o) return; const box = $('gcMsgs'); if (!box) return;
+    const sig = (r.data || []).length + ':' + ((r.data || []).slice(-1)[0] || {}).id; if (box.dataset.sig === sig) return; box.dataset.sig = sig;
+    box.innerHTML = (r.data || []).length ? r.data.map(m => `<div style="display:flex;justify-content:${m.sender === uid ? 'flex-end' : 'flex-start'};margin:6px 0"><div style="max-width:78%;padding:9px 13px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere;background:${m.sender === uid ? 'linear-gradient(135deg,#8b5cf6,#ec4899)' : 'var(--card2)'}">${esc(m.body)}<small style="display:block;opacity:.7;font-size:10px;text-align:right;margin-top:2px">${hm(m.at)}</small></div></div>`).join('')
+      : '<p class="sub" style="text-align:center;margin:30px 0">Nog geen berichten. Zeg hallo 👋</p>';
+    box.scrollTop = box.scrollHeight; const l = (r.data || []).slice(-1)[0]; if (l) { lastSeen[o] = l.at; try { localStorage.glxSeenMsg = JSON.stringify(lastSeen) } catch (e) { } }
+  }
+  function openChat2(id) {
+    const c = matchList.find(x => x.id === id); if (!c) return; chatWith = id; target = id;
+    xs('💬 ' + esc(c.name), `<div style="display:flex;gap:8px;margin-bottom:8px"><button class="pill" onclick="openProfile('${esc(id)}')">👤 Profiel</button><button class="pill" onclick="GLXNET.report()">🚩 Meld</button><button class="pill" onclick="GLXNET.block()">🚫 Blokkeer</button></div>
+<div id="gcMsgs" style="height:46vh;overflow-y:auto;padding:4px 2px"></div>
+<form onsubmit="event.preventDefault();GLXNET.sendMsg()" style="display:flex;gap:8px;margin-top:8px"><input id="gcIn" class="fld" maxlength="1000" autocomplete="off" placeholder="Typ een bericht" style="margin:0;flex:1 1 auto;min-width:0;width:auto"><button class="btn" type="submit" aria-label="Verstuur" style="flex:none;width:52px;padding:0">➤</button></form>
+<p class="sub" style="margin-top:8px;font-size:11px">🛡️ Deel geen adres, geld of bankgegevens. Spreek af op een openbare plek.</p>`, false);
+    loadMsgs(); clearInterval(chatT); chatT = setInterval(() => { const v = $('xV'); if (!v || !v.classList.contains('on') || !$('gcMsgs')) { clearInterval(chatT); chatWith = null; loadMatches(); return } loadMsgs() }, 4000);
+  }
+  async function sendMsg() {
+    const i = $('gcIn'), body = (i && i.value || '').trim(); if (!body || !chatWith) return; i.value = '';
+    const r = await sb.from('messages').insert({ sender: uid, to_id: chatWith, body: body.slice(0, 1000) });
+    if (r.error) { i.value = body; return T('Versturen lukte niet. Misschien zijn jullie geen match meer.') } loadMsgs();
+  }
 
   /* ---------- haken in de app ---------- */
   function hooks() {
@@ -102,7 +150,8 @@
     if (window.GLXPROFILE) { GLXPROFILE.wave = () => api.wave(); GLXPROFILE.report = () => api.report() }
     window.openProfile = function (id) { if (typeof id === 'string' && id.length > 20) return openOther(id) };
     if (typeof window.reallyDelete === 'function') { const rd = window.reallyDelete; window.reallyDelete = async function () { await api.wipe(); return rd.apply(this, arguments) } }
-    clearInterval(pollT); pollT = setInterval(poll, 60e3); document.addEventListener('visibilitychange', () => { if (!document.hidden) poll() });
+    if (typeof window.renderChats === 'function') { const rc = window.renderChats; window.renderChats = function () { const r = rc.apply(this, arguments); if (state === 'verbonden') { drawMatches(matchList.filter(c => c.unread).length); loadMatches() } return r } }
+    clearInterval(pollT); pollT = setInterval(() => { poll(); loadMatches() }, 60e3); document.addEventListener('visibilitychange', () => { if (!document.hidden) poll() });
   }
 
   async function start() {
@@ -111,7 +160,7 @@
       await loadLib(); if (!sb) sb = window.supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } });
       let s = (await sb.auth.getSession()).data.session;
       if (!s) { const r = await sb.auth.signInAnonymously(); if (r.error) throw r.error; s = r.data.session }
-      uid = s.user.id; await syncProfile(); if (state === 'verbonden') setTimeout(poll, 1500);
+      uid = s.user.id; await syncProfile(); if (state === 'verbonden') { setTimeout(poll, 1500); setTimeout(loadMatches, 2500) }
     } catch (e) { console.error('server', e); st('offline') }
   }
   hooks(); st('uit');
