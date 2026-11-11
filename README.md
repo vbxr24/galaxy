@@ -35,3 +35,7 @@ je checkt in bij een plek, zwaait naar iemand in dezelfde zone en chat na een ma
 Leeftijdscontrole met ID, betalen via Google Play, inloggen met e-mail, vertalingen, moderatie van meldingen.
 
 Kaartgegevens: OpenStreetMap-bijdragers, kaart via OpenFreeMap. 3D-figuren: Quaternius (CC0).
+
+## Kleuren
+
+In de app kies je via ✨ → Kleuren een donker Galaxy-thema of een licht pastelthema (lila, perzik, mint, hemel, roos). De keuze blijft bewaard op het toestel.
