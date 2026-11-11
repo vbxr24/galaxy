@@ -39,3 +39,6 @@ Kaartgegevens: OpenStreetMap-bijdragers, kaart via OpenFreeMap. 3D-figuren: Quat
 ## Kleuren
 
 In de app kies je via ✨ → Kleuren een donker Galaxy-thema of een licht pastelthema (lila, perzik, mint, hemel, roos). De keuze blijft bewaard op het toestel.
+
+## Welzijn
+✨ → **Welzijn** (of Profiel → Veiligheid): pauzemodus (24 u, 3 dagen, 1 week of tot je terugkomt, je chats blijven), welzijn-badges en een zelfzorg-zin (alleen op je profiel als je dat aanzet), een dagelijkse schermtijd-grens, een ademoefening van 1 minuut, tips en hulplijnen per land met findahelpline.com als reserve voor de rest van de wereld. Code: `welzijn.js`.
