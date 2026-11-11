@@ -100,7 +100,8 @@
   }
   const REASON = ['Lijkt minderjarig', 'Nepprofiel of oplichting', 'Intimidatie of bedreiging', 'Ongepaste foto of tekst', 'Vraagt geld of biedt seks tegen betaling', 'Iets anders'];
   const api = window.GLXNET = {
-    get state() { return state }, get uid() { return uid }, sync: syncProfile, poll,
+    get state() { return state }, get uid() { return uid }, get db() { return state === 'verbonden' ? sb : null }, sync: syncProfile, poll,
+    nameOf: id => { const c = matchList.find(x => x.id === id); return c ? c.name : '' },
     async wave() {
       if (!target || !sb) return; const w = await sb.from('waves').insert({ from_id: uid, to_id: target });
       if (w.error && w.error.code !== '23505') { console.error(w.error); return T('Zwaaien lukte niet') }
@@ -133,7 +134,7 @@
     document.querySelectorAll('#v-chat > h2').forEach((h, i) => { h.style.display = i === 0 ? 'none' : ''; if (i === 1) h.textContent = 'Matches en berichten' });
     cl.innerHTML = matchList.length ? matchList.map(c => `<button class="gmRow" style="width:100%;text-align:left;margin-bottom:8px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line);display:flex;gap:12px;align-items:center" onclick="GLXNET.chat('${esc(c.id)}')">
 <span style="flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:20px;background:linear-gradient(135deg,#8b5cf6,#ec4899)">${esc((c.name || '?')[0])}</span>
-<span style="flex:1;min-width:0"><b>${esc(c.name)}${c.age ? ', ' + c.age : ''}</b><br><small class="sub" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.last ? (c.last.sender === uid ? 'Jij: ' : '') + esc(c.last.body) : 'Jullie zwaaiden naar elkaar. Zeg hallo 👋'}</small></span>
+<span style="flex:1;min-width:0"><b>${esc(c.name)}${c.age ? ', ' + c.age : ''}</b><br><small class="sub" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.last ? (c.last.sender === uid ? 'Jij: ' : '') + esc(String(c.last.body).replace(/\s*\[#date:[0-9a-f-]{36}\]/gi, '')) : 'Jullie zwaaiden naar elkaar. Zeg hallo 👋'}</small></span>
 ${c.unread ? '<span style="flex:none;width:10px;height:10px;border-radius:50%;background:#ec4899"></span>' : ''}</button>`).join('')
       : '<div class="box"><p class="sub">Nog geen matches. Zwaai naar iemand in een zone op de kaart. Zwaait die terug, dan kunnen jullie hier chatten.</p></div>';
     const b = document.getElementById('chatDot'); if (b) { b.textContent = unread || ''; b.style.display = unread ? '' : 'none' }
@@ -143,13 +144,13 @@ ${c.unread ? '<span style="flex:none;width:10px;height:10px;border-radius:50%;ba
     const r = await sb.from('messages').select('id,sender,body,at').or(`and(sender.eq.${uid},to_id.eq.${o}),and(sender.eq.${o},to_id.eq.${uid})`).order('at', { ascending: true }).limit(300);
     if (r.error || chatWith !== o) return; const box = $('gcMsgs'); if (!box) return;
     const sig = (r.data || []).length + ':' + ((r.data || []).slice(-1)[0] || {}).id; if (box.dataset.sig === sig) return; box.dataset.sig = sig;
-    box.innerHTML = (r.data || []).length ? r.data.map(m => `<div style="display:flex;justify-content:${m.sender === uid ? 'flex-end' : 'flex-start'};margin:6px 0"><div style="max-width:78%;padding:9px 13px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere;background:${m.sender === uid ? 'linear-gradient(135deg,#8b5cf6,#ec4899)' : 'var(--card2)'}">${esc(m.body)}<small style="display:block;opacity:.7;font-size:10px;text-align:right;margin-top:2px">${hm(m.at)}</small></div></div>`).join('')
+    box.innerHTML = (r.data || []).length ? r.data.map(m => `<div style="display:flex;justify-content:${m.sender === uid ? 'flex-end' : 'flex-start'};margin:6px 0"><div style="max-width:78%;padding:9px 13px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere;background:${m.sender === uid ? 'linear-gradient(135deg,#8b5cf6,#ec4899)' : 'var(--card2)'}">${window.GLXDATE ? GLXDATE.tokens(esc(m.body)) : esc(m.body)}<small style="display:block;opacity:.7;font-size:10px;text-align:right;margin-top:2px">${hm(m.at)}</small></div></div>`).join('')
       : '<p class="sub" style="text-align:center;margin:30px 0">Nog geen berichten. Zeg hallo 👋</p>';
     box.scrollTop = box.scrollHeight; const l = (r.data || []).slice(-1)[0]; if (l) { lastSeen[o] = l.at; try { localStorage.glxSeenMsg = JSON.stringify(lastSeen) } catch (e) { } }
   }
   function openChat2(id) {
     const c = matchList.find(x => x.id === id); if (!c) return; chatWith = id; target = id;
-    xs('💬 ' + esc(c.name), `<div style="display:flex;gap:8px;margin-bottom:8px"><button class="pill" onclick="openProfile('${esc(id)}')">👤 Profiel</button><button class="pill" onclick="GLXNET.report()">🚩 Meld</button><button class="pill" onclick="GLXNET.block()">🚫 Blokkeer</button></div>
+    xs('💬 ' + esc(c.name), `<div style="display:flex;gap:8px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none"><button class="pill" onclick="GLXDATE.plan('${esc(id)}')" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);border-color:transparent">📅 Date</button><button class="pill" onclick="openProfile('${esc(id)}')">👤 Profiel</button><button class="pill" onclick="GLXNET.report()">🚩 Meld</button><button class="pill" onclick="GLXNET.block()">🚫 Blokkeer</button></div>
 <div id="gcMsgs" style="height:46vh;overflow-y:auto;padding:4px 2px"></div>
 <form onsubmit="event.preventDefault();GLXNET.sendMsg()" style="display:flex;gap:8px;margin-top:8px"><input id="gcIn" class="fld" maxlength="1000" autocomplete="off" placeholder="Typ een bericht" style="margin:0;flex:1 1 auto;min-width:0;width:auto"><button class="btn" type="submit" aria-label="Verstuur" style="flex:none;width:52px;padding:0">➤</button></form>
 <p class="sub" style="margin-top:8px;font-size:11px">🛡️ Deel geen adres, geld of bankgegevens. Spreek af op een openbare plek.</p>`, false);
