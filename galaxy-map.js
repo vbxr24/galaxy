@@ -148,6 +148,7 @@
     try { const l = JSON.parse(localStorage.glxLast || 'null'); if (l) { start = [l[0], l[1]]; z = l[2] } } catch (e) { }
     map = new maplibregl.Map({ container: 'glxMap', style: STYLE, center: start, zoom: z, pitch: 50, bearing: -12, maxPitch: 75, attributionControl: { compact: true }, dragRotate: true });
     map.touchZoomRotate.enableRotation();
+    try { let rz = 0; new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { try { map.resize() } catch (e) { } }, 80) }).observe(document.getElementById('glxMap')) } catch (e) { }
     map.on('load', () => { restyle(); addLayers(); refresh(); bar() });
     map.on('dragstart', () => { follow = false });
     map.on('sourcedata', e => { if (e.isSourceLoaded && e.sourceId !== 'stops' && e.sourceId !== 'heat' && e.sourceId !== 'range') { clearTimeout(poiT); poiT = setTimeout(refresh, 400) } });
