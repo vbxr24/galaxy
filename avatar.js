@@ -37,8 +37,10 @@
     if (THREE) return;
     if (!document.querySelector('script[type="importmap"]')) { const s = document.createElement('script'); s.type = 'importmap'; s.textContent = JSON.stringify({ imports: { three: THREE_URL + 'build/three.module.js', 'three/addons/': THREE_URL + 'examples/jsm/' } }); document.head.appendChild(s) }
     const T = await import('three'), L = await import('three/addons/loaders/GLTFLoader.js'), U = await import('three/addons/utils/SkeletonUtils.js');
+    try { RoomEnv = (await import('three/addons/environments/RoomEnvironment.js')).RoomEnvironment; creased = (await import('three/addons/utils/BufferGeometryUtils.js')).toCreasedNormals } catch (e) { }
     THREE = T; GLTFLoader = L.GLTFLoader; cloneSkinned = U.clone;
   }
+  let RoomEnv = null, creased = null;
   const cache = new Map();
   function gltf(file) { if (!cache.has(file)) { const p = new GLTFLoader().loadAsync(BASE + file + '.glb'); p.catch(() => cache.delete(file)); cache.set(file, p) } return cache.get(file) }
 
@@ -48,7 +50,9 @@
     const root = cloneSkinned(g.scene), mats = {};
     root.traverse(o => {
       if (!o.isMesh) return; o.castShadow = true; o.frustumCulled = false;
-      const one = m => { if (!mats[m.name]) { mats[m.name] = m.clone(); mats[m.name].userData.base = m.color.getHex(); mats[m.name].roughness = Math.max(.55, m.roughness); mats[m.name].metalness = 0 } return mats[m.name] };
+      if (creased && !o.geometry.userData.glxSmooth) { try { const src = o.geometry, g2 = creased(src, Math.PI * .34); g2.userData.glxSmooth = 1; src.userData.glxAlt = g2 } catch (e) { o.geometry.userData.glxSmooth = 1 } }
+      if (o.geometry.userData.glxAlt) o.geometry = o.geometry.userData.glxAlt;
+      const one = m => { if (!mats[m.name]) { mats[m.name] = m.clone(); mats[m.name].userData.base = m.color.getHex(); const mm = mats[m.name]; mm.flatShading = false; mm.metalness = 0; mm.roughness = /skin/i.test(m.name) ? .62 : /hair|shoe|black|belt/i.test(m.name) ? .5 : .78; mm.envMapIntensity = .55; mm.needsUpdate = true } return mats[m.name] };
       o.material = Array.isArray(o.material) ? o.material.map(one) : one(o.material);
     });
     /* op de grond zetten en op 1,7 hoog schalen (gemeten op het skelet) */
@@ -70,15 +74,17 @@
 
   function makeScene(transparent) {
     const scene = new THREE.Scene();
-    scene.add(new THREE.HemisphereLight('#ffffff', '#3a2a66', 1.5));
-    const key = new THREE.DirectionalLight('#fff4ea', 2.0); key.position.set(2.5, 4, 3.5); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); key.shadow.camera.near = .5; key.shadow.camera.far = 12; scene.add(key);
-    const rim1 = new THREE.DirectionalLight('#ff5fb4', .9); rim1.position.set(-3, 2.5, -2.5); scene.add(rim1);
-    const rim2 = new THREE.DirectionalLight('#38d4f0', .7); rim2.position.set(3, 1.5, -3); scene.add(rim2);
+    scene.add(new THREE.HemisphereLight('#ffffff', '#4a3a7a', RoomEnv ? .55 : 1.5));
+    const key = new THREE.DirectionalLight('#fff1e0', RoomEnv ? 2.4 : 2.0); key.position.set(2.2, 4.2, 3.6); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.camera.near = .5; key.shadow.camera.far = 12; key.shadow.radius = 5; key.shadow.bias = -.0004; key.shadow.normalBias = .02; scene.add(key);
+    const fill = new THREE.DirectionalLight('#cfd8ff', .5); fill.position.set(-2.5, 1.5, 3); scene.add(fill);
+    const rim1 = new THREE.DirectionalLight('#ff5fb4', 1.5); rim1.position.set(-3, 2.5, -2.8); scene.add(rim1);
+    const rim2 = new THREE.DirectionalLight('#38d4f0', 1.2); rim2.position.set(3, 1.8, -3); scene.add(rim2);
+    scene.userData.env = r => { if (!RoomEnv || scene.environment) return; try { const pm = new THREE.PMREMGenerator(r); scene.environment = pm.fromScene(new RoomEnv(), .04).texture; pm.dispose() } catch (e) { } };
     const sh = new THREE.Mesh(new THREE.CircleGeometry(transparent ? .45 : .8, 48), new THREE.ShadowMaterial({ opacity: .4 })); sh.rotation.x = -Math.PI / 2; sh.receiveShadow = true; scene.add(sh);
     if (!transparent) { const ring = new THREE.Mesh(new THREE.RingGeometry(.62, .7, 64), new THREE.MeshBasicMaterial({ color: '#a78bfa', transparent: true, opacity: .45 })); ring.rotation.x = -Math.PI / 2; ring.position.y = .002; scene.add(ring) }
     return scene;
   }
-  function newRenderer(w, h, keep) { const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: !!keep }); r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); r.setSize(w, h, false); r.outputColorSpace = THREE.SRGBColorSpace; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; return r }
+  function newRenderer(w, h, keep) { const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: !!keep }); r.setPixelRatio(Math.min(3, devicePixelRatio || 1)); r.setSize(w, h, false); r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.12; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap; return r }
 
   /* ===================== maker-scherm ===================== */
   let renderer, scene, cam, fig, raf, spin = -0.4, drag = null, previewWalk = false, waveT = 0, busy = 0;
@@ -137,7 +143,7 @@
   }
   async function start() {
     await lib();
-    if (!renderer) { renderer = newRenderer(340, 330, true); scene = makeScene(false); cam = new THREE.PerspectiveCamera(28, 1, .1, 50) }
+    if (!renderer) { renderer = newRenderer(340, 330, true); scene = makeScene(false); scene.userData.env(renderer); cam = new THREE.PerspectiveCamera(28, 1, .1, 50) }
     const stg = $('avStage'); if (renderer.domElement.parentNode !== stg) stg.prepend(renderer.domElement);
     const fit = () => { const w = stg.clientWidth || 340, h = stg.clientHeight || 330; if (renderer.domElement.width !== Math.round(w * renderer.getPixelRatio())) { renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix() } };
     fit(); cancelAnimationFrame(raf); let last = performance.now();
@@ -154,7 +160,7 @@
     try {
       const sc = makeScene(true), r = newRenderer(256, 256, true), c = new THREE.PerspectiveCamera(26, 1, .1, 50), old = fig.root.rotation.y, par = fig.root.parent;
       r.setPixelRatio(1); r.setSize(256, 256, false); sc.add(fig.root); fig.root.rotation.y = .35; c.position.set(0, .98, 5.1); c.lookAt(0, .86, 0);
-      r.render(sc, c); const url = r.domElement.toDataURL('image/png'); fig.root.rotation.y = old; if (par) par.add(fig.root); r.dispose(); return url;
+      sc.userData.env(r); r.render(sc, c); const url = r.domElement.toDataURL('image/png'); fig.root.rotation.y = old; if (par) par.add(fig.root); r.dispose(); return url;
     } catch (e) { return null }
   }
 
@@ -163,7 +169,7 @@
   async function mapRebuild() { const my = ++mapBusy, f = await figure(A); if (my !== mapBusy) return; if (mapFig) mapScene.remove(mapFig.root); mapFig = f; mapScene.add(f.root); f.play(mapState.walk ? 'Walk' : 'Idle') }
   async function mapAvatar() {
     await lib();
-    if (!mapR) { mapR = newRenderer(130, 190, false); mapScene = makeScene(true); mapCam = new THREE.PerspectiveCamera(22, 130 / 190, .1, 50); mapR.domElement.style.cssText = 'width:130px;height:190px;display:block;pointer-events:none' }
+    if (!mapR) { mapR = newRenderer(130, 190, false); mapScene = makeScene(true); mapScene.userData.env(mapR); mapCam = new THREE.PerspectiveCamera(22, 130 / 190, .1, 50); mapR.domElement.style.cssText = 'width:130px;height:190px;display:block;pointer-events:none' }
     await mapRebuild();
     cancelAnimationFrame(mapRaf); let last = performance.now();
     const loop = now => {

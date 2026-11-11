@@ -653,7 +653,7 @@ function renderProfExtra(){const B=[['first','Eerste match 💘',S.matches.lengt
 `}
 
 /* ---------- HUB ---------- */
-const HUB=[["🎰","Dagelijks rad","wheel()"],["💌","Complimenten","compliments()"],["💬","Openingszin-battle","battle()"],["👥","Groepen","groups()"],["🎉","Events","events()"],["👯","Dubbel-date","double()"],["🧭","Zwerver","wander()"],["🌍","Reismodus","travel()"],["🌙","Nachtmodus","night()"],["🧩","Match-quiz","quiz(0)"],["🎨","Thema","themes()"],["💎","Spotlight","spotlight()"],["🎤","Audio rooms","closeO('xV');go('live');liveTab(document.querySelectorAll('#v-live .seg button')[3],'audio')"],["👣","Gekruiste paden","closeO('xV');go('map');mapFilter('crossed')"],["🏆","Ranking","closeO('xV');go('feed')"]];
+const HUB=[["🎰","Dagelijks rad","wheel()"],["💌","Complimenten","compliments()"],["💬","Openingszin-battle","battle()"],["👥","Groepen","groups()"],["🎉","Events","events()"],["👯","Dubbel-date","double()"],["🧭","Zwerver","wander()"],["🌍","Reismodus","travel()"],["🌙","Nachtmodus","night()"],["🧩","Match-quiz","quiz(0)"],["🎨","Kleuren","themes()"],["💎","Spotlight","spotlight()"],["🎤","Audio rooms","closeO('xV');go('live');liveTab(document.querySelectorAll('#v-live .seg button')[3],'audio')"],["👣","Gekruiste paden","closeO('xV');go('map');mapFilter('crossed')"],["🏆","Ranking","closeO('xV');go('feed')"]];
 function openHub(){xs('✨ Galaxy Extra',`<div class="tiles">${HUB.map(h=>`<button class="tile" onclick="${h[2]}"><span>${h[0]}</span>${h[1]}</button>`).join('')}</div>`,false)}
 let rot=0;
 function wheel(){const pr=["🪙 10","⭐ Super like","🪙 50","🚀 Boost","🪙 25","💎 Spotlight"];
@@ -1528,7 +1528,7 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
  if(typeof saveProfile==='function'){const sp=saveProfile;saveProfile=function(){const r=sp.apply(this,arguments);saveMe();return r}}
  try{applyMe()}catch(e){}
  try{if(localStorage.glxGhost)$('ghostTg').classList.add('on')}catch(e){}
- const KEEP=/^(Groepen|Events|Thema|Nachtmodus)$/;if(typeof HUB!=='undefined')for(let k=HUB.length-1;k>=0;k--)if(!KEEP.test(HUB[k][1]))HUB.splice(k,1);
+ const KEEP=/^(Groepen|Events|Kleuren|Nachtmodus)$/;if(typeof HUB!=='undefined')for(let k=HUB.length-1;k>=0;k--)if(!KEEP.test(HUB[k][1]))HUB.splice(k,1);
  function age(d){const b=new Date(d),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
  window.welcomeGo=function(){const n=$('wN').value.trim(),d=$('wD').value,ok=$('wOk').checked,e=$('wErr');
   if(n.length<2)return e.textContent='Vul je voornaam in.';if(!d)return e.textContent='Vul je geboortedatum in.';
@@ -1557,7 +1557,7 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
 })();
 </script>
 <script src="theme.js?v=15"></script>
-<script src="galaxy-map.js?v=18"></script>
-<script src="avatar.js?v=15"></script><script src="profile.js?v=15"></script><script src="backend.js?v=17"></script><script src="a11y.js?v=17"></script>
+<script src="galaxy-map.js?v=19"></script>
+<script src="avatar.js?v=19"></script><script src="profile.js?v=15"></script><script src="backend.js?v=17"></script><script src="a11y.js?v=17"></script><script src="looks.js?v=19"></script>
 </body>
 </html>

@@ -154,7 +154,7 @@
     map.touchZoomRotate.enableRotation();
     try { let rz = 0; new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { try { map.resize() } catch (e) { } }, 80) }).observe(document.getElementById('glxMap')) } catch (e) { }
     const avScale = () => { const z = map.getZoom(); map.getContainer().style.setProperty('--avS', Math.max(.2, Math.min(1, (z - 8) / 8)).toFixed(3)) }; map.on('zoom', avScale); avScale();
-    map.on('load', () => { restyle(); addLayers(); refresh(); bar() });
+    map.on('load', () => { restyle(); addLayers(); restyle(); refresh(); bar() });
     map.on('dragstart', () => { follow = false });
     map.on('sourcedata', e => { if (e.isSourceLoaded && e.sourceId !== 'stops' && e.sourceId !== 'heat' && e.sourceId !== 'range') { clearTimeout(poiT); poiT = setTimeout(refresh, 400) } });
     map.on('moveend', () => { try { const c = map.getCenter(); localStorage.glxLast = JSON.stringify([c.lng, c.lat, map.getZoom()]) } catch (e) { } refresh() });
@@ -164,7 +164,10 @@
 
   /* Galaxy-stijl: donkerpaars, gloeiende wegen, 3D-gebouwen */
   function restyle() {
-    const set = (id, p, v) => { try { map.setPaintProperty(id, p, v) } catch (e) { } };
+    const light = !!(window.GLXLOOK && GLXLOOK.light());
+    const LM = { '#0a0820': '#f3eefb', '#0d1d44': '#bcdcf7', '#1c1642': '#e6dcf5', '#0f1d2b': '#cdeedb', '#16132f': '#f7efe0', '#110d29': '#f0eaf8', '#173a74': '#9cc7ee', '#7c3aed': '#a78bfa', '#0b0720': '#ffffff', '#3a2f6e': '#cbc0e8', '#e879f9': '#f0a5d8', '#c084fc': '#d6b8f8', '#8b5cf6': '#c7b6f2', '#4c3f8f': '#ffffff', '#3d3474': '#e2d9f3', '#221a4f': '#ece4f8', '#3b2a86': '#dccdf4', '#6d4bd8': '#c9b3f1', '#f5f3ff': '#2a2350', '#b7aee8': '#6b6396', '#7fb2ff': '#2f6fbd', '#cfc7f5': '#4a4273', '#07061a': '#ffffff', '#140f3a': '#dcd3f7', '#3b1d6e': '#f7dcec' };
+    const tr = v => !light ? v : typeof v === 'string' ? (LM[v] || v) : Array.isArray(v) ? v.map(tr) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, tr(x)])) : v;
+    const set = (id, p, v) => { try { map.setPaintProperty(id, p, tr(v)) } catch (e) { } };
     map.getStyle().layers.forEach(l => {
       const id = l.id, t = l.type;
       if (t === 'background') set(id, 'background-color', '#0a0820');
@@ -197,7 +200,11 @@
     if (!map.getStyle().layers.some(l => l.type === 'fill-extrusion') && map.getSource('openmaptiles')) {
       try { map.addLayer({ id: 'glx-3d', type: 'fill-extrusion', source: 'openmaptiles', 'source-layer': 'building', minzoom: 14, paint: { 'fill-extrusion-color': ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 8], 0, '#221a4f', 25, '#3b2a86', 80, '#6d4bd8', 200, '#c084fc'], 'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 8], 'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0], 'fill-extrusion-opacity': .88 } }, firstSymbol()) } catch (e) { }
     }
-    try { map.setSky && map.setSky({ 'sky-color': '#140f3a', 'horizon-color': '#3b1d6e', 'fog-color': '#0a0820', 'sky-horizon-blend': .6, 'horizon-fog-blend': .5, 'fog-ground-blend': .4 }) } catch (e) { }
+    try { map.setSky && map.setSky(tr({ 'sky-color': '#140f3a', 'horizon-color': '#3b1d6e', 'fog-color': '#0a0820', 'sky-horizon-blend': .6, 'horizon-fog-blend': .5, 'fog-ground-blend': .4 })) } catch (e) { }
+    ['gm-stops-l', 'gm-small-l', 'gm-labels', 'gm-names'].forEach(id => set(id, 'text-halo-color', '#07061a'));
+    map.getStyle().layers.forEach(l => { if (/^gm-/.test(l.id) && l.type === 'symbol') set(l.id, 'text-halo-color', '#07061a') });
+    try { map.setPaintProperty('gm-heat', 'heatmap-color', ['interpolate', ['linear'], ['heatmap-density'], 0, 'rgba(0,0,0,0)', .15, light ? 'rgba(168,85,247,.35)' : 'rgba(76,29,149,.55)', .4, light ? '#c026d3' : '#a21caf', .65, '#ec4899', .85, light ? '#e11d74' : '#fda4af', 1, light ? '#9d174d' : '#ffffff']) } catch (e) { }
+    try { map.setPaintProperty('gm-small', 'circle-stroke-color', light ? '#ffffff' : '#0a0820') } catch (e) { }
   }
   const firstSymbol = () => (map.getStyle().layers.find(l => l.type === 'symbol') || {}).id;
   const fc = (f = []) => ({ type: 'FeatureCollection', features: f });
@@ -527,7 +534,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
   }
 
   /* ---------- koppelen aan de app ---------- */
-  window.GLXMAP = { legend: () => xs('📍 Soorten plekken', Object.values(CAT).map(c => `<div class="gmRow"><span><span style="color:${c[0]}">●</span> ${c[1]} ${c[2]}</span></div>`).join('') + '<p class="sub" style="margin-top:8px">Cafés en restaurants verschijnen als je inzoomt tot op straatniveau.</p>'), locate: () => locate(), checkin, checkout, group, avatar: () => openAvatar(), saveGroup, fly: (lng, lat) => { try { closeO('xV') } catch (e) { } map && map.flyTo({ center: [lng, lat], zoom: 17, pitch: 55 }) }, power: openPower, state: G, _venues: venues, _map: () => map, _me: () => me, _center: () => { const c = map && map.getCenter(); return c ? { lat: c.lat, lng: c.lng } : null }, passenger() { try { sessionStorage.glxPass = Date.now() } catch (e) { } const l = document.getElementById('gmDrive'); if (l) l.remove(); T('👍 Veilige rit. Als passagier kun je verder.') }, _speed: speedCheck, _setMe: (lat, lng) => { me = { lat, lng }; onMe() } };
+  window.GLXMAP = { legend: () => xs('📍 Soorten plekken', Object.values(CAT).map(c => `<div class="gmRow"><span><span style="color:${c[0]}">●</span> ${c[1]} ${c[2]}</span></div>`).join('') + '<p class="sub" style="margin-top:8px">Cafés en restaurants verschijnen als je inzoomt tot op straatniveau.</p>'), locate: () => locate(), checkin, checkout, group, avatar: () => openAvatar(), saveGroup, fly: (lng, lat) => { try { closeO('xV') } catch (e) { } map && map.flyTo({ center: [lng, lat], zoom: 17, pitch: 55 }) }, power: openPower, state: G, _venues: venues, _map: () => map, restyle: () => { try { if (map && map.isStyleLoaded()) restyle() } catch (e) { } }, _me: () => me, _center: () => { const c = map && map.getCenter(); return c ? { lat: c.lat, lng: c.lng } : null }, passenger() { try { sessionStorage.glxPass = Date.now() } catch (e) { } const l = document.getElementById('gmDrive'); if (l) l.remove(); T('👍 Veilige rit. Als passagier kun je verder.') }, _speed: speedCheck, _setMe: (lat, lng) => { me = { lat, lng }; onMe() } };
   const og = window.go;
   /* Galaxy is een live kaart-app: geen swipen meer, de kaart is het startscherm */
   window.go = function (v) { if (v === 'discover') v = 'map'; const r = og.call(this, v); if (v === 'map') setTimeout(init, 30); return r };
