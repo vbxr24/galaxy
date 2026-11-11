@@ -78,7 +78,10 @@
 #gmBar{position:absolute;left:10px;right:10px;bottom:10px;z-index:5;padding:9px 12px;border-radius:14px;background:rgba(14,11,38,.88);border:1px solid rgba(167,139,250,.3);font-size:12.5px;color:#d9d4ff;backdrop-filter:blur(8px);display:flex;align-items:center;gap:8px}
 #gmBar b{color:#fff}#gmBar button{margin-left:auto;padding:6px 10px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#ec4899);font-size:12px;white-space:nowrap}
 #gmLegend{position:absolute;left:10px;bottom:58px;z-index:5;display:none;padding:7px 10px;border-radius:12px;background:rgba(14,11,38,.85);font-size:11px;color:#cfc9f5}
-#gmLegend.on{display:block}#gmLegend span{display:inline-block;width:110px;height:7px;border-radius:4px;vertical-align:middle;margin:0 6px;background:linear-gradient(90deg,#3b0764,#a21caf,#ec4899,#fff)}
+#gmLegend.on{display:block}
+.gmLive{display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:99px;background:rgba(6,40,30,.92);border:1px solid #34d399;color:#d1fae5;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5);white-space:nowrap}
+.gmLive i{width:8px;height:8px;border-radius:50%;background:#34d399;animation:gmPulse 1.6s infinite}.gmLive.pl{background:rgba(40,20,6,.92);border-color:#fbbf24;color:#fef3c7;padding:3px 7px}
+@keyframes gmPulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.7)}100%{box-shadow:0 0 0 9px rgba(52,211,153,0)}}#gmLegend span{display:inline-block;width:110px;height:7px;border-radius:4px;vertical-align:middle;margin:0 6px;background:linear-gradient(90deg,#3b0764,#a21caf,#ec4899,#fff)}
 .gmItem{width:42px;height:42px;display:grid;place-items:center;font-size:26px;cursor:pointer;border-radius:50%;animation:gmBob 2.4s ease-in-out infinite;filter:drop-shadow(0 0 8px var(--c,#a78bfa))}
 .gmItem.far{opacity:.55;filter:drop-shadow(0 0 4px var(--c,#a78bfa)) grayscale(.3)}
 @keyframes gmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
@@ -125,7 +128,7 @@
  <div class="gmChips"><button data-m="heat" class="on">🔥 Drukte</button><button data-m="stops">📍 Plekken</button><button data-m="groups">👥 Groepsdates</button></div>
  <div class="gmIntents on"><button data-i="all" class="on">Alles</button><button data-i="student">🎓 Studenten</button><button data-i="night">🍸 Uitgaan</button><button data-i="chill">☕ Rustig daten</button><button data-i="spicy">🌶️ Spicy</button></div>
  <div class="gmSide"><button id="gmLoc" title="Mijn locatie">◎</button><button id="gm3d" title="3D">3D</button><button id="gmAvBtn" title="Mijn mannetje">🧍</button><button id="gmPow" title="Power-ups">⚡</button></div>
- <div id="gmLegend">Verwachte drukte<span></span>druk</div>
+ <div id="gmLegend">Verwachte drukte<span></span>druk<br><b style="color:#34d399">●</b> groen = live aantal leden</div>
  <div id="gmBar">🌍 De kaart laadt…</div>
 </div>`);
     v.querySelectorAll('.gmChips button').forEach(b => b.onclick = () => setMode(b.dataset.m));
@@ -292,6 +295,7 @@ ${busyLabel(v) ? `<p style="margin:10px 0">${busyLabel(v)}</p>` : ''}
 ${mixHtml(v.lat, v.lng)}
 <div class="gmRow"><span>Afstand</span><b>${d == null ? 'zet je locatie aan' : d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(1) + ' km'}</b></div>
 <div class="gmRow"><span>Galaxy-leden hier nu</span><b>${peopleNear(v.lat, v.lng, 150).length || 'nog niemand'}</b></div>
+<div class="gmRow"><span>Nu ingecheckt (live)</span><b>${(live.busy && live.busy.places && live.busy.places[v.id]) || 0}</b></div>
 <p class="sub" style="margin-top:6px">Wie hier ook incheckt, ziet 2 uur lang je profiel. Je exacte locatie blijft verborgen.</p>
 <br>${cooldown(v) ? `<button class="btn ghost" style="width:100%" onclick="GLXMAP.checkout('${id}')">✔️ Ingecheckt · tik om uit te checken</button>` :
       inR || remote ? `<button class="btn" style="width:100%" onclick="GLXMAP.checkin('${id}',${remote ? 1 : 0})">${remote ? '🛰️ Check in op afstand (Cosmic, 1× per dag)' : '📍 Check hier in'}</button>` :
@@ -322,7 +326,7 @@ ${mixHtml(v.lat, v.lng)}
   function openZone(lat, lng) {
     const m = mixAt(lat, lng), ppl = peopleNear(lat, lng, 400), h = new Date().getHours();
     xs('🔥 Deze zone', `${m ? '' : '<p class="sub">Hier zijn weinig uitgaans- of studentenplekken.</p>'}${mixHtml(lat, lng)}
-<div class="gmRow"><span>Galaxy-leden hier nu</span><b>${ppl.length || 'nog niemand'}</b></div>
+<div class="gmRow"><span>Galaxy-leden hier nu</span><b>${liveAt(lat, lng) ? '🟢 ' + liveAt(lat, lng) + ' live' : ppl.length || 'nog niemand'}</b></div>
 ${pw().fc ? `<div class="gmRow"><span>Later vanavond</span><b>${h < 21 ? '🔥 drukker verwacht vanaf 22u' : h < 2 ? '🔥 piek nu tot ±2u' : 'rustig'}</b></div>` : `<p class="sub" style="margin-top:6px">Met Gold zie je ook de voorspelling voor later op de avond.</p>`}`);
   }
   function checkin(id, remote) {
@@ -331,7 +335,7 @@ ${pw().fc ? `<div class="gmRow"><span>Later vanavond</span><b>${h < 21 ? '🔥 d
     G.checkins = {}; G.checkins[id] = Date.now(); G.nCheck = (G.nCheck || 0) + 1; save(); drawStops(); live.send && live.send({ t: 'checkin', place: id });
     xs('📍 Ingecheckt bij ' + esc(v.n), `<p>Wie hier ook incheckt, ziet de komende 2 uur je profiel. Je exacte locatie blijft verborgen.</p><br><button class="btn" style="width:100%" onclick="closeO('xV')">Top</button>`);
   }
-  function checkout(id) { delete G.checkins[id]; save(); drawStops(); try { closeO('xV') } catch (e) { } T('Uitgecheckt') }
+  function checkout(id) { delete G.checkins[id]; save(); drawStops(); live.send && live.send({ t: 'checkout', place: id }); try { closeO('xV') } catch (e) { } T('Uitgecheckt') }
 
   /* ---------- groepsdates ---------- */
   function group(id) {
@@ -447,6 +451,26 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
   const ZONE = 0.003;
   const live = window.GLXLIVE = window.GLXLIVE || { people: [], send() { }, on: null };
   live.on = () => { drawPeople(); bar() };
+  /* live drukte: echte aantallen van de server (zones vanaf 3 leden, check-ins per plek) */
+  let bMarkers = [];
+  function drawBusy() {
+    bMarkers.forEach(m => m.remove()); bMarkers = [];
+    const b = live.busy; if (!map || !b || map.getZoom() < 12) return;
+    (b.zones || []).forEach(z => {
+      const el = document.createElement('div'); el.className = 'gmLive'; el.innerHTML = `<i></i><b>${z.n}</b> nu`; el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', z.n + ' leden nu in deze zone');
+      el.onclick = e => xs('🟢 Live drukte', `<p><b>${z.n} leden</b> zijn nu in deze zone (±300 m).</p><p class="sub" style="margin-top:8px">Dit getal is live en ververst elke 15 seconden. Je ziet alleen het aantal. Wie er zit, zie je pas na 15 minuten: zo kan niemand een ander live volgen.</p>`);
+      hush(el); bMarkers.push(new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([z.lng, z.lat]).addTo(map));
+    });
+    if (map.getZoom() >= 13.5) Object.keys(b.places || {}).forEach(id => {
+      const v = venues.get(id), n = b.places[id]; if (!v || !n) return;
+      const el = document.createElement('div'); el.className = 'gmLive pl'; el.innerHTML = `📍<b>${n}</b>`; el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', n + ' ingecheckt bij ' + (v.n || 'deze plek'));
+      el.onclick = () => xs('📍 ' + esc(v.n || 'Plek'), `<p><b>${n}</b> ${n === 1 ? 'lid is' : 'leden zijn'} hier de laatste 2 uur ingecheckt.</p><p class="sub" style="margin-top:8px">Live getal. Check zelf in om te zien wie er is.</p>`);
+      hush(el); bMarkers.push(new maplibregl.Marker({ element: el, anchor: 'bottom', offset: [0, -18] }).setLngLat([v.lng, v.lat]).addTo(map));
+    });
+  }
+  function liveAt(lat, lng) { const b = live.busy; let n = 0; if (b && b.zones) b.zones.forEach(z => { if (dist(lat, lng, z.lat, z.lng) <= 350) n += z.n }); return n }
+  function hush(el) { ['pointerdown', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'click', 'dblclick'].forEach(k => el.addEventListener(k, e => e.stopPropagation())) }
+  function liveCount() { const b = live.busy; if (!b || !b.ok || !map) return null; const bb = map.getBounds(); let n = 0; (b.zones || []).forEach(z => { if (bb.contains([z.lng, z.lat])) n += z.n }); return n }
   const snap = (lat, lng) => [(Math.floor(lat / ZONE) + .5) * ZONE, (Math.floor(lng / (ZONE * 1.5)) + .5) * ZONE * 1.5];
   const blocked = id => window.S && S.blocked && S.blocked.includes(id);
   function visible() { return (live.people || []).filter(p => p && p.zone && !blocked(p.id) && p.online !== false) }
@@ -454,6 +478,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
   function peopleInView() { if (!map) return 0; const b = map.getBounds(); return visible().filter(p => b.contains([p.zone[1], p.zone[0]])).length }
   let pMarkers = [];
   function drawPeople() {
+    drawBusy();
     pMarkers.forEach(m => m.remove()); pMarkers = [];
     if (!map || map.getZoom() < 12) return;
     const groups = {}; visible().forEach(p => { const z = snap(p.zone[0], p.zone[1]), k = z.join(); (groups[k] = groups[k] || { z, list: [] }).list.push(p) });
@@ -494,7 +519,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     if (z < 13.5) { e.innerHTML = '🔍 Zoom in op een stad of buurt om drukte, plekken en mensen te zien'; return }
     const ppl = n ? `👥 <b>${n}</b> ${n === 1 ? 'lid' : 'leden'} in beeld` : '👥 Nog niemand in de buurt';
     if (!me) { e.innerHTML = `${ppl} · 📍 <button onclick="GLXMAP.locate()">Zet locatie aan</button>`; return }
-    if (mode === 'heat') { e.innerHTML = `${ppl} · 🔥 <span>Tik op een zone om te zien wie er zit</span>${loading ? ' · laden…' : ''}`; return }
+    if (mode === 'heat') { const lc = liveCount(); e.innerHTML = `<span>${lc ? `🟢 <b>${lc}</b> leden nu live in beeld` : lc === 0 ? '🟢 Live: nog te weinig leden hier. Je ziet de verwachte drukte.' : ppl}${n ? ' · Tik op een poppetje om te zien wie er zit' : ''}${loading ? ' · laden…' : ''}</span>`; return }
     let s = 0; venues.forEach(v => { if (isStop(v) && v.n && inView(v)) s++ });
     e.innerHTML = `${ppl} · 📍 <b>${s}</b> plekken${loading ? ' · laden…' : ''} <button onclick="GLXMAP.legend()">Kleuren</button>`;
   }

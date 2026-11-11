@@ -8,7 +8,7 @@
   const LIB = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
   const Z = 0.003, T = m => { try { toast(m) } catch (e) { } }, $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  let sb = null, uid = null, state = 'uit', lastZone = '', lastSent = 0, pollT = null, target = null;
+  let sb = null, uid = null, state = 'uit', lastZone = '', lastSent = 0, pollT = null, target = null, lastPos = null, busyT = null, rtCh = null;
   const st = s => { state = s; try { localStorage.glxNet = s } catch (e) { } window.dispatchEvent(new CustomEvent('glx-net', { detail: s })) };
   const ghost = () => { try { return !!localStorage.glxGhost } catch (e) { return false } };
   const cut = (s, n) => (s == null ? null : String(s).slice(0, n));
@@ -42,7 +42,7 @@
   async function sendZone(lat, lng) {
     if (!sb || !uid || state !== 'verbonden' || ghost()) return;
     const zlat = Math.round(lat / Z) * Z, zlng = Math.round(lng / Z) * Z, k = zlat.toFixed(4) + ',' + zlng.toFixed(4), now = Date.now();
-    if (k === lastZone && now - lastSent < 10 * 60e3) return; if (now - lastSent < 20e3) return;
+    lastPos = [lat, lng]; if (k === lastZone && now - lastSent < 2 * 60e3) return; if (now - lastSent < 20e3) return;
     lastZone = k; lastSent = now;
     const { error } = await sb.rpc('set_presence', { lat: zlat, lng: zlng }); if (error) console.error('zone', error);
   }
@@ -60,6 +60,27 @@
       (p.data || []).forEach(c => { if (c && c.id) people.push({ id: c.id, name: c.name, age: c.age, intent: cat[c.cat] || '', zone: zz, card: c }) });
     }
     const L = window.GLXLIVE; if (L) { L.people = people; if (L.on) L.on() }
+  }
+
+  /* ---------- live drukte: alleen aantallen, elke 15 seconden ---------- */
+  async function busy() {
+    if (!sb || !uid || state !== 'verbonden' || document.hidden) return;
+    let c = null; try { c = GLXMAP._center && GLXMAP._center() } catch (e) { } if (!c) c = window.GLXMAP && GLXMAP._me && GLXMAP._me(); if (!c) return;
+    const [z, pl] = await Promise.all([sb.rpc('busy_near', { lat: c.lat, lng: c.lng }), sb.rpc('places_busy', { lat: c.lat, lng: c.lng })]);
+    const L = window.GLXLIVE; if (!L) return;
+    if (z.error || pl.error) { L.busy = { zones: [], places: {}, ok: false, at: Date.now() }; if (L.on) L.on(); return }
+    const places = {}; (pl.data || []).forEach(r => places[r.place_id] = Number(r.n));
+    L.busy = { zones: (z.data || []).map(r => ({ lat: r.zlat, lng: r.zlng, n: Number(r.n) })), places, ok: true, at: Date.now() }; if (L.on) L.on();
+  }
+  async function checkIn(id) {
+    if (!sb || !uid || state !== 'verbonden' || ghost()) return; let v = null; try { v = GLXMAP._venues.get(id) } catch (e) { } if (!v) return;
+    await sb.from('checkins').delete().eq('user_id', uid);
+    const r = await sb.from('checkins').insert({ user_id: uid, place_id: String(id).slice(0, 80), place_name: String(v.n || 'Plek').slice(0, 120), plat: v.lat, plng: v.lng }); if (r.error) console.error('checkin', r.error); busy();
+  }
+  async function checkOut() { if (!sb || !uid) return; await sb.from('checkins').delete().eq('user_id', uid); busy() }
+  function realtime() {
+    try { if (rtCh) sb.removeChannel(rtCh) } catch (e) { }
+    try { rtCh = sb.channel('glx-msg-' + uid).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'to_id=eq.' + uid }, () => { loadMsgs(); loadMatches() }).subscribe() } catch (e) { console.error('realtime', e) }
   }
 
   /* ---------- profielkaart van een ander ---------- */
@@ -146,12 +167,13 @@ ${c.unread ? '<span style="flex:none;width:10px;height:10px;border-radius:50%;ba
     window.addEventListener('glx-avatar', later);
     document.addEventListener('click', e => { if (e.target && e.target.id === 'ghostTg') setTimeout(syncProfile, 300) });
     const L = window.GLXLIVE = window.GLXLIVE || { people: [], send() { }, on: null }, snd = L.send;
-    L.send = function (m) { try { snd && snd.apply(this, arguments) } catch (e) { } if (m && m.t === 'pos') sendZone(m.lat, m.lng); if (m && (m.t === 'avatar' || m.t === 'cat')) later() };
+    L.send = function (m) { try { snd && snd.apply(this, arguments) } catch (e) { } if (m && m.t === 'pos') sendZone(m.lat, m.lng); if (m && m.t === 'checkin') checkIn(m.place); if (m && m.t === 'checkout') checkOut(); if (m && (m.t === 'avatar' || m.t === 'cat')) later() };
     if (window.GLXPROFILE) { GLXPROFILE.wave = () => api.wave(); GLXPROFILE.report = () => api.report() }
     window.openProfile = function (id) { if (typeof id === 'string' && id.length > 20) return openOther(id) };
     if (typeof window.reallyDelete === 'function') { const rd = window.reallyDelete; window.reallyDelete = async function () { await api.wipe(); return rd.apply(this, arguments) } }
     if (typeof window.renderChats === 'function') { const rc = window.renderChats; window.renderChats = function () { const r = rc.apply(this, arguments); if (state === 'verbonden') { drawMatches(matchList.filter(c => c.unread).length); loadMatches() } return r } }
-    clearInterval(pollT); pollT = setInterval(() => { poll(); loadMatches() }, 60e3); document.addEventListener('visibilitychange', () => { if (!document.hidden) poll() });
+    clearInterval(pollT); pollT = setInterval(poll, 60e3); document.addEventListener('visibilitychange', () => { if (!document.hidden) { poll(); busy(); loadMatches() } });
+    clearInterval(busyT); let tick = 0; busyT = setInterval(() => { tick++; busy(); loadMatches(); if (tick % 8 === 0 && lastPos && !document.hidden) sendZone(lastPos[0], lastPos[1]) }, 15e3);
   }
 
   async function start() {
@@ -160,7 +182,7 @@ ${c.unread ? '<span style="flex:none;width:10px;height:10px;border-radius:50%;ba
       await loadLib(); if (!sb) sb = window.supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } });
       let s = (await sb.auth.getSession()).data.session;
       if (!s) { const r = await sb.auth.signInAnonymously(); if (r.error) throw r.error; s = r.data.session }
-      uid = s.user.id; await syncProfile(); if (state === 'verbonden') { setTimeout(poll, 1500); setTimeout(loadMatches, 2500) }
+      uid = s.user.id; await syncProfile(); if (state === 'verbonden') { setTimeout(poll, 1500); setTimeout(busy, 2000); setTimeout(loadMatches, 2500); realtime() }
     } catch (e) { console.error('server', e); st('offline') }
   }
   hooks(); st('uit');
