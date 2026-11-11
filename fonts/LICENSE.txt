@@ -1,0 +1,4 @@
+Plus Jakarta Sans - Copyright 2020 The Plus Jakarta Sans Project Authors (https://github.com/tokotype/PlusJakartaSans)
+Syne - Copyright 2017 The Syne Project Authors (https://gitlab.com/bonjour-monde/fonderie/syne-typeface)
+Beide lettertypes: SIL Open Font License, versie 1.1 (https://openfontlicense.org).
+Bestanden via Fontsource (https://fontsource.org).
