@@ -89,12 +89,13 @@
 .gmMe.aura{background:#fbbf24;box-shadow:0 0 0 7px rgba(251,191,36,.25),0 0 24px #f472b6}
 .gmAv{position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center}
 .gmAv img{width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
-.gmAv.me img{width:76px;height:76px}
+.gmAv.me img{width:calc(76px*var(--avS,1));height:calc(76px*var(--avS,1))}
+.gmAv.live3d canvas{width:calc(130px*var(--avS,1))!important;height:calc(190px*var(--avS,1))!important}
 .gmAv.me:after{content:'';width:34px;height:10px;border-radius:50%;background:radial-gradient(rgba(34,211,238,.6),transparent 70%);margin-top:-6px}
 .gmAv.me.goud:after{background:radial-gradient(rgba(251,191,36,.55),transparent 70%);width:40px}
 .gmAv.me.aura{filter:drop-shadow(0 0 10px rgba(244,114,182,.9))}
 .gmAv.me.aura:after{background:radial-gradient(rgba(251,191,36,.8),transparent 70%);width:48px}
-.gmAv.live3d:after{margin-top:-22px;width:60px;height:16px}.gmAv.walk img{animation:gmWalk .45s ease-in-out infinite}.gmAv.walk.left img{transform:scaleX(-1)}
+.gmAv.live3d:after{margin-top:calc(-22px*var(--avS,1));width:calc(60px*var(--avS,1));height:calc(16px*var(--avS,1))}.gmAv.walk img{animation:gmWalk .45s ease-in-out infinite}.gmAv.walk.left img{transform:scaleX(-1)}
 @keyframes gmWalk{0%,100%{translate:0 0;rotate:-4deg}50%{translate:0 -5px;rotate:4deg}}
 .gmAv .stack{display:flex}.gmAv .stack img{width:46px;height:46px;margin-left:-14px}.gmAv .stack img:first-child{margin-left:0}
 .gmAv .stack b{font-size:30px}
@@ -152,6 +153,7 @@
     map = new maplibregl.Map({ container: 'glxMap', style: STYLE, center: start, zoom: z, pitch: 50, bearing: -12, maxPitch: 75, attributionControl: { compact: true }, dragRotate: true });
     map.touchZoomRotate.enableRotation();
     try { let rz = 0; new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { try { map.resize() } catch (e) { } }, 80) }).observe(document.getElementById('glxMap')) } catch (e) { }
+    const avScale = () => { const z = map.getZoom(); map.getContainer().style.setProperty('--avS', Math.max(.2, Math.min(1, (z - 8) / 8)).toFixed(3)) }; map.on('zoom', avScale); avScale();
     map.on('load', () => { restyle(); addLayers(); refresh(); bar() });
     map.on('dragstart', () => { follow = false });
     map.on('sourcedata', e => { if (e.isSourceLoaded && e.sourceId !== 'stops' && e.sourceId !== 'heat' && e.sourceId !== 'range') { clearTimeout(poiT); poiT = setTimeout(refresh, 400) } });
@@ -525,7 +527,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
   }
 
   /* ---------- koppelen aan de app ---------- */
-  window.GLXMAP = { legend: () => xs('📍 Soorten plekken', Object.values(CAT).map(c => `<div class="gmRow"><span><span style="color:${c[0]}">●</span> ${c[1]} ${c[2]}</span></div>`).join('') + '<p class="sub" style="margin-top:8px">Cafés en restaurants verschijnen als je inzoomt tot op straatniveau.</p>'), locate: () => locate(), checkin, checkout, group, avatar: () => openAvatar(), saveGroup, fly: (lng, lat) => { try { closeO('xV') } catch (e) { } map && map.flyTo({ center: [lng, lat], zoom: 17, pitch: 55 }) }, power: openPower, state: G, _venues: venues, _me: () => me, _center: () => { const c = map && map.getCenter(); return c ? { lat: c.lat, lng: c.lng } : null }, passenger() { try { sessionStorage.glxPass = Date.now() } catch (e) { } const l = document.getElementById('gmDrive'); if (l) l.remove(); T('👍 Veilige rit. Als passagier kun je verder.') }, _speed: speedCheck, _setMe: (lat, lng) => { me = { lat, lng }; onMe() } };
+  window.GLXMAP = { legend: () => xs('📍 Soorten plekken', Object.values(CAT).map(c => `<div class="gmRow"><span><span style="color:${c[0]}">●</span> ${c[1]} ${c[2]}</span></div>`).join('') + '<p class="sub" style="margin-top:8px">Cafés en restaurants verschijnen als je inzoomt tot op straatniveau.</p>'), locate: () => locate(), checkin, checkout, group, avatar: () => openAvatar(), saveGroup, fly: (lng, lat) => { try { closeO('xV') } catch (e) { } map && map.flyTo({ center: [lng, lat], zoom: 17, pitch: 55 }) }, power: openPower, state: G, _venues: venues, _map: () => map, _me: () => me, _center: () => { const c = map && map.getCenter(); return c ? { lat: c.lat, lng: c.lng } : null }, passenger() { try { sessionStorage.glxPass = Date.now() } catch (e) { } const l = document.getElementById('gmDrive'); if (l) l.remove(); T('👍 Veilige rit. Als passagier kun je verder.') }, _speed: speedCheck, _setMe: (lat, lng) => { me = { lat, lng }; onMe() } };
   const og = window.go;
   /* Galaxy is een live kaart-app: geen swipen meer, de kaart is het startscherm */
   window.go = function (v) { if (v === 'discover') v = 'map'; const r = og.call(this, v); if (v === 'map') setTimeout(init, 30); return r };
