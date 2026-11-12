@@ -26,6 +26,9 @@
   const LVL = () => ['', t('Misschien', 'Maybe'), t('Zin in', 'Keen'), t('Heel veel zin', 'Very keen')];
   const COMFORT = () => [['public', t('Openbare plek', 'Public place')], ['own_way', t('Zelf naar huis', 'Own way home')], ['no_alcohol', t('Alcoholvrij is prima', 'Alcohol-free is fine')],
   ['quiet', t('Niet te druk', 'Not too busy')], ['not_late', t('Niet te laat', 'Not too late')], ['short', t('Eerst iets korts', 'Something short first')]];
+  const TAGS = () => [['respect', '🤝', t('Respectvol', 'Respectful')], ['fun', '😄', t('Leuk gezelschap', 'Fun company')], ['punctual', '⏰', t('Op tijd', 'On time')], ['like_photos', '📸', t('Zoals op de foto\'s', 'Looks like their photos')],
+  ['listener', '👂', t('Goede luisteraar', 'Good listener')], ['at_ease', '🌿', t('Ik voelde me op mijn gemak', 'I felt at ease')], ['kind', '💛', t('Lief en attent', 'Kind and thoughtful')], ['great_spot', '📍', t('Toffe plek gekozen', 'Great spot')]];
+  const tagOf = k => TAGS().find(x => x[0] === k);
   const actOf = k => ACTS().find(a => a[0] === k) || ['', '📅', k || ''];
   const moodOf = k => MOODS().find(m => m[0] === k);
   const comfortOf = k => (COMFORT().find(c => c[0] === k) || [k, k])[1];
@@ -153,12 +156,14 @@ ${D.nb.length ? `<div class="dpChips">${D.nb.map((p, i) => `<button type="button
 <p class="sub" style="font-size:11px;margin-top:8px">${t('Bij acuut gevaar: bel het noodnummer (EU 112).', 'In danger: call the emergency number (EU 112).')}</p></div>`;
     }
     if (p.status === 'confirmed' && past) h += `<div class="dpCard" id="dpAgain"><b>💭 ${t('Zin in een tweede date?', 'Fancy a second date?')}</b><p class="sub" style="margin:6px 0 8px">${t(esc(name) + ' ziet jouw antwoord nooit. Jullie zien alleen iets als jullie allebei ja zeggen.', esc(name) + ' never sees your answer. You only see something if you both say yes.')}</p><div class="dpBtns" style="grid-template-columns:1fr 1fr"><button class="btn sm" onclick="GLXDATE._again(true)">${t('Ja!', 'Yes!')}</button><button class="btn sm ghost" onclick="GLXDATE._again(false)">${t('Liever niet', 'Rather not')}</button></div><p id="dpAgainR" class="sub" style="margin-top:8px"></p></div>`;
+    if (p.status === 'confirmed' && start.getTime() <= Date.now() && start.getTime() > Date.now() - 60 * 864e5) h += `<div class="dpCard" id="dpFb"><b>⭐ ${t('Hoe was je date?', 'How was your date?')}</b><p class="sub" style="margin-top:6px">${t('Laden…', 'Loading…')}</p></div>`;
     if (['proposed', 'confirmed', 'other_time'].includes(p.status) && !past) h += `<button class="btn ghost" style="width:100%;margin-bottom:8px" onclick="GLXDATE._cancel()">${t('Date annuleren', 'Cancel date')}</button>`;
     h += `<button class="btn ghost" style="width:100%" onclick="GLXNET.chat('${other}')">💬 ${t('Naar de chat', 'Go to chat')}</button>`;
     xs('📅 ' + t('Date met ', 'Date with ') + esc(name), h, false);
     clearInterval(cdT);
     if (p.status === 'confirmed' && !past) { countdown(); cdT = setInterval(() => { if (!$('dpCd')) return clearInterval(cdT); countdown() }, 30e3); weather(p) }
     if (p.status === 'confirmed' && past) again(null);
+    if ($('dpFb')) feedback(name);
   }
   function countdown() {
     const el = $('dpCd'); if (!el || !cur) return; const ms = new Date(cur.starts_at) - Date.now();
@@ -222,6 +227,44 @@ ${D.nb.length ? `<div class="dpChips">${D.nb.map((p, i) => `<button type="button
     if (j.both) { try { burst() } catch (e) { } }
   }
 
+  /* ---------- feedback na de date ---------- */
+  let FB = null;
+  async function feedback(name) {
+    const r = await db().rpc('date_feedback_mine', { p: cur.id }); const m = r.data || {};
+    FB = { tags: m.tags || [], safe: m.safe ?? null, prof: m.as_profile ?? null, name, done: !!r.data };
+    drawFb();
+  }
+  function drawFb() {
+    const el = $('dpFb'); if (!el || !FB) return; const n = esc(FB.name);
+    const yn = (k, v) => `<div class="dpChips" style="margin-top:6px"><button type="button" class="dpChip${FB[k] === true ? ' on' : ''}" onclick="GLXDATE._fbSet('${k}',true)">${t('Ja', 'Yes')}</button><button type="button" class="dpChip${FB[k] === false ? ' on' : ''}" onclick="GLXDATE._fbSet('${k}',false)">${t('Nee', 'No')}</button></div>`;
+    el.innerHTML = `<b>⭐ ${t('Hoe was je date?', 'How was your date?')}</b>
+<p class="sub" style="margin:6px 0 8px">${t('Geef ' + n + ' complimenten. Die komen anoniem aan; op een profiel verschijnen ze pas als minstens 2 mensen hetzelfde gaven.', 'Give ' + n + ' compliments. They arrive anonymously; they only show on a profile once at least 2 people gave the same one.')}</p>
+<div class="dpChips">${TAGS().map(x => `<button type="button" class="dpChip${FB.tags.includes(x[0]) ? ' on' : ''}" aria-pressed="${FB.tags.includes(x[0])}" onclick="GLXDATE._fbTag('${x[0]}')">${x[1]} ${esc(x[2])}</button>`).join('')}</div>
+<p style="margin-top:12px;font-weight:700">${t('Voelde je je veilig?', 'Did you feel safe?')}</p>${yn('safe')}
+<p style="margin-top:10px;font-weight:700">${t('Leek ' + n + ' op het profiel?', 'Did ' + n + ' look like their profile?')}</p>${yn('prof')}
+${FB.safe === false || FB.prof === false ? `<textarea class="fld" id="dpFbNote" maxlength="1000" rows="3" style="margin-top:10px" placeholder="${t('Wat is er gebeurd? Alleen het Galaxy-team leest dit, nooit ' + n + '.', 'What happened? Only the Galaxy team reads this, never ' + n + '.')}"></textarea><p class="sub" style="font-size:12px">${t('Bij gevaar: bel meteen het noodnummer (EU 112).', 'In danger: call the emergency number right away (EU 112).')}</p>` : ''}
+<p class="sub" style="font-size:12px;margin-top:8px">🔒 ${t('Je antwoorden op de vragen ziet ' + n + ' nooit.', n + ' never sees your answers to these questions.')}</p>
+<div class="dpBtns" style="margin-top:8px"><button class="btn" onclick="GLXDATE._fbSend()">${FB.done ? t('Feedback aanpassen', 'Update feedback') : t('Verstuur feedback', 'Send feedback')}</button>
+<button class="btn ghost" onclick="GLXDATE._thanks()">💜 ${t('Stuur ' + n + ' een bedankje', 'Send ' + n + ' a thank-you')}</button></div>`;
+  }
+  async function fbSend() {
+    const note = ($('dpFbNote') || {}).value || null;
+    const r = await db().rpc('date_feedback_give', { p: cur.id, tags: FB.tags, safe: FB.safe, as_profile: FB.prof, note });
+    if (r.error) { console.error(r.error); return T(t('Versturen lukte niet', 'Could not send')) }
+    FB.done = true; drawFb();
+    T(FB.safe === false || FB.prof === false ? t('Bedankt. Het Galaxy-team bekijkt dit vertrouwelijk.', 'Thank you. The Galaxy team will review this confidentially.') : '⭐ ' + t('Bedankt voor je feedback!', 'Thanks for your feedback!'));
+  }
+  async function thanks() {
+    const other = cur.from_id === me() ? cur.to_id : cur.from_id;
+    await chatMsg(other, '💜 ' + t('Bedankt voor de leuke date!', 'Thanks for the lovely date!')); T('💜 ' + t('Verstuurd', 'Sent'));
+  }
+  async function myCompliments() {
+    try { const r = await db().rpc('my_compliments'); return (r.data || []).map(x => { const g = tagOf(x.tag); return g ? `<span class="dpChip" style="cursor:default">${g[1]} ${esc(g[2])} <b>×${x.n}</b></span>` : '' }).join('') } catch (e) { return '' }
+  }
+  async function profileBadges(id) {
+    try { const r = await db().rpc('compliments_of', { target: id }); return (r.data || []).map(x => { const g = tagOf(x.tag); return g ? [g[1], g[2] + ' ×' + x.n] : null }).filter(Boolean) } catch (e) { return [] }
+  }
+
   /* ---------- 3. overzicht ---------- */
   async function list() {
     if (!db() || !me()) return T(t('Even geduld: Galaxy maakt nog verbinding.', 'One moment: Galaxy is still connecting.'));
@@ -230,14 +273,18 @@ ${D.nb.length ? `<div class="dpChips">${D.nb.map((p, i) => `<button type="button
     const all = (r.data || []).filter(p => p.status !== 'cancelled'), now = Date.now();
     const up = all.filter(p => new Date(p.starts_at).getTime() + p.minutes * 6e4 > now), past = all.filter(p => !up.includes(p)).reverse().slice(0, 10);
     const row = p => { const o = p.from_id === me() ? p.to_id : p.from_id, st = STATUS()[p.status] || ['', '']; return `<button class="opt" onclick="GLXDATE.open('${p.id}')"><div class="dpRow"><b>${actOf((p.from_wish || {}).act)[1]} ${esc(p.activity)}</b><span>${st[0]}</span></div><span class="sub">${esc((net().nameOf && net().nameOf(o)) || '')} · ${esc(fmt(p.starts_at))} · ${esc(p.place)}</span></button>` };
-    xs('📅 ' + t('Mijn dates', 'My dates'), `${up.length ? `<div class="dpH">${t('Gepland', 'Upcoming')}</div>` + up.map(row).join('') : `<div class="box"><p class="sub">${t('Nog geen dates gepland. Open een chat met een match en tik op 📅 Date plannen.', 'No dates yet. Open a chat with a match and tap 📅 Plan a date.')}</p></div>`}${past.length ? `<div class="dpH">${t('Voorbij', 'Past')}</div>` + past.map(row).join('') : ''}`, false);
+    const comp = await myCompliments();
+    xs('📅 ' + t('Mijn dates', 'My dates'), `${comp ? `<div class="dpCard"><b>💌 ${t('Complimenten die je kreeg', 'Compliments you received')}</b><div class="dpChips" style="margin-top:8px">${comp}</div></div>` : ''}${up.length ? `<div class="dpH">${t('Gepland', 'Upcoming')}</div>` + up.map(row).join('') : `<div class="box"><p class="sub">${t('Nog geen dates gepland. Open een chat met een match en tik op 📅 Date plannen.', 'No dates yet. Open a chat with a match and tap 📅 Plan a date.')}</p></div>`}${past.length ? `<div class="dpH">${t('Voorbij', 'Past')}</div>` + past.map(row).join('') : ''}`, false);
   }
 
   /* ---------- chat-koppeling: [#date:uuid] wordt een knop ---------- */
   function tokens(html) { return String(html).replace(/\[#date:([0-9a-f-]{36})\]/gi, (m, id) => `<button class="dpTok" onclick="GLXDATE.open('${id}')">📅 ${t('Bekijk de date', 'View date')} ›</button>`) }
 
   window.GLXDATE = {
-    plan, open, list, tokens,
+    plan, open, list, tokens, profileBadges, tagOf,
+    _fbTag(k) { FB.tags = FB.tags.includes(k) ? FB.tags.filter(x => x !== k) : FB.tags.length >= 5 ? (T(t('Maximaal 5', 'Up to 5')), FB.tags) : FB.tags.concat(k); drawFb() },
+    _fbSet(k, v) { const n = ($('dpFbNote') || {}).value; FB[k] = FB[k] === v ? null : v; if (k === 'prof' && FB.prof === false) FB.tags = FB.tags.filter(x => x !== 'like_photos'); drawFb(); const e = $('dpFbNote'); if (e && n) e.value = n },
+    _fbSend: fbSend, _thanks: thanks,
     _mood(k) { keep(); D.moods[k] = ((D.moods[k] || 0) + 1) % 4; if (!D.moods[k]) delete D.moods[k]; draw() },
     _myMood(k) { const r = $('dpReply'), v = r ? r.value : ''; myWish.moods[k] = ((myWish.moods[k] || 0) + 1) % 4; if (!myWish.moods[k]) delete myWish.moods[k]; render(); const r2 = $('dpReply'); if (r2) r2.value = v },
     _set(k, v, quiet) { keep(); D[k] = v; if (!quiet) draw() },

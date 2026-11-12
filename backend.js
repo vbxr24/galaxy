@@ -95,7 +95,8 @@
     const hit = ((window.GLXLIVE || {}).people || []).find(p => p.id === id); let c = hit && hit.card;
     if (!c) { const r = await sb.rpc('profile_card', { target: id }); c = r.data }
     if (!c) return T('Dit profiel is niet beschikbaar');
-    target = c.id; GLXPROFILE.show(toCard(c));
+    target = c.id; const card = toCard(c); try { if (window.GLXDATE) (await GLXDATE.profileBadges(c.id)).forEach(b => card.badges.push(b)) } catch (e) { }
+    GLXPROFILE.show(card);
     const sh = $('xSheet'); if (sh) sh.insertAdjacentHTML('beforeend', `<button class="btn ghost" style="width:100%;margin-top:8px;color:#fb7185" onclick="GLXNET.block()">🚫 Blokkeer ${esc(c.name)}</button>`);
   }
   const REASON = ['Lijkt minderjarig', 'Nepprofiel of oplichting', 'Intimidatie of bedreiging', 'Ongepaste foto of tekst', 'Vraagt geld of biedt seks tegen betaling', 'Iets anders'];

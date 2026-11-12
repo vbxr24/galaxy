@@ -43,5 +43,11 @@ In de app kies je via ✨ → Kleuren een donker Galaxy-thema of een licht paste
 ## Dates plannen
 In een chat met een match: **📅 Date**. Kies waar je zin in hebt (zin-meter), wat, waar (openbare plekken uit de kaart of zelf getypt), wanneer en wat je een fijn gevoel geeft. De ander bevestigt, vraagt een ander moment of zegt af, en geeft zelf aan waar hij of zij zin in heeft. Bevestigd: aftelklok, weer ter plaatse, route, agenda (.ics/Google) en een veilig-knop. Na de date: "nog eens?" (privé; je ziet alleen of jullie allebei ja zeiden). Overzicht via ✨ → Mijn dates. Server: `server/dateplans.sql`. Code: `dateplan.js`.
 
+## Feedback na een date
+Na een bevestigde date: complimenten geven (anoniem; op een profiel pas zichtbaar vanaf 2 verschillende gevers), "voelde je je veilig?" en "leek de persoon op het profiel?" (privé; een nee wordt een vertrouwelijke melding) en een bedankje sturen. Server: `server/feedback.sql`.
+
+## Evenementen en festivals
+✨ → Events: ontdekken, line-up met favorieten, tickets halen (gratis of via de betaallink van de organisator), ticket met QR-code die elke 30 seconden verandert (werkt offline), organiseren, nieuws plaatsen, bezoekerslijst (CSV) en tickets scannen met de camera. Server: `server/events.sql`. Code: `events.js`.
+
 ## Welzijn
 ✨ → **Welzijn** (of Profiel → Veiligheid): pauzemodus (24 u, 3 dagen, 1 week of tot je terugkomt, je chats blijven), welzijn-badges en een zelfzorg-zin (alleen op je profiel als je dat aanzet), een dagelijkse schermtijd-grens, een ademoefening van 1 minuut, tips en hulplijnen per land met findahelpline.com als reserve voor de rest van de wereld. Code: `welzijn.js`.
