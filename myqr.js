@@ -102,6 +102,7 @@ ${paused ? `<div class="box" style="border-color:#f59e0b"><p class="sub">🌙 ${
     try { if (typeof HUB !== 'undefined' && !HUB.some(h => /GLXQR/.test(h[2]))) HUB.splice(1, 0, ['📱', t('Mijn QR-code', 'My QR code'), 'GLXQR.mine()']) } catch (e) { }
     try { const g = $('ghostTg'), box = g && g.closest('.box'); if (box && !$('qrRow')) box.insertAdjacentHTML('afterbegin', `<div class="set" id="qrRow"><span>📱 ${t('Mijn QR-code', 'My QR code')}</span><button class="btn sm" onclick="GLXQR.mine()">${t('Toon', 'Show')}</button></div>`) } catch (e) { }
     fromUrl();
+    if (/[?&]qr=1/.test(location.search)) { try { history.replaceState(null, '', location.pathname) } catch (e) { } setTimeout(() => { try { GLXQR.mine() } catch (e) { } }, 900) }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hook); else hook();
 })();
