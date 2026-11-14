@@ -25,6 +25,7 @@
     if (/email.*(send|provider|smtp)|sending/i.test(m)) return t('De bevestigingsmail kon niet verstuurd worden. Probeer later opnieuw.', 'The confirmation email could not be sent. Try again later.');
     return t('Dat lukte niet. Probeer het opnieuw.', 'That did not work. Please try again.');
   };
+  const HOME = () => location.origin + location.pathname.replace(/[^/]*$/, '');
   async function user() { try { return (await db().auth.getUser()).data.user } catch (e) { return null } }
 
   /* ---------- account-scherm ---------- */
@@ -56,7 +57,7 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
     if (!okMail(mail)) return T(t('Vul een geldig e-mailadres in', 'Enter a valid email'));
     if (p1.length < 8) return T(t('Wachtwoord: minstens 8 tekens', 'Password: at least 8 characters'));
     if (p1 !== p2) return T(t('De wachtwoorden zijn niet gelijk', 'Passwords do not match'));
-    const r = await db().auth.updateUser({ email: mail, password: p1 });
+    const r = await db().auth.updateUser({ email: mail, password: p1 }, { emailRedirectTo: HOME() + '?saved=1' });
     if (r.error) return T(why(r.error));
     const u = r.data.user;
     T(u && u.email === mail ? '✅ ' + t('Account bewaard!', 'Account saved!') : '📧 ' + t('Check je mail en klik op de bevestigingslink', 'Check your mail and click the confirmation link'));
@@ -84,7 +85,7 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
   async function forgot() {
     const mail = (($('liMail') || {}).value || '').trim().toLowerCase();
     if (!okMail(mail)) return T(t('Vul eerst je e-mailadres in', 'Enter your email first'));
-    const r = await db().auth.resetPasswordForEmail(mail, { redirectTo: location.origin + location.pathname + '?reset=1' });
+    const r = await db().auth.resetPasswordForEmail(mail, { redirectTo: HOME() + '?reset=1' });
     T(r.error ? why(r.error) : '📧 ' + t('Als dit adres bestaat, krijg je een mail om je wachtwoord te herstellen.', 'If this address exists, you will get an email to reset your password.'));
   }
   async function newPasswordAfterReset() {
@@ -168,7 +169,7 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
     honestShop();
     try { if (typeof HUB !== 'undefined' && !HUB.some(h => /GLXACC/.test(h[2]))) HUB.splice(1, 0, ['👤', t('Account', 'Account'), 'GLXACC.open()']) } catch (e) { }
     try { const g = $('ghostTg'), box = g && g.closest('.box'); if (box && !$('acRow')) box.insertAdjacentHTML('afterbegin', `<div class="set" id="acRow"><span>👤 ${t('Account bewaren en inloggen', 'Save account and log in')}</span><button class="btn sm ghost" onclick="GLXACC.open()">${t('Open', 'Open')}</button></div>`) } catch (e) { }
-    let done = false; const go = () => { if (done) return; done = true; checkStatus(); newPasswordAfterReset() };
+    let done = false; const go = () => { if (done) return; done = true; checkStatus(); newPasswordAfterReset(); if (/[?&]saved=1/.test(location.search)) { try { history.replaceState(null, '', location.pathname) } catch (e) { } T('✅ ' + t('Je account is bewaard! Je kunt nu op elk toestel inloggen.', 'Your account is saved! You can now log in on any device.')) } };
     if (net().state === 'verbonden') go(); else window.addEventListener('glx-net', e => { if (e.detail === 'verbonden') go() });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hook); else hook();
