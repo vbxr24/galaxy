@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Galaxy – Beheer</title>
+<link rel="icon" href="icons/icon-192.png">
+<style>
+body{margin:0;background:#07061a;color:#ece9ff;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:22px 16px 60px}
+h1{font-size:22px;margin:0 0 4px}.sub{opacity:.7;font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0}
+.stats div{background:#15123a;border:1px solid #2a2560;border-radius:14px;padding:10px;text-align:center}.stats b{display:block;font-size:22px}
+.card{background:#110e2e;border:1px solid #2a2560;border-radius:16px;padding:14px;margin-bottom:10px}
+.card.done{opacity:.55}.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;background:#2a2560;font-size:12px;margin-right:4px}
+.pill.red{background:#7f1d1d}.pill.amber{background:#78350f}
+button{font:inherit;border:0;border-radius:11px;padding:8px 12px;margin:6px 6px 0 0;cursor:pointer;background:#2a2560;color:#fff}
+button.ban{background:#b91c1c}button.ok{background:#15803d}button:focus-visible{outline:2px solid #f9a8d4;outline-offset:2px}
+.tabs button.on{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid #8b5cf6;background:#ffffff08;border-radius:6px;white-space:pre-wrap}
+@media (max-width:600px){.stats{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<main>
+<h1>🛡️ Galaxy – Beheer</h1>
+<p class="sub">Meldingen bekijken, afhandelen en accounts schorsen. Alleen voor beheerders.</p>
+<div id="app"><p class="sub">Laden…</p></div>
+</main>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  const CFG = { url: 'https://dqodwuemdpzyvvvxvgtz.supabase.co', key: 'sb_publishable_nxc3zbKKIR6zpx8iYz4fFA_9yN0JY6p' };
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const when = d => new Date(d).toLocaleString('nl-BE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  let sb, open = true, rows = [];
+
+  async function start() {
+    sb = supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } });
+    const s = (await sb.auth.getSession()).data.session;
+    if (!s) return $('app').innerHTML = '<div class="card">Open eerst <a href="./" style="color:#f9a8d4">Galaxy</a> op dit toestel en log in met je beheerdersaccount.</div>';
+    const a = await sb.rpc('is_admin');
+    if (a.data !== true) return $('app').innerHTML = `<div class="card"><b>Geen toegang.</b><p class="sub">Dit account is geen beheerder. Jouw gebruikers-ID: <code>${esc(s.user.id)}</code></p></div>`;
+    load();
+  }
+  async function load() {
+    const [st, r] = await Promise.all([sb.rpc('mod_stats'), sb.rpc('mod_reports', { only_open: open })]);
+    const k = st.data || {}; rows = r.data || [];
+    $('app').innerHTML = `
+<div class="stats"><div><b>${k.users ?? '–'}</b>gebruikers</div><div><b>${k.active_24h ?? '–'}</b>actief 24 u</div><div><b>${k.messages_24h ?? '–'}</b>berichten 24 u</div><div><b>${k.open_reports ?? '–'}</b>open meldingen</div><div><b>${k.banned ?? '–'}</b>geschorst</div></div>
+<div class="tabs"><button class="${open ? 'on' : ''}" onclick="ADM.tab(true)">Open</button><button class="${open ? '' : 'on'}" onclick="ADM.tab(false)">Alles</button><button onclick="ADM.reload()">↻ Vernieuwen</button></div>
+<div style="margin-top:12px">${rows.length ? rows.map(card).join('') : '<div class="card">🎉 Geen open meldingen.</div>'}</div>
+<p class="sub" style="margin-top:20px">Tip: handel meldingen binnen 24 uur af. Bij een schorsing ziet de gebruiker de reden en kan hij bezwaar maken per mail. Bewaar bezwaren en je beslissing.</p>`;
+  }
+  function card(x) {
+    return `<div class="card${x.handled ? ' done' : ''}"><div class="row"><div>
+<span class="pill ${/veilig/i.test(x.reason) ? 'red' : 'amber'}">${esc(x.reason)}</span>${x.target_reports > 1 ? `<span class="pill red">${x.target_reports} meldingen</span>` : ''}${x.target_banned ? '<span class="pill red">geschorst</span>' : ''}${x.handled ? `<span class="pill">${esc(x.outcome || 'afgehandeld')}</span>` : ''}
+<div style="margin-top:6px"><b>${esc(x.target_name)}</b> <span class="sub">gemeld door ${esc(x.reporter_name)} · ${when(x.at)}</span></div></div></div>
+${x.detail ? `<blockquote>${esc(x.detail)}</blockquote>` : ''}${x.target_bio ? `<p class="sub">Bio: ${esc(x.target_bio)}</p>` : ''}
+${x.handled ? '' : `<button class="ok" onclick="ADM.resolve(${x.id},'geen actie')">Geen actie</button><button onclick="ADM.resolve(${x.id},'gewaarschuwd')">Gewaarschuwd</button>`}
+${x.target_banned ? `<button onclick="ADM.unban('${x.target}')">Schorsing opheffen</button>` : `<button class="ban" onclick="ADM.ban('${x.target}','${esc(x.target_name).replace(/'/g, '&#39;')}')">Schorsen</button>`}</div>`;
+  }
+  window.ADM = {
+    tab(o) { open = o; load() }, reload: load,
+    async resolve(id, out) { const r = await sb.rpc('mod_resolve', { rid: id, result: out }); if (r.error) alert(r.error.message); load() },
+    async ban(id, name) {
+      const reason = prompt('Waarom schors je ' + name + '? Deze reden ziet de gebruiker.', 'Herhaaldelijk ongepast gedrag, in strijd met de gebruiksvoorwaarden.');
+      if (!reason || !reason.trim()) return;
+      const r = await sb.rpc('mod_ban', { who: id, reason: reason.trim() }); if (r.error) alert(r.error.message); load();
+    },
+    async unban(id) { if (!confirm('Schorsing opheffen?')) return; const r = await sb.rpc('mod_unban', { who: id }); if (r.error) alert(r.error.message); load() }
+  };
+  if (window.supabase) start(); else window.addEventListener('load', start);
+})();
+</script>
+</body>
+</html>
