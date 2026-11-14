@@ -7,69 +7,182 @@
 <title>Galaxy – Beheer</title>
 <link rel="icon" href="icons/icon-192.png">
 <style>
-body{margin:0;background:#07061a;color:#ece9ff;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:860px;margin:0 auto;padding:22px 16px 60px}
-h1{font-size:22px;margin:0 0 4px}.sub{opacity:.7;font-size:13px}
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0}
-.stats div{background:#15123a;border:1px solid #2a2560;border-radius:14px;padding:10px;text-align:center}.stats b{display:block;font-size:22px}
-.card{background:#110e2e;border:1px solid #2a2560;border-radius:16px;padding:14px;margin-bottom:10px}
-.card.done{opacity:.55}.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
-.pill{display:inline-block;padding:2px 9px;border-radius:99px;background:#2a2560;font-size:12px;margin-right:4px}
-.pill.red{background:#7f1d1d}.pill.amber{background:#78350f}
-button{font:inherit;border:0;border-radius:11px;padding:8px 12px;margin:6px 6px 0 0;cursor:pointer;background:#2a2560;color:#fff}
-button.ban{background:#b91c1c}button.ok{background:#15803d}button:focus-visible{outline:2px solid #f9a8d4;outline-offset:2px}
-.tabs button.on{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+:root{--bg:#07061a;--s1:#110e2e;--s2:#17133b;--line:#2a2560;--grid:#ffffff14;--t1:#f0efec;--t2:#c3c2b7;--t3:#8f8aa8;
+--c1:#3987e5;--c2:#d95926;--c3:#199e70;--c4:#c98500;--c5:#d55181;--c6:#0ca30c;--good:#0ca30c;--bad:#e66767;--warn:#c98500}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t1);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:18px 14px 70px}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+h1{font-size:21px;margin:0;flex:1}h2{font-size:15px;margin:0 0 2px}h3{font-size:13px;margin:0;color:var(--t2);font-weight:600}
+.sub{color:var(--t3);font-size:12px}
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 14px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
+.tabs button,.seg button,.btn{font:inherit;border:1px solid var(--line);background:var(--s1);color:var(--t1);border-radius:999px;padding:7px 13px;cursor:pointer;white-space:nowrap}
+.tabs button.on,.seg button.on{background:linear-gradient(135deg,#8b5cf6,#ec4899);border-color:transparent}
+button:focus-visible,input:focus-visible{outline:2px solid #f9a8d4;outline-offset:2px}
+.seg{display:flex;gap:4px}.seg button{padding:5px 10px;font-size:12px}
+.grid{display:grid;gap:10px}.k4{grid-template-columns:repeat(4,1fr)}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:760px){.k4{grid-template-columns:1fr 1fr}.c2,.c3{grid-template-columns:1fr}}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:14px;min-width:0}
+.kpi .v{font-size:26px;font-weight:700;letter-spacing:-.5px;margin-top:2px}.kpi .d{font-size:12px;color:var(--t3)}
+.up{color:var(--good)}.down{color:var(--bad)}
+.chart{position:relative;margin-top:8px}.chart svg{display:block;width:100%;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:#000c;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;white-space:nowrap;transform:translate(-50%,-110%);display:none;z-index:3}
+details{margin-top:6px}summary{cursor:pointer;color:var(--t3);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}td,th{padding:3px 6px;border-bottom:1px solid var(--grid);text-align:left}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.hb{display:grid;grid-template-columns:minmax(80px,32%) 1fr 44px;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+.hb .bar{height:14px;border-radius:0 4px 4px 0;background:var(--c1);min-width:2px}.hb .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--t2)}
+.big{font-size:40px;font-weight:800;letter-spacing:-1px}
+.note{background:#c9850022;border:1px solid #c9850066;border-radius:12px;padding:10px 12px;font-size:13px;margin:8px 0}
+.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--grid)}.row:last-child{border:0}
+label.f{display:block;margin:10px 0 2px;font-size:13px;color:var(--t2)}input[type=range]{width:100%;accent-color:#ec4899}
+.rep{background:var(--s2);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}.rep.done{opacity:.55}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;background:var(--line);font-size:11px;margin-right:4px}.pill.red{background:#7f1d1d}.pill.amber{background:#78350f}
+.btn{border-radius:10px;padding:6px 11px;margin:6px 6px 0 0;font-size:13px}.btn.ban{background:#b91c1c;border-color:#b91c1c}.btn.ok{background:#15803d;border-color:#15803d}
 blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid #8b5cf6;background:#ffffff08;border-radius:6px;white-space:pre-wrap}
-@media (max-width:600px){.stats{grid-template-columns:repeat(3,1fr)}}
+.funnel .hb{grid-template-columns:minmax(110px,34%) 1fr 70px}
 </style>
 </head>
 <body>
 <main>
-<h1>🛡️ Galaxy – Beheer</h1>
-<p class="sub">Meldingen bekijken, afhandelen en accounts schorsen. Alleen voor beheerders.</p>
+<header><h1>🛡️ Galaxy – Beheer</h1><div class="seg" id="per"><button data-d="7">7 dagen</button><button data-d="30" class="on">30 dagen</button><button data-d="90">90 dagen</button></div><button class="btn" style="margin:0" onclick="ADM.reload()">↻</button></header>
 <div id="app"><p class="sub">Laden…</p></div>
 </main>
+<div class="tip" id="tip"></div>
 <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 (function () {
   const CFG = { url: 'https://dqodwuemdpzyvvvxvgtz.supabase.co', key: 'sb_publishable_nxc3zbKKIR6zpx8iYz4fFA_9yN0JY6p' };
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const nf = n => (n == null ? '–' : Number(n).toLocaleString('nl-BE'));
+  const eur = n => '€ ' + Number(n || 0).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '–';
+  const dshort = d => new Date(d).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' });
   const when = d => new Date(d).toLocaleString('nl-BE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  let sb, open = true, rows = [];
+  let sb, S = null, days = 30, tab = 'over', openOnly = true, reps = [];
+  const GOAL = { lange: 'Lange relatie', serieus: 'Serieus daten', zien: 'Zien wat komt', vrienden: 'Vrienden', fwb: 'Iets losser', ons: 'Weet nog niet' };
+  const PLAN = { free: 'Gratis', plus: 'Galaxy+ (€ 9,99)', gold: 'Gold (€ 19,99)', cosmic: 'Cosmic (€ 34,99)' };
 
+  /* ---------- grafieken (SVG, met hover en tabel) ---------- */
+  const tip = $('tip');
+  function hover(el) {
+    el.querySelectorAll('[data-t]').forEach(m => {
+      m.addEventListener('pointerenter', e => { tip.innerHTML = m.dataset.t; tip.style.display = 'block' });
+      m.addEventListener('pointermove', e => { tip.style.left = e.pageX + 'px'; tip.style.top = e.pageY - 6 + 'px' });
+      m.addEventListener('pointerleave', () => tip.style.display = 'none');
+    });
+  }
+  function table(rows, head) { return `<details><summary>📋 Toon als tabel</summary><table><tr>${head.map((h, i) => `<th class="${i ? 'n' : ''}">${h}</th>`).join('')}</tr>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${i ? 'n' : ''}">${c}</td>`).join('')}</tr>`).join('')}</table></details>` }
+  /* staafjes over tijd: één reeks, dus geen legende – de titel zegt wat het is */
+  function bars(data, key, label, color) {
+    const W = 600, H = 170, L = 30, B = 22, T = 8, n = data.length, max = Math.max(1, ...data.map(d => d[key])), nice = Math.ceil(max / 4) * 4 || 4;
+    const bw = (W - L) / n, y = v => T + (H - T - B) * (1 - v / nice);
+    let g = ''; for (let i = 0; i <= 4; i++) { const v = nice * i / 4, yy = y(v); g += `<line x1="${L}" x2="${W}" y1="${yy}" y2="${yy}" stroke="var(--grid)"/><text x="${L - 6}" y="${yy + 4}" fill="var(--t3)" font-size="10" text-anchor="end">${nf(v)}</text>` }
+    const step = Math.ceil(n / 6);
+    const marks = data.map((d, i) => { const v = d[key], x = L + i * bw, h = (H - T - B) - (y(v) - T), w = Math.max(1, bw - 2);
+      return `<g data-t="<b>${dshort(d.day)}</b><br>${label}: ${nf(v)}"><rect x="${x}" y="${T}" width="${bw}" height="${H - T - B}" fill="transparent"/>${v ? `<path d="M${x + 1},${H - B} v${-Math.max(0, h - 3)} q0,-3 3,-3 h${w - 6} q3,0 3,3 v${Math.max(0, h - 3)} z" fill="${color}"/>` : ''}</g>${i % step === 0 ? `<text x="${x + bw / 2}" y="${H - 6}" fill="var(--t3)" font-size="10" text-anchor="middle">${dshort(d.day)}</text>` : ''}` }).join('');
+    return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)} per dag">${g}<line x1="${L}" x2="${W}" y1="${H - B}" y2="${H - B}" stroke="var(--t3)"/>${marks}</svg>${table(data.map(d => [dshort(d.day), nf(d[key])]), ['Dag', label])}</div>`;
+  }
+  /* liggende staven voor verdelingen, van groot naar klein */
+  function hbars(obj, map, color, keep) {
+    const e = Object.entries(obj || {}).sort((a, b) => keep ? 0 : b[1] - a[1]), tot = e.reduce((s, x) => s + x[1], 0), max = Math.max(1, ...e.map(x => x[1]));
+    if (!e.length) return '<p class="sub">Nog geen gegevens.</p>';
+    return e.map(([k, n]) => `<div class="hb" data-t="${esc((map && map[k]) || k)}: ${nf(n)} (${pct(n, tot)})"><span>${esc((map && map[k]) || k)}</span><div class="bar" style="width:${100 * n / max}%;background:${color || 'var(--c1)'}"></div><span class="n">${pct(n, tot)}</span></div>`).join('');
+  }
+  function kpi(label, v, sub, cls) { return `<div class="card kpi"><h3>${label}</h3><div class="v">${v}</div><div class="d ${cls || ''}">${sub || '&nbsp;'}</div></div>` }
+
+  /* ---------- tabbladen ---------- */
+  function over() {
+    const t = S.totals, dlt = t.new_7d - t.new_prev_7d;
+    return `<div class="grid k4">
+${kpi('👥 Gebruikers', nf(t.users), `${dlt >= 0 ? '▲' : '▼'} ${nf(Math.abs(dlt))} nieuw t.o.v. vorige week`, dlt >= 0 ? 'up' : 'down')}
+${kpi('🔥 Actief vandaag', nf(t.dau), `${pct(t.dau, t.users)} van alle gebruikers`)}
+${kpi('📅 Actief deze week', nf(t.wau), `Vandaag ÷ week: ${pct(t.dau, t.wau)} (hoe vaak mensen terugkomen)`)}
+${kpi('🗺️ Nu op de kaart', nf(t.on_map_now), 'laatste 15 minuten')}
+${kpi('💞 Matches', nf(t.matches), `${nf(t.waves)} keer gezwaaid`)}
+${kpi('💬 Berichten 24 u', nf(t.messages_24h), `${nf(t.messages)} in totaal`)}
+${kpi('💰 Inkomsten', eur(0), 'betalingen nog niet actief')}
+${kpi('🚩 Open meldingen', nf(t.open_reports), t.open_reports ? 'bekijk bij Veiligheid' : 'alles afgehandeld', t.open_reports ? 'down' : 'up')}</div>
+<div class="grid c2" style="margin-top:10px"><div class="card"><h2>Nieuwe gebruikers per dag</h2><p class="sub">Laatste ${days} dagen</p>${bars(S.daily, 'signups', 'Nieuwe gebruikers', 'var(--c1)')}</div>
+<div class="card"><h2>Berichten per dag</h2><p class="sub">Laatste ${days} dagen</p>${bars(S.daily, 'messages', 'Berichten', 'var(--c3)')}</div></div>`;
+  }
+  function groei() {
+    const t = S.totals, F = [['👥 Gebruikers', t.users], ['👋 Heeft gezwaaid', t.waves], ['💞 Matches', t.matches], ['💬 Gesprekken', t.chats], ['📅 Date voorgesteld', t.dates], ['✅ Date bevestigd', t.dates_confirmed]], fm = Math.max(1, F[0][1]);
+    const H = S.hours, hmax = Math.max(1, ...H.map(h => h.n));
+    return `<div class="grid c2"><div class="card"><h2>👋 Zwaaien per dag</h2>${bars(S.daily, 'waves', 'Zwaaien', 'var(--c5)')}</div><div class="card"><h2>📍 Check-ins per dag</h2>${bars(S.daily, 'checkins', 'Check-ins', 'var(--c4)')}</div></div>
+<div class="grid c2" style="margin-top:10px"><div class="card funnel"><h2>Van gebruiker tot date</h2><p class="sub">Hoeveel mensen geraken tot elke stap (totaal)</p>${F.map(([k, n]) => `<div class="hb" data-t="${k}: ${nf(n)}"><span>${k}</span><div class="bar" style="width:${Math.min(100, 100 * n / fm)}%"></div><span class="n">${nf(n)}</span></div>`).join('')}</div>
+<div class="card"><h2>🕐 Wanneer wordt er gechat?</h2><p class="sub">Berichten per uur, laatste 30 dagen (Belgische tijd)</p>
+<div class="chart"><svg viewBox="0 0 600 150" role="img" aria-label="Berichten per uur">${H.map((h, i) => { const bw = 600 / 24, hh = 112 * h.n / hmax; return `<g data-t="<b>${h.h}u – ${h.h + 1}u</b><br>${nf(h.n)} berichten"><rect x="${i * bw}" y="0" width="${bw}" height="130" fill="transparent"/>${h.n ? `<rect x="${i * bw + 1}" y="${126 - hh}" width="${bw - 2}" height="${hh}" rx="3" fill="var(--c1)"/>` : ''}</g>${i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="144" font-size="10" fill="var(--t3)" text-anchor="middle">${h.h}u</text>` : ''}` }).join('')}<line x1="0" x2="600" y1="126" y2="126" stroke="var(--t3)"/></svg>${table(H.map(h => [h.h + 'u', nf(h.n)]), ['Uur', 'Berichten'])}</div></div></div>
+<div class="grid k4" style="margin-top:10px">${kpi('🔁 Blijft na 7 dagen', S.retention_d7 == null ? '–' : S.retention_d7 + '%', 'van wie langer dan een week lid is')}${kpi('💾 Account bewaard', pct(t.saved_accounts, t.users), nf(t.saved_accounts) + ' met e-mail')}${kpi('🔔 Meldingen aan', pct(t.push_users, t.users), nf(t.push_users) + ' gebruikers')}${kpi('👥 Groepsdates', nf(t.group_dates), nf(t.checkins) + ' check-ins in totaal')}</div>`;
+  }
+  function users() {
+    const c = {}; (S.cities || []).forEach(x => c[x.city] = x.n); const p = {}; (S.places || []).forEach(x => p[x.place] = x.n);
+    return `<div class="grid c2"><div class="card"><h2>⚧ Gender</h2>${hbars(S.gender, null, 'var(--c1)')}</div><div class="card"><h2>🎂 Leeftijd</h2>${hbars(Object.fromEntries(['18-24', '25-29', '30-34', '35-44', '45-54', '55+'].filter(k => S.ages[k]).map(k => [k, S.ages[k]])), null, 'var(--c1)', true)}</div>
+<div class="card"><h2>🎯 Waar ze naar zoeken</h2>${hbars(S.goal, GOAL, 'var(--c1)')}</div><div class="card"><h2>🏙️ Top steden</h2>${hbars(c, null, 'var(--c1)')}</div>
+<div class="card"><h2>📍 Populairste plekken (30 dagen)</h2>${hbars(p, null, 'var(--c1)')}</div>
+<div class="card"><h2>🧾 Accounts</h2>${[['Leeftijd geverifieerd', S.totals.age_verified], ['Account bewaard met e-mail', S.totals.saved_accounts], ['Onzichtbaar (pauze)', S.totals.ghost], ['Geschorst', S.totals.banned]].map(([k, n]) => `<div class="row"><span>${k}</span><b>${nf(n)} <span class="sub">(${pct(n, S.totals.users)})</span></b></div>`).join('')}</div></div>
+<p class="sub" style="margin-top:10px">Alleen totalen. Groepen kleiner dan 5 mensen kun je herkennen: deel deze cijfers dus niet buiten het team.</p>`;
+  }
+  function geld() {
+    const t = S.totals;
+    return `<div class="grid c2"><div class="card"><h2>💰 Echte inkomsten</h2><div class="big">${eur(0)}</div><p class="sub">deze maand · ${eur(0)} totaal</p>
+<div class="note">Betalingen staan nog niet aan. Gebruikers kunnen abonnementen en munten nu alleen gratis uitproberen. Zodra betalen via Google Play werkt (dat kan pas na je ondernemingsnummer en je Play Console-account), komen hier je echte inkomsten, terugbetalingen en opzeggingen per dag.</div>
+<h3 style="margin-top:12px">Abonnementen op de server</h3>${hbars(S.plans, PLAN, 'var(--c4)')}</div>
+<div class="card"><h2>🧮 Wat zou je verdienen?</h2><p class="sub">Een schatting, geen belofte. Schuif om te proberen.</p>
+<label class="f">Aantal gebruikers: <b id="cu"></b></label><input type="range" id="ru" min="10" max="50000" step="10" value="${Math.max(100, t.users)}">
+<label class="f">Betaalt voor een abonnement: <b id="cp"></b></label><input type="range" id="rp" min="1" max="15" step=".5" value="4">
+<label class="f">Koopt munten (gem. € 5 per maand): <b id="cc"></b></label><input type="range" id="rc" min="0" max="10" step=".5" value="2">
+<div id="calc" style="margin-top:12px"></div></div></div>`;
+  }
+  function calc() {
+    const u = +$('ru').value, p = +$('rp').value / 100, c = +$('rc').value / 100;
+    $('cu').textContent = nf(u); $('cp').textContent = String(p * 100).replace('.', ',') + '%'; $('cc').textContent = String(c * 100).replace('.', ',') + '%';
+    const subs = u * p, gross = subs * (.7 * 9.99 + .22 * 19.99 + .08 * 34.99) + u * c * 5;
+    const vat = gross - gross / 1.21, play = (gross - vat) * .15, net = gross - vat - play;
+    $('calc').innerHTML = [['Betalende abonnees', nf(Math.round(subs))], ['Bruto per maand (wat mensen betalen)', eur(gross)], ['− BTW 21%', eur(vat)], ['− Google Play 15%', eur(play)]].map(([k, v]) => `<div class="row"><span>${k}</span><span>${v}</span></div>`).join('') + `<div class="row"><b>Voor jou, per maand</b><b class="up">${eur(net)}</b></div><div class="row"><span>Per jaar</span><b>${eur(net * 12)}</b></div><p class="sub">Aanname: 70% Galaxy+, 22% Gold, 8% Cosmic. Dating-apps halen meestal 2 à 8% betalende gebruikers. Daarna nog belastingen en kosten (Supabase, domein). Vraag een boekhouder voor je echte cijfers.</p>`;
+  }
+  function veilig() {
+    const t = S.totals;
+    return `<div class="grid k4">${kpi('🚩 Meldingen', nf(t.reports), nf(t.open_reports) + ' nog open', t.open_reports ? 'down' : 'up')}${kpi('⛔ Blokkeringen', nf(t.blocks), 'door gebruikers zelf')}${kpi('⚠️ Onveilige date', nf(t.feedback_unsafe), `van ${nf(t.feedback)} keer feedback`, t.feedback_unsafe ? 'down' : '')}${kpi('🔒 Geschorst', nf(t.banned), '')}</div>
+<div class="grid c2" style="margin-top:10px"><div class="card"><h2>Redenen van meldingen</h2>${hbars(S.reasons, null, 'var(--c2)')}</div><div class="card"><h2>Meldingen per dag</h2>${bars(S.daily, 'reports', 'Meldingen', 'var(--c2)')}</div></div>
+<div class="card" style="margin-top:10px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="flex:1">Meldingen afhandelen</h2><div class="seg"><button class="${openOnly ? 'on' : ''}" onclick="ADM.reps(true)">Open</button><button class="${openOnly ? '' : 'on'}" onclick="ADM.reps(false)">Alles</button></div></div>
+<div id="reps" style="margin-top:10px">${reps.length ? reps.map(card).join('') : '<p class="sub">🎉 Geen open meldingen.</p>'}</div>
+<p class="sub">Tip: handel meldingen binnen 24 uur af. Bij een schorsing ziet de gebruiker de reden en kan hij per mail bezwaar maken. Bewaar bezwaren en je beslissing.</p></div>`;
+  }
+  function card(x) {
+    return `<div class="rep${x.handled ? ' done' : ''}"><span class="pill ${/veilig/i.test(x.reason) ? 'red' : 'amber'}">${esc(x.reason)}</span>${x.target_reports > 1 ? `<span class="pill red">${x.target_reports} meldingen</span>` : ''}${x.target_banned ? '<span class="pill red">geschorst</span>' : ''}${x.handled ? `<span class="pill">${esc(x.outcome || 'afgehandeld')}</span>` : ''}
+<div style="margin-top:6px"><b>${esc(x.target_name)}</b> <span class="sub">gemeld door ${esc(x.reporter_name)} · ${when(x.at)}</span></div>
+${x.detail ? `<blockquote>${esc(x.detail)}</blockquote>` : ''}${x.target_bio ? `<p class="sub">Bio: ${esc(x.target_bio)}</p>` : ''}
+${x.handled ? '' : `<button class="btn ok" onclick="ADM.resolve(${x.id},'geen actie')">Geen actie</button><button class="btn" onclick="ADM.resolve(${x.id},'gewaarschuwd')">Gewaarschuwd</button>`}
+${x.target_banned ? `<button class="btn" onclick="ADM.unban('${x.target}')">Schorsing opheffen</button>` : `<button class="btn ban" onclick="ADM.ban('${x.target}')">Schorsen</button>`}</div>`;
+  }
+
+  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid']];
+  function draw() {
+    const body = { over, groei, users, geld, veilig }[tab]();
+    $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
+    hover($('app')); if (tab === 'geld') { ['ru', 'rp', 'rc'].forEach(id => $(id).oninput = calc); calc() }
+  }
+  async function load() {
+    const [st, r] = await Promise.all([sb.rpc('admin_stats', { days }), sb.rpc('mod_reports', { only_open: openOnly })]);
+    if (st.error) { $('app').innerHTML = `<div class="card">⚠️ Statistieken laden lukte niet: ${esc(st.error.message)}</div>`; return }
+    S = st.data; reps = r.data || []; draw();
+  }
   async function start() {
     sb = supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } });
     const s = (await sb.auth.getSession()).data.session;
     if (!s) return $('app').innerHTML = '<div class="card">Open eerst <a href="./" style="color:#f9a8d4">Galaxy</a> op dit toestel en log in met je beheerdersaccount.</div>';
     const a = await sb.rpc('is_admin');
     if (a.data !== true) return $('app').innerHTML = `<div class="card"><b>Geen toegang.</b><p class="sub">Dit account is geen beheerder. Jouw gebruikers-ID: <code>${esc(s.user.id)}</code></p></div>`;
-    load();
-  }
-  async function load() {
-    const [st, r] = await Promise.all([sb.rpc('mod_stats'), sb.rpc('mod_reports', { only_open: open })]);
-    const k = st.data || {}; rows = r.data || [];
-    $('app').innerHTML = `
-<div class="stats"><div><b>${k.users ?? '–'}</b>gebruikers</div><div><b>${k.active_24h ?? '–'}</b>actief 24 u</div><div><b>${k.messages_24h ?? '–'}</b>berichten 24 u</div><div><b>${k.open_reports ?? '–'}</b>open meldingen</div><div><b>${k.banned ?? '–'}</b>geschorst</div></div>
-<div class="tabs"><button class="${open ? 'on' : ''}" onclick="ADM.tab(true)">Open</button><button class="${open ? '' : 'on'}" onclick="ADM.tab(false)">Alles</button><button onclick="ADM.reload()">↻ Vernieuwen</button></div>
-<div style="margin-top:12px">${rows.length ? rows.map(card).join('') : '<div class="card">🎉 Geen open meldingen.</div>'}</div>
-<p class="sub" style="margin-top:20px">Tip: handel meldingen binnen 24 uur af. Bij een schorsing ziet de gebruiker de reden en kan hij bezwaar maken per mail. Bewaar bezwaren en je beslissing.</p>`;
-  }
-  function card(x) {
-    return `<div class="card${x.handled ? ' done' : ''}"><div class="row"><div>
-<span class="pill ${/veilig/i.test(x.reason) ? 'red' : 'amber'}">${esc(x.reason)}</span>${x.target_reports > 1 ? `<span class="pill red">${x.target_reports} meldingen</span>` : ''}${x.target_banned ? '<span class="pill red">geschorst</span>' : ''}${x.handled ? `<span class="pill">${esc(x.outcome || 'afgehandeld')}</span>` : ''}
-<div style="margin-top:6px"><b>${esc(x.target_name)}</b> <span class="sub">gemeld door ${esc(x.reporter_name)} · ${when(x.at)}</span></div></div></div>
-${x.detail ? `<blockquote>${esc(x.detail)}</blockquote>` : ''}${x.target_bio ? `<p class="sub">Bio: ${esc(x.target_bio)}</p>` : ''}
-${x.handled ? '' : `<button class="ok" onclick="ADM.resolve(${x.id},'geen actie')">Geen actie</button><button onclick="ADM.resolve(${x.id},'gewaarschuwd')">Gewaarschuwd</button>`}
-${x.target_banned ? `<button onclick="ADM.unban('${x.target}')">Schorsing opheffen</button>` : `<button class="ban" onclick="ADM.ban('${x.target}','${esc(x.target_name).replace(/'/g, '&#39;')}')">Schorsen</button>`}</div>`;
+    $('per').querySelectorAll('button').forEach(b => b.onclick = () => { days = +b.dataset.d; $('per').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); load() });
+    load(); setInterval(() => { if (document.visibilityState === 'visible' && tab !== 'geld') load() }, 60000);
   }
   window.ADM = {
-    tab(o) { open = o; load() }, reload: load,
+    tab(k) { tab = k; draw() }, reload: load,
+    async reps(o) { openOnly = o; reps = (await sb.rpc('mod_reports', { only_open: o })).data || []; draw() },
     async resolve(id, out) { const r = await sb.rpc('mod_resolve', { rid: id, result: out }); if (r.error) alert(r.error.message); load() },
-    async ban(id, name) {
-      const reason = prompt('Waarom schors je ' + name + '? Deze reden ziet de gebruiker.', 'Herhaaldelijk ongepast gedrag, in strijd met de gebruiksvoorwaarden.');
-      if (!reason || !reason.trim()) return;
-      const r = await sb.rpc('mod_ban', { who: id, reason: reason.trim() }); if (r.error) alert(r.error.message); load();
+    async ban(id) {
+      const x = reps.find(r => r.target === id), reason = prompt('Waarom schors je ' + (x ? x.target_name : 'deze gebruiker') + '? Deze reden ziet de gebruiker.', 'Herhaaldelijk ongepast gedrag, in strijd met de gebruiksvoorwaarden.');
+      if (!reason || !reason.trim()) return; const r = await sb.rpc('mod_ban', { who: id, reason: reason.trim() }); if (r.error) alert(r.error.message); load();
     },
     async unban(id) { if (!confirm('Schorsing opheffen?')) return; const r = await sb.rpc('mod_unban', { who: id }); if (r.error) alert(r.error.message); load() }
   };
