@@ -179,10 +179,33 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
   /* ---------- verplicht: eerst een account (e-mail + wachtwoord), dan je gegevens ---------- */
   let gTab = 'new';
   let pendingMail = null;
+  /* echte 18+-controle (Didit): selfie-leeftijdsschatting, bij twijfel ID-kaart */
+  async function ageState() {
+    try { const c = await cl(); const r = await c.functions.invoke('age-check', { body: { action: 'check' } }); if (r.error) return null; return r.data } catch (e) { return null }
+  }
+  function drawAge(status) {
+    drawGate(null); const card = document.querySelector('#glxGate .card'), seg = document.querySelector('#glxGate .seg'); if (seg) seg.remove();
+    const declined = /Declined/i.test(status || ''), review = /Review/i.test(status || '');
+    card.innerHTML = `<div style="text-align:center"><div style="font-size:46px">🔞</div><h2 style="margin:6px 0">${declined ? 'Verification not passed' : review ? 'Being reviewed' : 'Verify you are 18+'}</h2>
+<p class="lead" style="font-size:14px">${declined ? 'We could not confirm that you are 18 or older. Galaxy is strictly 18+. If you think this is a mistake, try again with your ID card or contact us.' : review ? 'A person is checking your verification. This usually takes a few minutes. You will be able to continue right after.' : 'Galaxy is strictly for adults. A quick selfie check estimates your age in seconds. Only if it is unsure, we ask for your ID card. Your selfie is not shown to anyone.'}</p>
+${review ? `<button class="btn" style="width:100%;margin-top:16px" onclick="GLXACC._ageCheck()">Check again</button>` : `<button class="btn" style="width:100%;margin-top:16px" onclick="GLXACC._ageStart()">📸 ${declined ? 'Try again' : 'Start age check'}</button>`}
+<p class="small">Powered by Didit · Takes about 30 seconds · <a href="privacy.html" target="_blank">How we use it</a></p>
+<button class="btn sm ghost" style="width:100%;margin-top:10px" onclick="GLXACC._logout()">Log out</button></div>`;
+  }
+  async function ageStart() {
+    const c = await cl(); const r = await c.functions.invoke('age-check', { body: { action: 'start', back: HOME() + '?age=1' } });
+    if (r.error || !r.data || !r.data.url) return T('The age check could not start. Please try again.');
+    location.href = r.data.url;
+  }
+  async function ageCheck() { const a = await ageState(); if (a && a.verified) { T('✅ Age verified. Welcome to Galaxy!'); gate() } else drawAge(a && a.status) }
   async function gate() {
     const c = await cl(); if (!c) return setTimeout(gate, 3000);
     const u = await user();
-    if (u && !u.is_anonymous && u.email) { const g = $('glxGate'); if (g) { g.remove(); location.reload() } document.body.classList.remove('gated'); return }
+    if (u && !u.is_anonymous && u.email) {
+      const a = await ageState();
+      if (a && a.configured && !a.verified) return drawAge(a.status);
+      const g = $('glxGate'); if (g) { g.remove(); location.reload() } document.body.classList.remove('gated'); return;
+    }
     drawGate((u && u.new_email) || pendingMail);
   }
   function drawGate(pending) {
@@ -231,7 +254,7 @@ ${pw('gLiPw', en('Wachtwoord', 'Password'), 'current-password')}
     else { gTab = 'in'; pendingMail = null; drawGate(null); return T(en('Log nu in met je e-mail en wachtwoord', 'Now log in with your email and password')) } if (u && !u.is_anonymous && u.email) { T('✅ ' + en('Welkom bij Galaxy!', 'Welcome to Galaxy!')); gate() } else T(en('Nog niet bevestigd. Tik eerst op de knop in de mail.', 'Not confirmed yet. Tap the button in the email first.')) }
   async function gResend(mail) { const c = await cl(); const r = await c.auth.resend({ type: (await user()) ? 'email_change' : 'signup', email: mail, options: { emailRedirectTo: HOME() + '?saved=1' } }); T(r.error ? why(r.error) : '📧 ' + en('Mail opnieuw verstuurd', 'Email sent again')) }
 
-  window.GLXACC = { open, data, gate, _save: save, _login: login, _forgot: forgot, _logout: logout, _gTab: k => { gTab = k; drawGate(null) }, _gSave: gSave, _gLogin: () => busy(0, () => doLogin($('gLiMail').value, $('gLiPw').value, false)), _gCheck: gCheck, _gResend: gResend };
+  window.GLXACC = { open, data, gate, _save: save, _login: login, _forgot: forgot, _logout: logout, _gTab: k => { gTab = k; drawGate(null) }, _gSave: gSave, _gLogin: () => busy(0, () => doLogin($('gLiMail').value, $('gLiPw').value, false)), _gCheck: gCheck, _gResend: gResend, _ageStart: ageStart, _ageCheck: ageCheck };
 
   function hook() {
     honestShop();

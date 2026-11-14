@@ -98,7 +98,7 @@
 .gmAv.live3d:after{margin-top:calc(-22px*var(--avS,1));width:calc(60px*var(--avS,1));height:calc(16px*var(--avS,1))}.gmAv.walk img{animation:gmWalk .45s ease-in-out infinite}.gmAv.walk.left img{transform:scaleX(-1)}
 @keyframes gmWalk{0%,100%{translate:0 0;rotate:-4deg}50%{translate:0 -5px;rotate:4deg}}
 .gmAv .stack{display:flex}.gmAv .stack img{width:46px;height:46px;margin-left:-14px}.gmAv .stack img:first-child{margin-left:0}
-.gmAv .stack b{font-size:30px}.gmAv .stack b.ini{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;font-weight:800;color:#fff;background:linear-gradient(135deg,#8b5cf6,#ec4899);border:2px solid #fff;box-shadow:0 4px 14px #0008;margin-left:-12px}.gmAv .stack b.ini:first-child{margin-left:0}
+.gmAv .stack b{font-size:30px}.gmAv .stack img.ld{background:radial-gradient(circle,#8b5cf655,transparent 70%);animation:gmPulse 1.2s ease-in-out infinite}@keyframes gmPulse{50%{opacity:.4}}.gmAv .stack b.ini{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;font-weight:800;color:#fff;background:linear-gradient(135deg,#8b5cf6,#ec4899);border:2px solid #fff;box-shadow:0 4px 14px #0008;margin-left:-12px}.gmAv .stack b.ini:first-child{margin-left:0}
 .gmAv i{position:absolute;top:-4px;right:-8px;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;font-style:normal;font-size:11px;font-weight:800;border-radius:10px;padding:1px 6px}
 .gmAv .dot{width:9px;height:9px;border-radius:50%;background:#34d399;border:2px solid #0a0820;position:absolute;bottom:2px;right:0}
 .gmCatch{text-align:center}
@@ -420,7 +420,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     if (!meMarker) {
       meMarker = new maplibregl.Marker({ element: meEl(), anchor: 'bottom' }).setLngLat([me.lng, me.lat]).addTo(map);
       // echt 3D-mannetje dat meeloopt (als je er een gemaakt hebt)
-      if (window.GLXAV && GLXAV.has() && !av3dLoading) { av3dLoading = true; GLXAV.mapAvatar().then(a => { av3d = a; const el = meMarker.getElement(); el.innerHTML = ''; el.appendChild(a.el); el.classList.add('live3d') }).catch(() => { }) }
+      if (window.GLXAV && !av3dLoading) { av3dLoading = true; GLXAV.mapAvatar().then(a => { av3d = a; const el = meMarker.getElement(); el.innerHTML = ''; el.appendChild(a.el); el.classList.add('live3d') }).catch(() => { }) }
     } else meMarker.setLngLat([me.lng, me.lat]);
     const moved = lastPos ? dist(lastPos.lat, lastPos.lng, me.lat, me.lng) : 0;
     if (moved > 2.5 && moved < 150 && curSpeed < 4.5) { G.walked = (G.walked || 0) + moved; save() }
@@ -493,15 +493,17 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     const groups = {}; visible().forEach(p => { const z = snap(p.zone[0], p.zone[1]), k = z.join(); (groups[k] = groups[k] || { z, list: [] }).list.push(p) });
     Object.values(groups).forEach(g => {
       const el = document.createElement('div'); el.className = 'gmAv' + (g.list.length > 1 ? ' group' : '');
-      const top = g.list.slice(0, 3).map(p => p.img ? `<img src="${esc(p.img)}" alt="">` : `<b class="ini">${esc(((p.n || p.name || '?').trim()[0] || '?').toUpperCase())}</b>`).join('');
+      const top = g.list.slice(0, 3).map(p => p.img ? `<img src="${esc(p.img)}" alt="">` : `<img class="ld" data-id="${esc(p.id)}" alt="">`).join('');
       el.innerHTML = `<div class="stack">${top}</div>${g.list.length > 1 ? `<i>${g.list.length}</i>` : ''}<span class="dot"></span>`;
       el.onclick = () => openPeople(g.list);
+      el.querySelectorAll('img.ld').forEach(im => { const p = g.list.find(x => String(x.id) === im.dataset.id); if (p && window.GLXAV) GLXAV.thumb(p.card && p.card.avatar, p.id).then(u => { if (u) { p.img = u; im.src = u; im.classList.remove('ld') } }) });
       pMarkers.push(new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([g.z[1], g.z[0]]).addTo(map));
     });
   }
   function openPeople(list) {
-    xs('👥 In deze zone', list.map(p => `<div class="gmRow"><span style="display:flex;gap:10px;align-items:center">${p.img ? `<img src="${esc(p.img)}" style="width:44px;height:44px;border-radius:12px;background:var(--card2)">` : '🧑'}<span><b>${esc(p.name || 'Galaxy-lid')}</b>${p.age ? ', ' + p.age : ''}<br><small class="sub">${esc(p.intent || '')} · ± ${me ? Math.max(100, Math.round(dist(me.lat, me.lng, p.zone[0], p.zone[1]) / 100) * 100) + ' m' : 'in de buurt'}</small></span></span><button class="pill" onclick="typeof openProfile==='function'&&openProfile('${esc(p.id)}')">Bekijk</button></div>`).join('') +
+    xs('👥 In deze zone', list.map(p => `<div class="gmRow"><span style="display:flex;gap:10px;align-items:center"><img src="${esc(p.img || '')}" data-id="${esc(p.id)}" class="${p.img ? '' : 'ld'}" style="width:44px;height:56px;object-fit:contain;border-radius:12px;background:var(--card2)"><span><b>${esc(p.name || 'Galaxy-lid')}</b>${p.age ? ', ' + p.age : ''}<br><small class="sub">${esc(p.intent || '')} · ± ${me ? Math.max(100, Math.round(dist(me.lat, me.lng, p.zone[0], p.zone[1]) / 100) * 100) + ' m' : 'in de buurt'}</small></span></span><button class="pill" onclick="typeof openProfile==='function'&&openProfile('${esc(p.id)}')">Bekijk</button></div>`).join('') +
       '<p class="sub" style="margin-top:8px">🛡️ Leden staan in een zone van ±300 m, nooit op hun exacte plek.</p>');
+    document.querySelectorAll('#xSheet img.ld').forEach(im => { const p = list.find(x => String(x.id) === im.dataset.id); if (p && window.GLXAV) GLXAV.thumb(p.card && p.card.avatar, p.id).then(u => { if (u) { p.img = u; im.src = u; im.classList.remove('ld') } }) });
   }
 
   async function search(q, go) {

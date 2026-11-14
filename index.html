@@ -1532,7 +1532,8 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
  function age(d){const b=new Date(d),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
  window.welcomeGo=function(){const n=$('wN').value.trim(),d=$('wD').value,ok=$('wOk').checked,e=$('wErr');
   if(n.length<2)return e.textContent='Vul je voornaam in.';if(!d)return e.textContent='Vul je geboortedatum in.';
-  const a=age(d);if(!(a>=18&&a<110)){e.textContent='Galaxy is alleen voor 18 jaar en ouder.';return}
+  try{const m=+localStorage.glxMinor||0;if(m&&Date.now()-m<30*864e5)return e.textContent='Galaxy is alleen voor 18 jaar en ouder. Dit toestel is 30 dagen geblokkeerd.'}catch(x){}
+  const a=age(d);if(a<18&&a>=0){try{localStorage.glxMinor=Date.now()}catch(x){}e.textContent='Galaxy is alleen voor 18 jaar en ouder. Dit toestel is nu 30 dagen geblokkeerd.';return}if(!(a>=18&&a<110)){e.textContent='Vul een geldige geboortedatum in.';return}
   if(!ok)return e.textContent='Vink aan dat je akkoord gaat met de voorwaarden.';
   ME.name=n.slice(0,24);ME.age=a;ME.city=$('wC').value.trim().slice(0,40);ME.born=d;saveMe();try{applyMe()}catch(x){}
   $('welV').classList.remove('on');try{showPromise()}catch(x){}};
@@ -1558,6 +1559,6 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
 </script>
 <script src="theme.js?v=15"></script>
 <script src="galaxy-map.js?v=20"></script>
-<script src="avatar.js?v=20"></script><script src="profile.js?v=15"></script><script src="backend.js?v=20"></script><script src="a11y.js?v=17"></script><script src="looks.js?v=19"></script><script src="welzijn.js?v=1"></script><script src="dateplan.js?v=2"></script><script src="myqr.js?v=2"></script><script src="dagbonus.js?v=1"></script><script src="account.js?v=6"></script><script src="push.js?v=2"></script><script src="feel.js?v=1"></script>
+<script src="avatar.js?v=21"></script><script src="profile.js?v=15"></script><script src="backend.js?v=20"></script><script src="a11y.js?v=17"></script><script src="looks.js?v=19"></script><script src="welzijn.js?v=1"></script><script src="dateplan.js?v=2"></script><script src="myqr.js?v=2"></script><script src="dagbonus.js?v=1"></script><script src="account.js?v=7"></script><script src="push.js?v=2"></script><script src="feel.js?v=1"></script>
 </body>
 </html>
