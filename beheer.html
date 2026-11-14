@@ -12,7 +12,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t1);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:1100px;margin:0 auto;padding:18px 14px 70px}
 header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-h1{font-size:21px;margin:0;flex:1}h2{font-size:15px;margin:0 0 2px}h3{font-size:13px;margin:0;color:var(--t2);font-weight:600}
+h1{font-size:21px;margin:0;flex:1 1 auto;white-space:nowrap}h2{font-size:15px;margin:0 0 2px}h3{font-size:13px;margin:0;color:var(--t2);font-weight:600}
 .sub{color:var(--t3);font-size:12px}
 .tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 14px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5}
 .tabs button,.seg button,.btn{font:inherit;border:1px solid var(--line);background:var(--s1);color:var(--t1);border-radius:999px;padding:7px 13px;cursor:pointer;white-space:nowrap}
@@ -38,7 +38,7 @@ label.f{display:block;margin:10px 0 2px;font-size:13px;color:var(--t2)}input[typ
 .pill{display:inline-block;padding:1px 8px;border-radius:99px;background:var(--line);font-size:11px;margin-right:4px}.pill.red{background:#7f1d1d}.pill.amber{background:#78350f}
 .btn{border-radius:10px;padding:6px 11px;margin:6px 6px 0 0;font-size:13px}.btn.ban{background:#b91c1c;border-color:#b91c1c}.btn.ok{background:#15803d;border-color:#15803d}
 blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid #8b5cf6;background:#ffffff08;border-radius:6px;white-space:pre-wrap}
-.funnel .hb{grid-template-columns:minmax(110px,34%) 1fr 70px}
+.funnel .hb{grid-template-columns:minmax(110px,34%) 1fr 84px}
 </style>
 </head>
 <body>
@@ -106,10 +106,10 @@ ${kpi('🚩 Open meldingen', nf(t.open_reports), t.open_reports ? 'bekijk bij Ve
 <div class="card"><h2>Berichten per dag</h2><p class="sub">Laatste ${days} dagen</p>${bars(S.daily, 'messages', 'Berichten', 'var(--c3)')}</div></div>`;
   }
   function groei() {
-    const t = S.totals, F = [['👥 Gebruikers', t.users], ['👋 Heeft gezwaaid', t.waves], ['💞 Matches', t.matches], ['💬 Gesprekken', t.chats], ['📅 Date voorgesteld', t.dates], ['✅ Date bevestigd', t.dates_confirmed]], fm = Math.max(1, F[0][1]);
+    const t = S.totals, F = [['👥 Gebruikers', t.users], ['👋 Heeft gezwaaid', t.wavers], ['💞 Heeft een match', t.matched], ['💬 Heeft gechat', t.chatters], ['📅 Date gepland', t.daters], ['✅ Date bevestigd', t.daters_ok]], fm = Math.max(1, F[0][1]);
     const H = S.hours, hmax = Math.max(1, ...H.map(h => h.n));
     return `<div class="grid c2"><div class="card"><h2>👋 Zwaaien per dag</h2>${bars(S.daily, 'waves', 'Zwaaien', 'var(--c5)')}</div><div class="card"><h2>📍 Check-ins per dag</h2>${bars(S.daily, 'checkins', 'Check-ins', 'var(--c4)')}</div></div>
-<div class="grid c2" style="margin-top:10px"><div class="card funnel"><h2>Van gebruiker tot date</h2><p class="sub">Hoeveel mensen geraken tot elke stap (totaal)</p>${F.map(([k, n]) => `<div class="hb" data-t="${k}: ${nf(n)}"><span>${k}</span><div class="bar" style="width:${Math.min(100, 100 * n / fm)}%"></div><span class="n">${nf(n)}</span></div>`).join('')}</div>
+<div class="grid c2" style="margin-top:10px"><div class="card funnel"><h2>Van gebruiker tot date</h2><p class="sub">Hoeveel mensen elke stap bereiken (% van alle gebruikers)</p>${F.map(([k, n]) => `<div class="hb" data-t="${k}: ${nf(n)} mensen (${pct(n, fm)})"><span>${k}</span><div class="bar" style="width:${Math.min(100, 100 * n / fm)}%"></div><span class="n">${nf(n)} · ${pct(n, fm)}</span></div>`).join('')}</div>
 <div class="card"><h2>🕐 Wanneer wordt er gechat?</h2><p class="sub">Berichten per uur, laatste 30 dagen (Belgische tijd)</p>
 <div class="chart"><svg viewBox="0 0 600 150" role="img" aria-label="Berichten per uur">${H.map((h, i) => { const bw = 600 / 24, hh = 112 * h.n / hmax; return `<g data-t="<b>${h.h}u – ${h.h + 1}u</b><br>${nf(h.n)} berichten"><rect x="${i * bw}" y="0" width="${bw}" height="130" fill="transparent"/>${h.n ? `<rect x="${i * bw + 1}" y="${126 - hh}" width="${bw - 2}" height="${hh}" rx="3" fill="var(--c1)"/>` : ''}</g>${i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="144" font-size="10" fill="var(--t3)" text-anchor="middle">${h.h}u</text>` : ''}` }).join('')}<line x1="0" x2="600" y1="126" y2="126" stroke="var(--t3)"/></svg>${table(H.map(h => [h.h + 'u', nf(h.n)]), ['Uur', 'Berichten'])}</div></div></div>
 <div class="grid k4" style="margin-top:10px">${kpi('🔁 Blijft na 7 dagen', S.retention_d7 == null ? '–' : S.retention_d7 + '%', 'van wie langer dan een week lid is')}${kpi('💾 Account bewaard', pct(t.saved_accounts, t.users), nf(t.saved_accounts) + ' met e-mail')}${kpi('🔔 Meldingen aan', pct(t.push_users, t.users), nf(t.push_users) + ' gebruikers')}${kpi('👥 Groepsdates', nf(t.group_dates), nf(t.checkins) + ' check-ins in totaal')}</div>`;
