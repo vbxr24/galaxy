@@ -46,6 +46,9 @@ In een chat met een match: **📅 Date**. Kies waar je zin in hebt (zin-meter), 
 ## Feedback na een date
 Na een bevestigde date: complimenten geven (anoniem; op een profiel pas zichtbaar vanaf 2 verschillende gevers), "voelde je je veilig?" en "leek de persoon op het profiel?" (privé; een nee wordt een vertrouwelijke melding) en een bedankje sturen. Server: `server/feedback.sql`.
 
+## Dagbonus
+✨ → Dagbonus: elke dag dat je Galaxy opent een stempel (+5 munten); 7 stempels (niet per se na elkaar) = Sterrendoos (+30 munten). Vraag van de dag (+3) die je een dag op je profiel kunt zetten. Geen reeks die je verliest, geen willekeurige prijzen, geen meldingen, uit te zetten. Munten staan op het toestel. Code: `dagbonus.js`.
+
 ## Mijn QR-code
 Profiel → Veiligheid of ✨ → Mijn QR-code: een persoonlijke QR-code met een link naar je profielkaart. Iemand scant hem (met Galaxy of de gewone camera) en ziet meteen je profiel om naar je te zwaaien. Ook: zelf een code scannen en je link delen. Code: `myqr.js`.
 
