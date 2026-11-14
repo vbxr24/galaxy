@@ -1528,7 +1528,7 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
  if(typeof saveProfile==='function'){const sp=saveProfile;saveProfile=function(){const r=sp.apply(this,arguments);saveMe();return r}}
  try{applyMe()}catch(e){}
  try{if(localStorage.glxGhost)$('ghostTg').classList.add('on')}catch(e){}
- const KEEP=/^(Groepen|Events|Kleuren|Nachtmodus)$/;if(typeof HUB!=='undefined')for(let k=HUB.length-1;k>=0;k--)if(!KEEP.test(HUB[k][1]))HUB.splice(k,1);
+ const KEEP=/^(Groepen|Kleuren|Nachtmodus)$/;if(typeof HUB!=='undefined')for(let k=HUB.length-1;k>=0;k--)if(!KEEP.test(HUB[k][1]))HUB.splice(k,1);
  function age(d){const b=new Date(d),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a}
  window.welcomeGo=function(){const n=$('wN').value.trim(),d=$('wD').value,ok=$('wOk').checked,e=$('wErr');
   if(n.length<2)return e.textContent='Vul je voornaam in.';if(!d)return e.textContent='Vul je geboortedatum in.';
@@ -1558,6 +1558,6 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
 </script>
 <script src="theme.js?v=15"></script>
 <script src="galaxy-map.js?v=19"></script>
-<script src="avatar.js?v=19"></script><script src="profile.js?v=15"></script><script src="backend.js?v=19"></script><script src="a11y.js?v=17"></script><script src="looks.js?v=19"></script><script src="welzijn.js?v=1"></script><script src="dateplan.js?v=2"></script><script src="events.js?v=1"></script>
+<script src="avatar.js?v=19"></script><script src="profile.js?v=15"></script><script src="backend.js?v=19"></script><script src="a11y.js?v=17"></script><script src="looks.js?v=19"></script><script src="welzijn.js?v=1"></script><script src="dateplan.js?v=2"></script><script src="myqr.js?v=1"></script>
 </body>
 </html>
