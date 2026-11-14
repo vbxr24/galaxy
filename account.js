@@ -30,7 +30,8 @@
 
   /* ---------- account-scherm ---------- */
   async function open() {
-    if (!db()) return T(t('Even geduld: Galaxy maakt nog verbinding.', 'One moment: Galaxy is still connecting.'));
+    for (let i = 0; !db() && i < 25; i++) { if (i === 0) T(t('Even geduld: Galaxy maakt verbinding…', 'One moment: connecting…')); await new Promise(r => setTimeout(r, 400)) }
+    if (!db()) return T(t('Geen verbinding. Controleer je internet en probeer opnieuw.', 'No connection. Check your internet and try again.'));
     const u = await user(); const saved = u && !u.is_anonymous && u.email, pending = u && u.new_email;
     const pw = (id, ph) => `<input class="fld" id="${id}" type="password" autocomplete="${id === 'acPw' || id === 'acPw2' ? 'new-password' : 'current-password'}" minlength="8" maxlength="72" placeholder="${ph}" style="margin:0 0 8px">`;
     xs('👤 ' + t('Account', 'Account'), saved ? `
@@ -169,7 +170,7 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
     honestShop();
     try { if (typeof HUB !== 'undefined' && !HUB.some(h => /GLXACC/.test(h[2]))) HUB.splice(1, 0, ['👤', t('Account', 'Account'), 'GLXACC.open()']) } catch (e) { }
     try { const g = $('ghostTg'), box = g && g.closest('.box'); if (box && !$('acRow')) box.insertAdjacentHTML('afterbegin', `<div class="set" id="acRow"><span>👤 ${t('Account bewaren en inloggen', 'Save account and log in')}</span><button class="btn sm ghost" onclick="GLXACC.open()">${t('Open', 'Open')}</button></div>`) } catch (e) { }
-    let done = false; const go = () => { if (done) return; done = true; checkStatus(); newPasswordAfterReset(); if (/[?&]login=1/.test(location.search)) { try { history.replaceState(null, '', location.pathname) } catch (e) { } setTimeout(() => { document.querySelectorAll('.ov.on').forEach(o => { if (o.id !== 'xV') o.classList.remove('on') }); open() }, 600) } if (/[?&]saved=1/.test(location.search)) { try { history.replaceState(null, '', location.pathname) } catch (e) { } T('✅ ' + t('Je account is bewaard! Je kunt nu op elk toestel inloggen.', 'Your account is saved! You can now log in on any device.')) } };
+    let done = false; const go = () => { if (done) return; done = true; checkStatus(); newPasswordAfterReset(); if (/[?&]login=1/.test(location.search)) { try { history.replaceState(null, '', location.pathname) } catch (e) { } let n = 0; const tryOpen = () => { if (!db() && ++n < 40) return setTimeout(tryOpen, 400); document.querySelectorAll('.ov.on').forEach(o => { if (o.id !== 'xV') o.classList.remove('on') }); open() }; setTimeout(tryOpen, 600) } if (/[?&]saved=1/.test(location.search)) { try { history.replaceState(null, '', location.pathname) } catch (e) { } T('✅ ' + t('Je account is bewaard! Je kunt nu op elk toestel inloggen.', 'Your account is saved! You can now log in on any device.')) } };
     if (net().state === 'verbonden') go(); else window.addEventListener('glx-net', e => { if (e.detail === 'verbonden') go() });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hook); else hook();
