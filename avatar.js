@@ -244,18 +244,19 @@
   function hashStr(x) { let h = 2166136261; for (let i = 0; i < x.length; i++) { h ^= x.charCodeAt(i); h = Math.imul(h, 16777619) } return h >>> 0 }
   function defaultFor(seed) {
     const h = hashStr(String(seed || 'x')), keys = ['m_casual', 'f_casual', 'm_hoodie', 'f_formal', 'a_anime', 'm_suit', 'f_suit', 'a_anime'].filter(k => MODELS[k]), pick = (a, n) => a[(h >>> n) % a.length];
-    const k = pick(keys, 0), parts = {}; MODELS[k].parts.forEach(([, m], i) => { if ((h >>> (i + 3)) & 1) parts[m] = pick(CLOTH, 5 + i * 3) });
+    const SAFE = ['#f8fafc', '#1f2937', '#0b0a1f', '#2563eb', '#38bdf8', '#8b5cf6', '#ec4899', '#16a34a', '#14b8a6', '#ef4444', '#fbbf24', '#64748b'];
+    const k = pick(keys, 0), parts = {}; MODELS[k].parts.forEach(([, m], i) => { parts[m] = pick(SAFE, 5 + i * 4) });
     return { model: k, skin: pick(SKIN, 7), hair: pick(HAIRC.slice(0, 9), 11), eyes: MODELS[k].vrm ? pick(EYES, 13) : null, face: MODELS[k].vrm ? 'happy' : null, parts };
   }
   function clean(cfg, seed) { return cfg && MODELS[cfg.model] ? cfg : defaultFor(seed) }
-  function thumb(cfg, seed) {
-    cfg = clean(cfg, seed); const key = JSON.stringify(cfg);
+  function thumb(cfg, seed, scale) {
+    cfg = clean(cfg, seed); const sc = scale || 1, key = sc + JSON.stringify(cfg);
     if (thumbs.has(key)) return thumbs.get(key);
     const p = tq = tq.then(async () => {
       await lib();
-      if (!tR) { tR = newRenderer(200, 260, true); tR.setPixelRatio(1); tR.setSize(200, 260, false); tS = makeScene(true); tS.userData.env(tR); tC = new THREE.PerspectiveCamera(24, 200 / 260, .1, 50) }
+      if (!tR || tR._sc !== sc) { tR = newRenderer(200 * sc, 260 * sc, true); tR._sc = sc; tR.setPixelRatio(1); tR.setSize(200 * sc, 260 * sc, false); tS = makeScene(true); tS.userData.env(tR); tC = new THREE.PerspectiveCamera(24, 200 / 260, .1, 50) }
       const f = await figure(cfg); f.root.rotation.y = .3; f.mixer.update(.016); tS.add(f.root);
-      tC.position.set(0, .9, 4.6); tC.lookAt(0, .84, 0); tR.render(tS, tC); await new Promise(r => requestAnimationFrame(r)); f.mixer.update(.016); tR.render(tS, tC); const url = tR.domElement.toDataURL('image/png');
+      tC.position.set(0, .95, 5.1); tC.lookAt(0, .9, 0); tR.render(tS, tC); await new Promise(r => requestAnimationFrame(r)); f.mixer.update(.016); tR.render(tS, tC); const url = tR.domElement.toDataURL('image/png');
       tS.remove(f.root); f.root.traverse(o => { if (o.isMesh && o.geometry && !o.isSkinnedMesh) { } }); return url;
     }).catch(() => null);
     thumbs.set(key, p); return p;
