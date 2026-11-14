@@ -776,7 +776,7 @@ renderDeck();renderChats();renderProfExtra();
 <script>
 /* 1. Galaxy-belofte (onboarding) */
 const PROM=[["🌍","Een live kaart in plaats van swipen","Zie waar het druk is en wie er in de buurt is, overal ter wereld."],["🧍","Je eigen 3D-mannetje","Maak het zoals jij wilt. Het loopt met je mee op de kaart."],["📍","Echt afspreken","Check in bij een plek of plan een groepsdate op een openbare plaats."],["🛡️","Jouw locatie blijft van jou","Anderen zien alleen een zone van ±300 m, nooit je exacte plek. Onzichtbaar kan altijd."],["🔞","Alleen voor 18+","Meld en blokkeer met één tik. Ongepaste profielen worden verwijderd."]];
-function showPromise(){$('promiseSheet').innerHTML=`<div style="text-align:center"><div style="font-size:42px">✦</div><h2 style="margin:6px 0 2px">De Galaxy-belofte</h2><p class="sub" style="margin-bottom:12px">Zo werkt Galaxy</p></div>`+PROM.map(p=>`<div class="set" style="justify-content:flex-start;gap:12px;align-items:flex-start"><span style="font-size:24px">${p[0]}</span><span><b>${p[1]}</b><br><span class="sub">${p[2]}</span></span></div>`).join('')+`<button class="btn" style="margin-top:14px" onclick="closeO('promiseV')">Ik ben erbij ✦</button>`;openO('promiseV')}
+function showPromise(){$('promiseSheet').innerHTML=`<div style="text-align:center"><div style="font-size:42px">✦</div><h2 style="margin:6px 0 2px">De Galaxy-belofte</h2><p class="sub" style="margin-bottom:12px">Zo werkt Galaxy</p></div>`+PROM.map(p=>`<div class="set" style="justify-content:flex-start;gap:12px;align-items:flex-start"><span style="font-size:24px">${p[0]}</span><span><b>${p[1]}</b><br><span class="sub">${p[2]}</span></span></div>`).join('')+`<button class="btn" style="margin-top:14px" onclick="closeO('promiseV')">Ik ben erbij ✦</button><button class="btn ghost" style="margin-top:8px" onclick="closeO('promiseV');window.GLXACC&&GLXACC.open()">🔑 Ik heb al een account: inloggen</button>`;openO('promiseV')}
 setTimeout(showPromise,1500);
 
 /* 2. Wie jou leuk vindt = gratis voor iedereen */
@@ -1558,6 +1558,6 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
 </script>
 <script src="theme.js?v=15"></script>
 <script src="galaxy-map.js?v=19"></script>
-<script src="avatar.js?v=20"></script><script src="profile.js?v=15"></script><script src="backend.js?v=19"></script><script src="a11y.js?v=17"></script><script src="looks.js?v=19"></script><script src="welzijn.js?v=1"></script><script src="dateplan.js?v=2"></script><script src="myqr.js?v=2"></script><script src="dagbonus.js?v=1"></script><script src="account.js?v=2"></script><script src="push.js?v=2"></script><script src="feel.js?v=1"></script>
+<script src="avatar.js?v=20"></script><script src="profile.js?v=15"></script><script src="backend.js?v=19"></script><script src="a11y.js?v=17"></script><script src="looks.js?v=19"></script><script src="welzijn.js?v=1"></script><script src="dateplan.js?v=2"></script><script src="myqr.js?v=2"></script><script src="dagbonus.js?v=1"></script><script src="account.js?v=3"></script><script src="push.js?v=2"></script><script src="feel.js?v=1"></script>
 </body>
 </html>
