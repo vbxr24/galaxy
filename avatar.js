@@ -22,13 +22,16 @@
     f_suit: { f: 'Female_Suit', n: 'Pak', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Pak', 'Black'], ['Hemd', 'White']] },
     m_beach: { f: 'Male_Beach', n: 'Zomer', hair: ['Hair', 'Eyebrows'], parts: [['Top', 'LightBrown'], ['Short', 'Red_Dark']] },
     f_punk: { f: 'Female_Punk', n: 'Punk', hair: ['Pink'], hairLbl: 'Haar en top', parts: [['Broek', 'Black'], ['Schoenen', 'Grey']] },
+    a_anime: { vrm: 'Anime_A', n: 'Anime', g: 'f', hairLbl: 'Haarkleur', parts: [['Top', 'Tops_01_CLOTH'], ['Rok', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], eyes: true },
     m_punk: { f: 'Male_Punk', n: 'Punk', hair: ['Red', 'Red_Dark'], parts: [['Top', 'White'], ['Vest', 'Black'], ['Broek', 'LightBlue']] }
   };
   const SKIN = ['#f8d9c4', '#f1c7a5', '#e0ac85', '#c98f66', '#a56f48', '#7d4f30', '#5a3620', '#3b2314'];
   const HAIRC = ['#17120f', '#3a2618', '#6b4226', '#a8703a', '#d8b46a', '#f2e3b0', '#b8402a', '#8e9099', '#f5f5f5', '#ec4899', '#3b82f6', '#22c55e', '#8b5cf6'];
   const CLOTH = ['#f8fafc', '#cbd5e1', '#64748b', '#1f2937', '#0b0a1f', '#ef4444', '#f97316', '#fbbf24', '#84cc16', '#16a34a', '#14b8a6', '#38bdf8', '#2563eb', '#8b5cf6', '#ec4899', '#9d174d', '#92400e', '#d6b48a'];
+  const EYES = ['#3b2314', '#6b4226', '#2563eb', '#38bdf8', '#16a34a', '#8b5cf6', '#ec4899', '#ef4444', '#fbbf24', '#8e9099'];
+  const FACES = [['neutral', '🙂 Gewoon'], ['happy', '😄 Blij'], ['relaxed', '😌 Relaxed'], ['surprised', '😮 Verrast'], ['sad', '🥺 Verlegen']];
   const DEF = { model: 'm_casual', skin: null, hair: null, parts: {} };
-  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, parts: a.parts || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
+  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
   function has() { try { return !!localStorage[KEY] } catch (e) { return false } }
   let A = load();
 
@@ -40,13 +43,66 @@
     try { RoomEnv = (await import('three/addons/environments/RoomEnvironment.js')).RoomEnvironment; creased = (await import('three/addons/utils/BufferGeometryUtils.js')).toCreasedNormals } catch (e) { }
     THREE = T; GLTFLoader = L.GLTFLoader; cloneSkinned = U.clone;
   }
-  let RoomEnv = null, creased = null;
+  let RoomEnv = null, creased = null, VRMmod = null;
+  async function vrmLib() { await lib(); if (!VRMmod) VRMmod = await import(new URL('vendor/three-vrm-3.5.5.module.min.js', location.href).href); return VRMmod }
+  const vrmBuf = new Map();
+  function vrmData(file) { if (!vrmBuf.has(file)) { const p = fetch(BASE + file + '.vrm').then(r => { if (!r.ok) throw new Error('vrm ' + r.status); return r.arrayBuffer() }); p.catch(() => vrmBuf.delete(file)); vrmBuf.set(file, p) } return vrmBuf.get(file) }
+
+  /* anime-figuur (VRM): eigen skelet, bewegingen met code, knipperen en gezichtjes */
+  async function vrmFigure(cfg, M) {
+    const V = await vrmLib(), buf = await vrmData(M.vrm), loader = new GLTFLoader();
+    loader.register(p => new V.VRMLoaderPlugin(p));
+    const g = await new Promise((ok, no) => loader.parse(buf.slice(0), new URL(BASE, location.href).href, ok, no));
+    const vrm = g.userData.vrm; V.VRMUtils.removeUnnecessaryVertices(g.scene); V.VRMUtils.combineSkeletons ? V.VRMUtils.combineSkeletons(g.scene) : 0; V.VRMUtils.rotateVRM0(vrm);
+    vrm.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false } });
+    const mats = {}; vrm.scene.traverse(o => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { const n = (m.name || '').replace(/ \(Outline\)$/, ''); (mats[n] = mats[n] || []).push(m); if (m.color && m.userData.base == null) m.userData.base = m.color.getHex(); if (m.shadeColorFactor && m.userData.shade == null) m.userData.shade = m.shadeColorFactor.getHex() }) });
+    const H = vrm.humanoid, bone = n => H.getNormalizedBoneNode(n);
+    vrm.scene.updateMatrixWorld(true); const head = bone('head'), v = new THREE.Vector3(); const hh = head ? head.getWorldPosition(v).y + .14 : 1.6;
+    const k = 1.62 / hh, wrap = new THREE.Group(); vrm.scene.scale.setScalar(k); wrap.add(vrm.scene);
+    let mode = 'Idle', once = 0, t = 0, blinkAt = 1.5, blink = 0;
+    const R = (n, x, y, z) => { const b = bone(n); if (b) b.rotation.set(x || 0, y || 0, z || 0) };
+    const pose = dt => {
+      t += dt; const s = Math.sin, br = s(t * 2) * .02;
+      R('spine', br, 0, 0); R('chest', br, 0, 0); R('neck', 0, s(t * .5) * .08, 0);
+      if (mode === 'Walk') {
+        const w = t * 7, a = s(w) * .55;
+        R('leftUpperLeg', a, 0, 0); R('rightUpperLeg', -a, 0, 0); R('leftLowerLeg', Math.max(0, -s(w)) * .9, 0, 0); R('rightLowerLeg', Math.max(0, s(w)) * .9, 0, 0);
+        R('leftUpperArm', -a * .6, 0, -1.2); R('rightUpperArm', a * .6, 0, 1.2); R('leftLowerArm', 0, 0, -.2); R('rightLowerArm', 0, 0, .2);
+        R('hips', 0, s(w) * .08, 0); vrm.scene.position.y = Math.abs(s(w)) * .03;
+      } else {
+        ['leftUpperLeg', 'rightUpperLeg', 'leftLowerLeg', 'rightLowerLeg', 'hips'].forEach(n => R(n)); vrm.scene.position.y = 0;
+        R('leftUpperArm', 0, 0, -1.22 - s(t * 2) * .02); R('leftLowerArm', 0, 0, -.12);
+        if (mode === 'Wave') { R('rightUpperArm', 0, 0, -.2); R('rightLowerArm', 0, -.2 + s(t * 9) * .45, -1.5); R('rightHand', 0, 0, 0) }
+        else { R('rightUpperArm', 0, 0, 1.22 + s(t * 2) * .02); R('rightLowerArm', 0, 0, .12) }
+      }
+      if (once && t > once) { once = 0; mode = 'Idle' }
+      const E = vrm.expressionManager;
+      if (E) {
+        if (t > blinkAt) { blink = .16; blinkAt = t + 2 + Math.random() * 3 } if (blink > 0) blink -= dt;
+        E.setValue('blink', blink > 0 ? Math.sin((blink / .16) * Math.PI) : 0);
+        const f = mode === 'Wave' ? 'happy' : (cfg.face || 'neutral'); FACES.forEach(([n]) => E.setValue(n, n === f && n !== 'neutral' ? (n === 'sad' ? .55 : .85) : 0));
+      }
+      vrm.update(dt);
+    };
+    const fig = {
+      root: wrap, model: cfg.model, vrm,
+      mixer: { update: pose },
+      play(n, o) { mode = n === 'Wave' || n === 'Walk' ? n : 'Idle'; once = o || n === 'Wave' ? t + 2.2 : 0 },
+      tint(c) {
+        const set = (names, hex) => names.forEach(n => (mats[n] || []).forEach(m => { if (!m.color) return; m.color.set(hex == null ? m.userData.base : hex); if (m.shadeColorFactor) { if (hex == null) m.shadeColorFactor.set(m.userData.shade); else m.shadeColorFactor.set(hex).multiplyScalar(.72) } }));
+        set(['Body_00_SKIN', 'Face_00_SKIN'], c.skin); set(['Hair_00_HAIR', 'HairBack_00_HAIR'], c.hair); set(['EyeIris_00_EYE'], c.eyes);
+        M.parts.forEach(([, mat]) => set([mat], (c.parts || {})[mat]));
+      },
+      face(f) { cfg = Object.assign({}, cfg, { face: f }) }
+    };
+    fig.tint(cfg); pose(0); return fig;
+  }
   const cache = new Map();
   function gltf(file) { if (!cache.has(file)) { const p = new GLTFLoader().loadAsync(BASE + file + '.glb'); p.catch(() => cache.delete(file)); cache.set(file, p) } return cache.get(file) }
 
   /* een figuur maken uit een instelling */
   async function figure(cfg) {
-    await lib(); const M = MODELS[cfg.model] || MODELS[DEF.model], g = await gltf(M.f);
+    await lib(); const M = MODELS[cfg.model] || MODELS[DEF.model]; if (M.vrm) return vrmFigure(cfg, M); const g = await gltf(M.f);
     const root = cloneSkinned(g.scene), mats = {};
     root.traverse(o => {
       if (!o.isMesh) return; o.castShadow = true; o.frustumCulled = false;
@@ -107,7 +163,7 @@
 .avSw.on{border-color:#fff!important;box-shadow:0 0 0 3px #ec4899!important}
 .avSw.std{background:conic-gradient(#888,#ddd,#888)!important;font-size:10px;color:#111}
 .avLbl{font-size:12px;color:var(--mut);margin-top:6px}`;
-  const TABS = [['stijl', '🧍 Stijl'], ['huid', '🎨 Huid'], ['haar', '💇 Haar'], ['kleren', '👕 Kleren']];
+  const TABS = [['stijl', '🧍 Stijl'], ['huid', '🎨 Huid'], ['haar', '💇 Haar'], ['kleren', '👕 Kleren'], ['gezicht', '😊 Gezicht']];
   let tab = 'stijl';
   function ensureDom() {
     if ($('avV')) return;
@@ -128,7 +184,8 @@
   function panel() {
     const M = MODELS[A.model]; $('avTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
     let h = '';
-    if (tab === 'stijl') h = `<div class="avOpts">${Object.entries(MODELS).map(([k, m]) => `<button class="${A.model === k ? 'on' : ''}" onclick="GLXAV.set('model','${k}')">${k[0] === 'f' ? '👩' : '👨'} ${m.n}</button>`).join('')}</div><p class="avLbl">Kies een stijl. Daarna pas je huid, haar en kleuren aan.</p>`;
+    if (tab === 'stijl') h = `<div class="avOpts">${Object.entries(MODELS).map(([k, m]) => `<button class="${A.model === k ? 'on' : ''}" onclick="GLXAV.set('model','${k}')">${m.vrm ? '✨' : k[0] === 'f' ? '👩' : '👨'} ${m.n}</button>`).join('')}</div><p class="avLbl">Kies een stijl. Daarna pas je huid, haar en kleuren aan.${M.vrm ? ' ✨ Anime knippert met de ogen en toont gezichtjes.' : ''}</p>`;
+    if (tab === 'gezicht') h = M.vrm ? `<div class="avLbl">Gezichtje</div><div class="avOpts">${FACES.map(([f, n]) => `<button class="${(A.face || 'neutral') === f ? 'on' : ''}" onclick="GLXAV.set('face','${f}')">${n}</button>`).join('')}</div><div class="avLbl">Oogkleur</div>${sw("set.bind(null,'eyes')", A.eyes, EYES)}` : `<p class="avLbl">Gezichtjes en oogkleur kan je kiezen bij de stijl ✨ Anime.</p>`;
     if (tab === 'huid') h = `<div class="avLbl">Huidskleur</div>${sw("set.bind(null,'skin')", A.skin, SKIN)}`;
     if (tab === 'haar') h = `<div class="avLbl">${M.hairLbl || 'Haarkleur'}</div>${sw("set.bind(null,'hair')", A.hair, HAIRC)}`;
     if (tab === 'kleren') h = M.parts.map(([n, mat]) => `<div class="avLbl">${n}</div>${sw(`part.bind(null,'${mat}')`, (A.parts || {})[mat] || null, CLOTH)}`).join('');
@@ -186,11 +243,11 @@
   const api = window.GLXAV = {
     open() { ensureDom(); panel(); document.querySelectorAll('.ov.on').forEach(o => o.classList.remove('on')); $('avV').classList.add('on'); start().catch(fail) },
     close() { $('avV').classList.remove('on') },
-    set(k, v) { if (k === 'model') { if (!MODELS[v] || v === A.model) return; A = { model: v, skin: A.skin, hair: null, parts: {} }; panel(); rebuild().catch(fail); return } A[k] = v; if (fig) fig.tint(A); panel() },
+    set(k, v) { if (k === 'model') { if (!MODELS[v] || v === A.model) return; A = { model: v, skin: A.skin, hair: null, eyes: null, face: A.face || null, parts: {} }; panel(); rebuild().catch(fail); return } A[k] = v; if (fig) { fig.tint(A); if (k === 'face' && fig.face) fig.face(v) } panel() },
     part(mat, v) { A.parts = A.parts || {}; if (v == null) delete A.parts[mat]; else A.parts[mat] = v; if (fig) fig.tint(A); panel() },
     random() {
       const r = a => a[Math.floor(Math.random() * a.length)], k = r(Object.keys(MODELS)), parts = {}; MODELS[k].parts.forEach(([, m]) => { if (Math.random() < .7) parts[m] = r(CLOTH) });
-      const same = k === A.model; A = { model: k, skin: r(SKIN), hair: r(HAIRC.slice(0, 9)), parts }; panel(); if (same && fig) fig.tint(A); else rebuild().catch(fail);
+      const same = k === A.model; A = { model: k, skin: r(SKIN), hair: r(HAIRC.slice(0, 9)), eyes: MODELS[k].vrm ? r(EYES) : null, face: MODELS[k].vrm ? r(FACES)[0] : null, parts }; panel(); if (same && fig) fig.tint(A); else rebuild().catch(fail);
     },
     save() {
       try { localStorage[KEY] = JSON.stringify(A) } catch (e) { }

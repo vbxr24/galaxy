@@ -1,3 +1,6 @@
 3D-figuren in deze map: "Ultimate Modular Men" en "Ultimate Modular Women" van Quaternius (https://quaternius.com).
 Licentie: CC0 1.0 Universal (publiek domein). https://creativecommons.org/publicdomain/zero/1.0/
 Vrij te gebruiken, ook commercieel, zonder naamsvermelding. Bedankt, Quaternius!
+
+Anime_A.vrm: "VRM1_Constraint_Twist_Sample" van pixiv Inc. (uit github.com/pixiv/three-vrm, MIT).
+VRM-licentie van het model: commercieel gebruik toegestaan, aanpassen en herverdelen toegestaan, naamsvermelding niet nodig. Texturen verkleind voor mobiel.
