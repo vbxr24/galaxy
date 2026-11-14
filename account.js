@@ -10,9 +10,11 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const T = m => { try { toast(m) } catch (e) { } };
   const nl = () => { try { return (typeof LANG === 'undefined' ? 'nl' : LANG) === 'nl' } catch (e) { return true } };
-  const t = (a, b) => nl() ? a : b;
+  const t = (a, b) => (nl() && !document.getElementById('glxGate')) ? a : b;
   const net = () => window.GLXNET || {};
-  const db = () => net().db;
+  const db = () => net().db || CL;
+  let CL = null, memPw = null;
+  async function cl() { if (net().db) return net().db; if (!CL && net().client) { try { CL = await net().client() } catch (e) { } } return CL }
   const MAIL = () => { try { return (typeof CONTACT_EMAIL !== 'undefined' && CONTACT_EMAIL) || 'galaxy.app.xv@gmail.com' } catch (e) { return 'galaxy.app.xv@gmail.com' } };
   const okMail = s => /^[^\s@]{1,64}@[^\s@]{1,190}\.[a-z]{2,}$/i.test(s || '');
   const why = e => {
@@ -26,7 +28,7 @@
     return t('Dat lukte niet. Probeer het opnieuw.', 'That did not work. Please try again.');
   };
   const HOME = () => location.origin + location.pathname.replace(/[^/]*$/, '');
-  async function user() { try { return (await db().auth.getUser()).data.user } catch (e) { return null } }
+  async function user() { try { const c = await cl(); const s = (await c.auth.getSession()).data.session; return s ? s.user : null } catch (e) { return null } }
 
   /* ---------- account-scherm ---------- */
   async function open() {
@@ -59,9 +61,14 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
     if (!okMail(mail)) return T(t('Vul een geldig e-mailadres in', 'Enter a valid email'));
     if (p1.length < 8) return T(t('Wachtwoord: minstens 8 tekens', 'Password: at least 8 characters'));
     if (p1 !== p2) return T(t('De wachtwoorden zijn niet gelijk', 'Passwords do not match'));
-    const r = await db().auth.updateUser({ email: mail, password: p1 }, { emailRedirectTo: HOME() + '?saved=1' });
+    const c = await cl(); if (!c) return T(t('Geen verbinding. Probeer opnieuw.', 'No connection. Try again.'));
+    const cur = await user(); memPw = p1;
+    const r = cur ? await c.auth.updateUser({ email: mail, password: p1 }, { emailRedirectTo: HOME() + '?saved=1' })
+                  : await c.auth.signUp({ email: mail, password: p1, options: { emailRedirectTo: HOME() + '?saved=1' } });
+    if (!cur && !r.error && r.data && !r.data.session) { pendingMail = mail; T('📧 ' + t('Check je mail en klik op de bevestigingslink', 'Check your mail and click the confirmation link')); return true }
     if (r.error) return T(why(r.error));
     const u = r.data.user;
+    if (r.data.session) { pendingMail = null; }
     T(u && u.email === mail ? '✅ ' + t('Account bewaard!', 'Account saved!') : '📧 ' + t('Check je mail en klik op de bevestigingslink', 'Check your mail and click the confirmation link'));
     return true;
   }
@@ -77,10 +84,11 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
     if (!okMail(mail) || !pw) return T(t('Vul e-mail en wachtwoord in', 'Enter email and password'));
     const before = await user();
     if (ask && before && before.is_anonymous && !confirm(t('Inloggen vervangt het profiel op deze gsm door je bewaarde account. Doorgaan?', 'Logging in replaces the profile on this phone with your saved account. Continue?'))) return;
-    const r = await db().auth.signInWithPassword({ email: mail, password: pw });
+    const c = await cl(); if (!c) return T(t('Geen verbinding. Probeer opnieuw.', 'No connection. Try again.'));
+    const r = await c.auth.signInWithPassword({ email: mail, password: pw });
     if (r.error) return T(why(r.error));
     try {
-      const p = (await db().from('profiles').select('*').eq('id', r.data.user.id).maybeSingle()).data;
+      const p = (await c.from('profiles').select('*').eq('id', r.data.user.id).maybeSingle()).data;
       if (p) { localStorage.glxMe = JSON.stringify(toMe(p)); if (p.avatar) localStorage.glxAvatar = JSON.stringify(p.avatar); if (p.ghost) localStorage.glxGhost = '1'; else localStorage.removeItem('glxGhost') }
     } catch (e) { }
     T('✅ ' + t('Ingelogd', 'Logged in')); setTimeout(() => location.reload(), 700);
@@ -167,14 +175,15 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
   }
 
 
+  const en = (a, b) => b;  /* het login-scherm is altijd in het Engels */
   /* ---------- verplicht: eerst een account (e-mail + wachtwoord), dan je gegevens ---------- */
   let gTab = 'new';
+  let pendingMail = null;
   async function gate() {
-    for (let i = 0; !db() && i < 40; i++) await new Promise(r => setTimeout(r, 400));
-    if (!db()) return;
+    const c = await cl(); if (!c) return setTimeout(gate, 3000);
     const u = await user();
-    if (u && !u.is_anonymous && u.email) { const g = $('glxGate'); if (g) g.remove(); document.body.classList.remove('gated'); return }
-    drawGate(u && u.new_email);
+    if (u && !u.is_anonymous && u.email) { const g = $('glxGate'); if (g) { g.remove(); location.reload() } document.body.classList.remove('gated'); return }
+    drawGate((u && u.new_email) || pendingMail);
   }
   function drawGate(pending) {
     if (!$('gateCss')) document.head.insertAdjacentHTML('beforeend', `<style id="gateCss">
@@ -184,40 +193,45 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
 #glxGate .seg{display:flex;background:#ffffff10;border-radius:14px;padding:4px;margin:20px 0 14px}#glxGate .seg button{flex:1;padding:10px;border-radius:11px;font-weight:700;color:#c9c4ef}#glxGate .seg button.on{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff}
 #glxGate .fld{width:100%;margin:0 0 10px}#glxGate .small{font-size:12px;color:#8f8aa8;line-height:1.5;margin-top:12px;text-align:center}#glxGate .small a{color:#f9a8d4}
 #glxGate .card{background:#ffffff0d;border:1px solid #ffffff1f;border-radius:18px;padding:18px;animation:gIn .35s ease both}@keyframes gIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-body.gated{overflow:hidden}</style>`);
+body.gated{overflow:hidden}#glxGate .feats{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:12px}#glxGate .feats span{font-size:12px;padding:5px 10px;border-radius:99px;background:#ffffff12;border:1px solid #ffffff1a;color:#e6e1ff}#glxGate .pw{position:relative}#glxGate .pw button{position:absolute;right:8px;top:7px;background:none;border:0;font-size:18px;padding:4px 6px;color:#c9c4ef}#glxGate .btn[disabled]{opacity:.6}#glxGate .foot{text-align:center;font-size:11px;color:#6f6a8f;margin-top:26px}#glxGate .foot a{color:#8f8aa8}</style>`);
     let g = $('glxGate'); if (!g) { document.body.insertAdjacentHTML('beforeend', '<div id="glxGate" role="dialog" aria-modal="true" aria-label="Galaxy account"></div>'); g = $('glxGate') }
     document.body.classList.add('gated');
-    const head = `<div class="gLogo"><img src="icons/icon-192.png" alt="Galaxy"><h1>Galaxy</h1><p class="lead">${t('De live kaart om nieuwe mensen te ontmoeten. Alleen 18+.', 'The live map to meet new people. 18+ only.')}</p></div>`;
-    const pw = (id, ph, ac) => `<input class="fld" id="${id}" type="password" autocomplete="${ac}" minlength="8" maxlength="72" placeholder="${ph}">`;
+    const head = `<div class="gLogo"><img src="icons/icon-192.png" alt="Galaxy"><h1>Galaxy</h1><p class="lead">${en('', 'Meet real people nearby, on a live map.')}</p><div class="feats"><span>🗺️ Live map</span><span>🧍 3D avatar</span><span>🛡️ Safe &amp; private</span></div></div>`;
+    const pw = (id, ph, ac) => `<div class="pw"><input class="fld" id="${id}" type="password" autocomplete="${ac}" minlength="8" maxlength="72" placeholder="${ph}"><button type="button" aria-label="Show password" onclick="const i=this.previousElementSibling;i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁️':'🙈'">👁️</button></div>`;
     if (pending) {
-      g.innerHTML = `<div class="in">${head}<div class="card" style="text-align:center"><div style="font-size:44px">📧</div><h2 style="margin:6px 0">${t('Check je mail', 'Check your email')}</h2>
-<p class="lead">${t('We stuurden een link naar', 'We sent a link to')} <b>${esc(pending)}</b>. ${t('Tik op de knop in die mail en kom dan terug.', 'Tap the button in that email, then come back.')}</p>
-<button class="btn" style="width:100%;margin-top:16px" onclick="GLXACC._gCheck()">✅ ${t('Ik heb bevestigd', "I've confirmed")}</button>
-<button class="btn ghost" style="width:100%;margin-top:8px" onclick="GLXACC._gResend('${esc(pending)}')">${t('Mail opnieuw sturen', 'Resend email')}</button>
-<button class="btn sm ghost" style="width:100%;margin-top:8px" onclick="GLXACC._gTab('new')">${t('Ander e-mailadres gebruiken', 'Use another email')}</button>
-<p class="small">${t('Niets gekregen? Kijk ook in je spam of "Reclame".', 'Nothing? Also check your spam folder.')}</p></div></div>`;
+      g.innerHTML = `<div class="in">${head}<div class="card" style="text-align:center"><div style="font-size:44px">📧</div><h2 style="margin:6px 0">${en('Check je mail', 'Check your email')}</h2>
+<p class="lead">${en('We stuurden een link naar', 'We sent a link to')} <b>${esc(pending)}</b>. ${en('Tik op de knop in die mail en kom dan terug.', 'Tap the button in that email, then come back.')}</p>
+<button class="btn" style="width:100%;margin-top:16px" onclick="GLXACC._gCheck()">✅ ${en('Ik heb bevestigd', "I've confirmed")}</button>
+<button class="btn ghost" style="width:100%;margin-top:8px" onclick="GLXACC._gResend('${esc(pending)}')">${en('Mail opnieuw sturen', 'Resend email')}</button>
+<button class="btn sm ghost" style="width:100%;margin-top:8px" onclick="GLXACC._gTab('new')">${en('Ander e-mailadres gebruiken', 'Use another email')}</button>
+<p class="small">${en('Niets gekregen? Kijk ook in je spam of "Reclame".', 'Nothing? Also check your spam folder.')}</p></div></div>`;
       return;
     }
-    g.innerHTML = `<div class="in">${head}<div class="seg"><button class="${gTab === 'new' ? 'on' : ''}" onclick="GLXACC._gTab('new')">${t('Account maken', 'Sign up')}</button><button class="${gTab === 'in' ? 'on' : ''}" onclick="GLXACC._gTab('in')">${t('Inloggen', 'Log in')}</button></div>
+    g.innerHTML = `<div class="in">${head}<div class="seg"><button class="${gTab === 'new' ? 'on' : ''}" onclick="GLXACC._gTab('new')">${en('Account maken', 'Sign up')}</button><button class="${gTab === 'in' ? 'on' : ''}" onclick="GLXACC._gTab('in')">${en('Inloggen', 'Log in')}</button></div>
 <div class="card">${gTab === 'new' ? `
-<input class="fld" id="gMail" type="email" autocomplete="email" maxlength="254" placeholder="${t('E-mailadres', 'Email address')}">
-${pw('gPw', t('Wachtwoord (min. 8 tekens)', 'Password (min. 8 characters)'), 'new-password')}${pw('gPw2', t('Herhaal wachtwoord', 'Repeat password'), 'new-password')}
-<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#c9c4ef;margin:4px 0 14px"><input type="checkbox" id="gOk" style="margin-top:3px;accent-color:#ec4899"><span>${t('Ik ben 18+ en ga akkoord met de', 'I am 18+ and agree to the')} <a href="voorwaarden.html" target="_blank" style="color:#f9a8d4">${t('voorwaarden', 'terms')}</a> ${t('en het', 'and the')} <a href="privacy.html" target="_blank" style="color:#f9a8d4">${t('privacybeleid', 'privacy policy')}</a>.</span></label>
-<button class="btn" style="width:100%" onclick="GLXACC._gSave()">${t('Account maken', 'Create account')} ✦</button>` : `
-<input class="fld" id="gLiMail" type="email" autocomplete="email" maxlength="254" placeholder="${t('E-mailadres', 'Email address')}">
-${pw('gLiPw', t('Wachtwoord', 'Password'), 'current-password')}
-<button class="btn" style="width:100%" onclick="GLXACC._gLogin()">${t('Inloggen', 'Log in')}</button>
-<button class="btn sm ghost" style="width:100%;margin-top:8px" onclick="GLXACC._forgot()">${t('Wachtwoord vergeten?', 'Forgot password?')}</button>`}</div>
-<p class="small">${t('Met een account verlies je nooit je profiel, matches en chats. We tonen nooit je exacte locatie.', 'With an account you never lose your profile, matches and chats. We never show your exact location.')}</p></div>`;
+<input class="fld" id="gMail" type="email" autocomplete="email" maxlength="254" placeholder="${en('E-mailadres', 'Email address')}">
+${pw('gPw', en('Wachtwoord (min. 8 tekens)', 'Password (min. 8 characters)'), 'new-password')}${pw('gPw2', en('Herhaal wachtwoord', 'Repeat password'), 'new-password')}
+<label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#c9c4ef;margin:4px 0 14px"><input type="checkbox" id="gOk" style="margin-top:3px;accent-color:#ec4899"><span>${en('Ik ben 18+ en ga akkoord met de', 'I am 18+ and agree to the')} <a href="voorwaarden.html" target="_blank" style="color:#f9a8d4">${en('voorwaarden', 'terms')}</a> ${en('en het', 'and the')} <a href="privacy.html" target="_blank" style="color:#f9a8d4">${en('privacybeleid', 'privacy policy')}</a>.</span></label>
+<button class="btn" style="width:100%" onclick="GLXACC._gSave()">${en('Account maken', 'Create account')} ✦</button>` : `
+<input class="fld" id="gLiMail" type="email" autocomplete="email" maxlength="254" placeholder="${en('E-mailadres', 'Email address')}">
+${pw('gLiPw', en('Wachtwoord', 'Password'), 'current-password')}
+<button class="btn" style="width:100%" onclick="GLXACC._gLogin()">${en('Inloggen', 'Log in')}</button>
+<button class="btn sm ghost" style="width:100%;margin-top:8px" onclick="GLXACC._forgot()">${en('Wachtwoord vergeten?', 'Forgot password?')}</button>`}</div>
+<p class="small">${en('', 'Your account keeps your profile, matches and chats safe on every device. We never show your exact location.')}</p><div class="foot"><a href="privacy.html" target="_blank">Privacy</a> · <a href="voorwaarden.html" target="_blank">Terms</a> · <a href="mailto:${MAIL()}">Contact</a><br>© Galaxy · 18+ only</div></div>`;
   }
+  async function busy(btn, fn) { const b = document.activeElement && document.activeElement.closest && document.activeElement.closest('button'); if (b) { b.disabled = true; b.dataset.l = b.innerHTML; b.innerHTML = '…' } try { return await fn() } finally { if (b && b.isConnected) { b.disabled = false; b.innerHTML = b.dataset.l } } }
   async function gSave() {
-    if (!$('gOk').checked) return T(t('Bevestig dat je 18+ bent en akkoord gaat', 'Confirm you are 18+ and agree'));
-    if (await doSave($('gMail').value, $('gPw').value, $('gPw2').value)) gate();
+    if (!$('gOk').checked) return T(en('Bevestig dat je 18+ bent en akkoord gaat', 'Confirm you are 18+ and agree'));
+    if (await busy(0, () => doSave($('gMail').value, $('gPw').value, $('gPw2').value))) gate();
   }
-  async function gCheck() { try { await db().auth.refreshSession() } catch (e) { } const u = await user(); if (u && !u.is_anonymous && u.email) { T('✅ ' + t('Welkom bij Galaxy!', 'Welcome to Galaxy!')); gate() } else T(t('Nog niet bevestigd. Tik eerst op de knop in de mail.', 'Not confirmed yet. Tap the button in the email first.')) }
-  async function gResend(mail) { const r = await db().auth.resend({ type: 'email_change', email: mail }); T(r.error ? why(r.error) : '📧 ' + t('Mail opnieuw verstuurd', 'Email sent again')) }
+  async function gCheck() {
+    const c = await cl(); let u = await user();
+    if (u) { try { await c.auth.refreshSession() } catch (e) { } u = await user() }
+    else if (pendingMail && memPw) { const r = await c.auth.signInWithPassword({ email: pendingMail, password: memPw }); if (r.error) return T(/confirm/i.test(r.error.message) ? en('Nog niet bevestigd. Tik eerst op de knop in de mail.', 'Not confirmed yet. Tap the button in the email first.') : why(r.error)); u = r.data.user }
+    else { gTab = 'in'; pendingMail = null; drawGate(null); return T(en('Log nu in met je e-mail en wachtwoord', 'Now log in with your email and password')) } if (u && !u.is_anonymous && u.email) { T('✅ ' + en('Welkom bij Galaxy!', 'Welcome to Galaxy!')); gate() } else T(en('Nog niet bevestigd. Tik eerst op de knop in de mail.', 'Not confirmed yet. Tap the button in the email first.')) }
+  async function gResend(mail) { const c = await cl(); const r = await c.auth.resend({ type: (await user()) ? 'email_change' : 'signup', email: mail, options: { emailRedirectTo: HOME() + '?saved=1' } }); T(r.error ? why(r.error) : '📧 ' + en('Mail opnieuw verstuurd', 'Email sent again')) }
 
-  window.GLXACC = { open, data, gate, _save: save, _login: login, _forgot: forgot, _logout: logout, _gTab: k => { gTab = k; drawGate(null) }, _gSave: gSave, _gLogin: () => doLogin($('gLiMail').value, $('gLiPw').value, false), _gCheck: gCheck, _gResend: gResend };
+  window.GLXACC = { open, data, gate, _save: save, _login: login, _forgot: forgot, _logout: logout, _gTab: k => { gTab = k; drawGate(null) }, _gSave: gSave, _gLogin: () => busy(0, () => doLogin($('gLiMail').value, $('gLiPw').value, false)), _gCheck: gCheck, _gResend: gResend };
 
   function hook() {
     honestShop();
@@ -227,6 +241,7 @@ ${pw('gLiPw', t('Wachtwoord', 'Password'), 'current-password')}
     if (net().state === 'verbonden') go(); else window.addEventListener('glx-net', e => { if (e.detail === 'verbonden') go() });
   }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('glxGate')) gCheckQuiet() });
-  async function gCheckQuiet() { try { await db().auth.refreshSession() } catch (e) { } gate() }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hook); else hook();
+  async function gCheckQuiet() { const c = await cl(); try { if (await user()) await c.auth.refreshSession() } catch (e) { } if (!(await user()) && pendingMail && memPw) { try { await c.auth.signInWithPassword({ email: pendingMail, password: memPw }) } catch (e) { } } gate() }
+  const boot = () => { hook(); setTimeout(gate, 300) };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

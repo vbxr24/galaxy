@@ -102,6 +102,7 @@
   const REASON = ['Lijkt minderjarig', 'Nepprofiel of oplichting', 'Intimidatie of bedreiging', 'Ongepaste foto of tekst', 'Vraagt geld of biedt seks tegen betaling', 'Iets anders'];
   const api = window.GLXNET = {
     get state() { return state }, get uid() { return uid }, get db() { return state === 'verbonden' ? sb : null }, sync: syncProfile, poll,
+    async client() { await loadLib(); if (!sb) sb = window.supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } }); return sb },
     nameOf: id => { const c = matchList.find(x => x.id === id); return c ? c.name : '' },
     async wave() {
       if (!target || !sb) return; const w = await sb.from('waves').insert({ from_id: uid, to_id: target });
