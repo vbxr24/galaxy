@@ -98,7 +98,7 @@
 .gmAv.live3d:after{margin-top:calc(-22px*var(--avS,1));width:calc(60px*var(--avS,1));height:calc(16px*var(--avS,1))}.gmAv.walk img{animation:gmWalk .45s ease-in-out infinite}.gmAv.walk.left img{transform:scaleX(-1)}
 @keyframes gmWalk{0%,100%{translate:0 0;rotate:-4deg}50%{translate:0 -5px;rotate:4deg}}
 .gmAv .stack{display:flex}.gmAv .stack img{width:46px;height:46px;margin-left:-14px}.gmAv .stack img:first-child{margin-left:0}
-.gmAv .stack b{font-size:30px}
+.gmAv .stack b{font-size:30px}.gmAv .stack b.ini{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;font-weight:800;color:#fff;background:linear-gradient(135deg,#8b5cf6,#ec4899);border:2px solid #fff;box-shadow:0 4px 14px #0008;margin-left:-12px}.gmAv .stack b.ini:first-child{margin-left:0}
 .gmAv i{position:absolute;top:-4px;right:-8px;background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;font-style:normal;font-size:11px;font-weight:800;border-radius:10px;padding:1px 6px}
 .gmAv .dot{width:9px;height:9px;border-radius:50%;background:#34d399;border:2px solid #0a0820;position:absolute;bottom:2px;right:0}
 .gmCatch{text-align:center}
@@ -493,7 +493,7 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     const groups = {}; visible().forEach(p => { const z = snap(p.zone[0], p.zone[1]), k = z.join(); (groups[k] = groups[k] || { z, list: [] }).list.push(p) });
     Object.values(groups).forEach(g => {
       const el = document.createElement('div'); el.className = 'gmAv' + (g.list.length > 1 ? ' group' : '');
-      const top = g.list.slice(0, 3).map(p => p.img ? `<img src="${esc(p.img)}" alt="">` : '<b>🧑</b>').join('');
+      const top = g.list.slice(0, 3).map(p => p.img ? `<img src="${esc(p.img)}" alt="">` : `<b class="ini">${esc(((p.n || p.name || '?').trim()[0] || '?').toUpperCase())}</b>`).join('');
       el.innerHTML = `<div class="stack">${top}</div>${g.list.length > 1 ? `<i>${g.list.length}</i>` : ''}<span class="dot"></span>`;
       el.onclick = () => openPeople(g.list);
       pMarkers.push(new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([g.z[1], g.z[0]]).addTo(map));
