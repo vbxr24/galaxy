@@ -25,6 +25,11 @@
     keys.forEach((k, i) => { const v = vals[i]; if (!v) return; (Array.isArray(k) ? k : [k]).forEach(s => { if (s && !(s in D)) D[s] = v }) });
     try { Object.keys(localStorage).forEach(k => { if (/^glxI18n/.test(k) && k !== 'glxI18nK' + V && k !== 'glxI18n' + V + lang) localStorage.removeItem(k) }) } catch (e) { }
   }
+  /* een paar korte woorden in vaste knoppen */
+  const MINI = { Gratis: { fr: 'Gratuit', en: 'Free', de: 'Gratis', es: 'Gratis', it: 'Gratis', pt: 'Grátis', tr: 'Ücretsiz', pl: 'Za darmo', ro: 'Gratuit', ru: 'Бесплатно', uk: 'Безкоштовно', ar: 'مجاني', zh: '免费', ja: '無料' },
+    Chat: { pt: 'Conversas', tr: 'Sohbet', pl: 'Czat', ru: 'Чат', uk: 'Чат', ar: 'الدردشة', zh: '聊天', ja: 'チャット' },
+    Live: { ru: 'Карта', uk: 'Мапа', ar: 'مباشر', zh: '实时', ja: 'ライブ', tr: 'Canlı', pl: 'Na żywo', ro: 'Live', pt: 'Ao vivo', es: 'En vivo', it: 'Live', de: 'Live', fr: 'Live' } };
+  Object.keys(MINI).forEach(k => { const v = MINI[k][lang]; if (v && !(k in D)) D[k] = v });
   const RX = /^([^\p{L}]*)([\s\S]*?)([^\p{L}\p{N})]*)$/u;
   function look(s) {
     if (lang === 'nl' || s == null) return null; s = String(s);
