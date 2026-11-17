@@ -157,6 +157,24 @@ ${x.target_banned ? `<button class="btn" onclick="ADM.unban('${x.target}')">Scho
   }
 
   /* ---------- Galaxy-avonden beheren ---------- */
+  /* ---------------- feed-moderatie ---------------- */
+  let FR = null, FURL = {};
+  async function loadFeed() { const r = await sb.rpc('admin_feed_review'); FR = r.error ? { err: r.error.message } : r.data;
+    FURL = {}; for (const st of (FR && FR.stories) || []) { const u = await sb.storage.from('stories').createSignedUrl(st.path, 900); FURL[st.id] = u.data && u.data.signedUrl } }
+  function feed() {
+    if (!FR) return '<div class="card">Laden…</div>'; if (FR.err) return `<div class="card">⚠️ ${esc(FR.err)}<p class="sub">Is server/feed.sql al uitgevoerd in Supabase?</p></div>`;
+    const c = FR.counts || {}, st = FR.stories || [], an = FR.answers || [], vp = FR.venues || [];
+    const lbl = x => x.status === 'review' ? '<b style="color:#fbbf24">verborgen, wacht op jou</b>' : x.status === 'hidden' ? 'verwijderd' : 'zichtbaar';
+    const btns = (k, x) => `<div style="display:flex;gap:6px;margin-top:8px"><button class="btn" onclick="ADM.feedSet('${k}','${x.id}','ok')">✅ Goedkeuren</button><button class="btn" style="background:#7f1d1d" onclick="ADM.feedSet('${k}','${x.id}','hidden')">🚫 Weg</button></div>`;
+    const why = x => (x.reasons || []).filter(Boolean).length ? `<div class="sub">Meldingen: ${esc((x.reasons || []).filter(Boolean).join(', '))}</div>` : '';
+    return `<div class="grid"><div class="card kpi"><h3>Verhalen (24 u)</h3><div class="v">${c.stories_today || 0}</div></div><div class="card kpi"><h3>Antwoorden vandaag</h3><div class="v">${c.answers_today || 0}</div></div>
+<div class="card kpi"><h3>Café-acties live</h3><div class="v">${c.venue_live || 0}</div></div><div class="card kpi"><h3>Na te kijken</h3><div class="v" style="color:${c.to_review ? '#fbbf24' : 'inherit'}">${c.to_review || 0}</div></div></div>
+<div class="card"><h2>📸 Verhalen</h2>${st.length ? st.map(x => `<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #ffffff14">${FURL[x.id] ? `<img src="${FURL[x.id]}" alt="" style="width:96px;height:128px;object-fit:cover;border-radius:10px;background:#000">` : ''}<div style="flex:1"><b>${esc(x.name)}</b> <span class="sub">${esc(new Date(x.at).toLocaleString('nl-BE'))} · ${x.reports} melding(en) · ${lbl(x)}</span><div>${esc(x.caption || '')}</div>${why(x)}${btns('story', x)}</div></div>`).join('') : '<p class="sub">Niets na te kijken. 🎉</p>'}</div>
+<div class="card"><h2>💬 Antwoorden</h2>${an.length ? an.map(x => `<div style="padding:10px 0;border-bottom:1px solid #ffffff14"><b>${esc(x.name)}</b> <span class="sub">${x.reports} melding(en) · ${lbl(x)}</span><div>${esc(x.body)}</div>${why(x)}${btns('answer', x)}</div>`).join('') : '<p class="sub">Niets na te kijken.</p>'}</div>
+<div class="card"><h2>📣 Café-acties</h2>${vp.length ? vp.map(x => `<div style="padding:10px 0;border-bottom:1px solid #ffffff14"><b>${esc(x.venue)}</b> <span class="sub">${x.reports} melding(en) · ${lbl(x)}</span><div>${esc(x.body)}</div>${btns('venue', x)}</div>`).join('') : '<p class="sub">Niets na te kijken.</p>'}</div>
+<p class="sub">Alles met 2 meldingen wordt meteen verborgen. Foto's die de automatische controle twijfelachtig vindt, komen hier ook terecht voor iemand anders ze ziet.</p>`;
+  }
+
   let EV = [], evEdit = null;
   const local = d => { const x = new Date(d); return new Date(x - x.getTimezoneOffset() * 6e4).toISOString().slice(0, 16) };
   async function loadEv() { const r = await sb.rpc('admin_events'); EV = (r.data || []).map(x => x.admin_events || x) }
@@ -181,16 +199,16 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
   function drawQr(cv, id, px) { const q = window.qrcode(0, 'M'); q.addData(evUrl(id)); q.make(); const n = q.getModuleCount(), c = cv.getContext('2d'), s = px / (n + 4); cv.width = cv.height = px; c.fillStyle = '#fff'; c.fillRect(0, 0, px, px); c.fillStyle = '#1a1240'; for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) c.fillRect(Math.round((k + 2) * s), Math.round((r + 2) * s), Math.ceil(s), Math.ceil(s)) }
   async function evQr() { try { await loadQr(); document.querySelectorAll('canvas.evQr').forEach(cv => drawQr(cv, cv.dataset.id, 120)) } catch (e) { } }
 
-  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden']];
+  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden'], ['feed', '📰 Feed']];
   function draw() {
-    const body = { over, groei, users, geld, veilig, avonden }[tab]();
-    $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
+    const body = { over, groei, users, geld, veilig, avonden, feed }[tab]();
+    $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}${k === 'feed' && FR && FR.counts && FR.counts.to_review ? ` (${FR.counts.to_review})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
     hover($('app')); if (tab === 'avonden') evQr(); if (tab === 'geld') { ['ru', 'rp', 'rc'].forEach(id => $(id).oninput = calc); calc() }
   }
   async function load() {
     const [st, r] = await Promise.all([sb.rpc('admin_stats', { days }), sb.rpc('mod_reports', { only_open: openOnly })]);
     if (st.error) { $('app').innerHTML = `<div class="card">⚠️ Statistieken laden lukte niet: ${esc(st.error.message)}</div>`; return }
-    S = st.data; reps = r.data || []; draw();
+    S = st.data; reps = r.data || []; if (tab === 'feed' || !FR) await loadFeed(); draw();
   }
   async function start() {
     sb = supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } });
@@ -202,7 +220,8 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
     load(); setInterval(() => { if (document.visibilityState === 'visible' && tab !== 'geld') load() }, 60000);
   }
   window.ADM = {
-    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); draw() }, reload: load,
+    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); if (k === 'feed') await loadFeed(); draw() },
+    async feedSet(k, id, st) { const r = await sb.rpc('admin_feed_set', { p_kind: k, p_item: id, p_status: st }); if (r.error) alert(r.error.message); await loadFeed(); draw() }, reload: load,
     newEv() { evEdit = null; draw() }, editEv(id) { evEdit = EV.find(x => x.id === id) || null; draw() },
     async geo() { const a = $('evA').value.trim() || $('evV').value.trim(); if (!a) return alert('Vul eerst een adres in'); try { const r = await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(a))).json(); if (!r[0]) return alert('Adres niet gevonden'); $('evLa').value = r[0].lat; $('evLo').value = r[0].lon; $('evGeo').textContent = 'Gevonden: ' + r[0].display_name } catch (e) { alert('Zoeken lukte niet') } },
     async saveEv() {
