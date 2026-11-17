@@ -14,16 +14,16 @@
 
   /* stijl -> bestand, materialen voor haar en per kledingstuk */
   const MODELS = {
-    m_casual: { f: 'Male_Casual_2', n: 'Casual', hair: ['Hair', 'Eyebrows'], parts: [['T-shirt', 'LightBrown'], ['Broek', 'LightBlue'], ['Schoenen', 'Red_Dark']] },
-    f_casual: { f: 'Female_Casual', n: 'Casual', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Top', 'White'], ['Broek', 'Orange'], ['Schoenen', 'Grey']] },
-    m_hoodie: { f: 'Male_Casual_Hoodie', n: 'Hoodie', hair: ['Hair', 'Eyebrows'], parts: [['Hoodie', 'Purple'], ['Short', 'LightBlue'], ['Schoenen', 'White']] },
-    f_formal: { f: 'Female_Formal', n: 'Jurk', hair: ['Red'], hairLbl: 'Haar en schoenen', parts: [['Jurk', 'LimeGreen'], ['Riem', 'Gold']] },
-    m_suit: { f: 'Male_Suit', n: 'Pak', hair: ['Hair', 'Eyebrows'], parts: [['Broek', 'Suit'], ['Das', 'Tie'], ['Hemd', 'White']] },
-    f_suit: { f: 'Female_Suit', n: 'Pak', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Pak', 'Black'], ['Hemd', 'White']] },
-    m_beach: { f: 'Male_Beach', n: 'Zomer', hair: ['Hair', 'Eyebrows'], parts: [['Top', 'LightBrown'], ['Short', 'Red_Dark']] },
-    f_punk: { f: 'Female_Punk', n: 'Punk', hair: ['Pink'], hairLbl: 'Haar en top', parts: [['Broek', 'Black'], ['Schoenen', 'Grey']] },
+    m_casual: { f: 'Male_Casual_2', n: 'Casual man', hair: ['Hair', 'Eyebrows'], parts: [['T-shirt', 'LightBrown'], ['Broek', 'LightBlue'], ['Schoenen', 'Red_Dark']] },
+    f_casual: { f: 'Female_Casual', n: 'Casual vrouw', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Top', 'White'], ['Broek', 'Orange'], ['Schoenen', 'Grey']] },
+    m_hoodie: { f: 'Male_Casual_Hoodie', n: 'Hoodie man', hair: ['Hair', 'Eyebrows'], parts: [['Hoodie', 'Purple'], ['Short', 'LightBlue'], ['Schoenen', 'White']] },
+    f_formal: { f: 'Female_Formal', n: 'Jurk vrouw', hair: ['Red'], hairLbl: 'Haar en schoenen', parts: [['Jurk', 'LimeGreen'], ['Riem', 'Gold']] },
+    m_suit: { f: 'Male_Suit', n: 'Pak man', hair: ['Hair', 'Eyebrows'], parts: [['Broek', 'Suit'], ['Das', 'Tie'], ['Hemd', 'White']] },
+    f_suit: { f: 'Female_Suit', n: 'Pak vrouw', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Pak', 'Black'], ['Hemd', 'White']] },
+    m_beach: { f: 'Male_Beach', n: 'Zomer man', hair: ['Hair', 'Eyebrows'], parts: [['Top', 'LightBrown'], ['Short', 'Red_Dark']] },
+    f_punk: { f: 'Female_Punk', n: 'Punk vrouw', hair: ['Pink'], hairLbl: 'Haar en top', parts: [['Broek', 'Black'], ['Schoenen', 'Grey']] },
     a_anime: { vrm: 'Anime_A', n: 'Anime', g: 'f', hairLbl: 'Haarkleur', parts: [['Top', 'Tops_01_CLOTH'], ['Rok', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], eyes: true },
-    m_punk: { f: 'Male_Punk', n: 'Punk', hair: ['Red', 'Red_Dark'], parts: [['Top', 'White'], ['Vest', 'Black'], ['Broek', 'LightBlue']] }
+    m_punk: { f: 'Male_Punk', n: 'Punk man', hair: ['Red', 'Red_Dark'], parts: [['Top', 'White'], ['Vest', 'Black'], ['Broek', 'LightBlue']] }
   };
   const SKIN = ['#f8d9c4', '#f1c7a5', '#e0ac85', '#c98f66', '#a56f48', '#7d4f30', '#5a3620', '#3b2314'];
   const HAIRC = ['#17120f', '#3a2618', '#6b4226', '#a8703a', '#d8b46a', '#f2e3b0', '#b8402a', '#8e9099', '#f5f5f5', '#ec4899', '#3b82f6', '#22c55e', '#8b5cf6'];
