@@ -10,7 +10,7 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const T = m => { try { toast(m) } catch (e) { } };
   const nl = () => { try { return (typeof LANG === 'undefined' ? 'nl' : LANG) === 'nl' } catch (e) { return true } };
-  const t = (a, b) => (nl() && !document.getElementById('glxGate')) ? a : b;
+  const t = (a, b) => document.getElementById('glxGate') ? en(a, b) : (window.GLXL ? GLXL(a, b) : (nl() ? a : b));
   const net = () => window.GLXNET || {};
   const db = () => net().db || CL;
   let CL = null, memPw = null;
@@ -177,7 +177,7 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
   }
 
 
-  const en = (a, b) => b;  /* het login-scherm is altijd in het Engels */
+  const en = (a, b) => (window.GLXL && window.GLXLANG && GLXLANG !== 'nl') ? GLXL(a, b) : b;  /* het login-scherm is altijd in het Engels */
   /* ---------- verplicht: eerst een account (e-mail + wachtwoord), dan je gegevens ---------- */
   let gTab = 'new';
   let pendingMail = null;

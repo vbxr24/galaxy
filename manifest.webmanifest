@@ -1,15 +1,15 @@
 {
   "name": "Galaxy – live kaart",
   "short_name": "Galaxy",
-  "description": "De live wereldkaart om nieuwe mensen te ontmoeten. Zie waar het druk is, maak je eigen 3D-mannetje en spreek af. Alleen 18+.",
+  "description": "Galaxy: meet real people nearby on a live map. Make your own 3D avatar, see where it's busy and meet up. 18+ only.",
   "id": "/galaxy/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#07061a",
   "theme_color": "#07061a",
-  "lang": "nl",
+  "lang": "en",
   "categories": [
     "social",
     "lifestyle"
@@ -68,5 +68,10 @@
         }
       ]
     }
-  ]
+  ],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "dir": "auto"
 }

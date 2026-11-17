@@ -8,7 +8,7 @@
   const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v) } catch (e) { } return null };
   const T = m => { try { toast(m) } catch (e) { } };
   const nl = () => { try { return (typeof LANG === 'undefined' ? 'nl' : LANG) === 'nl' } catch (e) { return true } };
-  const t = (a, b) => nl() ? a : b;
+  const t = (a, b) => window.GLXL ? GLXL(a, b) : (nl() ? a : b);
 
   /* ---------- hulplijnen per land ---------- */
   const LINES = {

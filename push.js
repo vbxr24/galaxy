@@ -6,7 +6,7 @@
   const $ = id => document.getElementById(id);
   const T = m => { try { toast(m) } catch (e) { } };
   const nl = () => { try { return (typeof LANG === 'undefined' ? 'nl' : LANG) === 'nl' } catch (e) { return true } };
-  const t = (a, b) => nl() ? a : b;
+  const t = (a, b) => window.GLXL ? GLXL(a, b) : (nl() ? a : b);
   const db = () => (window.GLXNET || {}).db;
   const can = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   const ios = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window.navigator.standalone || matchMedia('(display-mode: standalone)').matches);

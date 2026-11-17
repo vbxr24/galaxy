@@ -6,7 +6,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const nl = () => { try { return (typeof LANG === 'undefined' ? 'nl' : LANG) === 'nl' } catch (e) { return true } };
-  const t = (a, b) => nl() ? a : b;
+  const t = (a, b) => window.GLXL ? GLXL(a, b) : (nl() ? a : b);
   const on = () => { try { return localStorage.glxHaptics !== '0' } catch (e) { return true } };
 
   const css = document.createElement('style');

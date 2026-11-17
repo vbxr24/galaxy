@@ -5,7 +5,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const nl = () => { try { return (typeof LANG === 'undefined' ? 'nl' : LANG) === 'nl' } catch (e) { return true } };
-  const t = (a, b) => nl() ? a : b;
+  const t = (a, b) => window.GLXL ? GLXL(a, b) : (nl() ? a : b);
 
   /* lijniconen, 24×24, 1.8 dik, kleur van de tekst */
   const P = {
