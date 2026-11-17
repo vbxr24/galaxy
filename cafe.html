@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Galaxy – jouw Galaxy-avonden</title>
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#07061a;--s1:#110e2e;--line:#2a2560;--grid:#ffffff14;--t1:#f0efec;--t2:#c3c2b7;--t3:#8f8aa8;--c1:#3987e5;--good:#34d399}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t1);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:860px;margin:0 auto;padding:22px 16px 60px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:6px}header img{width:44px;height:44px;border-radius:12px}
+h1{font-size:24px;margin:0}h2{font-size:16px;margin:0 0 8px}.sub{color:var(--t3);font-size:13px}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(3,1fr);margin:16px 0}@media(max-width:620px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.kpi .v{font-size:30px;font-weight:800}.kpi h3{margin:0;font-size:13px;color:var(--t2);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:8px 6px;border-bottom:1px solid var(--grid);text-align:left}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.tip{position:absolute;pointer-events:none;background:#000c;border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:12px;display:none;transform:translate(-50%,-110%)}
+</style>
+</head>
+<body>
+<main>
+<header><img src="icons/icon-192.png" alt="Galaxy-logo"><div><h1 id="ttl">Jouw Galaxy-avonden</h1><div class="sub">Alleen totalen. Wie er was, zie je nooit: dat beschermt je gasten.</div></div></header>
+<div id="app"><p class="sub">Laden…</p></div>
+</main>
+<div class="tip" id="tip"></div>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function () {
+  const CFG = { url: 'https://dqodwuemdpzyvvvxvgtz.supabase.co', key: 'sb_publishable_nxc3zbKKIR6zpx8iYz4fFA_9yN0JY6p' };
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const when = d => new Date(d).toLocaleString('nl-BE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const tok = new URLSearchParams(location.search).get('t') || '';
+  async function start() {
+    if (!/^[0-9a-f-]{36}$/i.test(tok)) return $('app').innerHTML = '<div class="card">Deze link is niet volledig. Vraag de juiste link aan het Galaxy-team.</div>';
+    const sb = supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: false, autoRefreshToken: false } });
+    const r = await sb.rpc('venue_stats', { token: tok }); const d = r.data;
+    if (r.error || !d) return $('app').innerHTML = '<div class="card">Deze link werkt niet (meer). Vraag een nieuwe aan via galaxy.app.xv@gmail.com.</div>';
+    $('ttl').textContent = 'Galaxy-avonden in ' + d.venue; document.title = 'Galaxy – ' + d.venue;
+    const ev = d.events || [], past = ev.filter(e => new Date(e.ends_at) < new Date()), next = ev.filter(e => new Date(e.ends_at) >= new Date()).reverse()[0];
+    const H = d.hours || [], max = Math.max(1, ...H.map(h => h.n));
+    $('app').innerHTML = `<div class="grid">
+<div class="card kpi"><h3>Avonden</h3><div class="v">${ev.length}</div><div class="sub">${past.length} voorbij</div></div>
+<div class="card kpi"><h3>Ingecheckt</h3><div class="v">${d.total_checkins}</div><div class="sub">gasten via de QR-code</div></div>
+<div class="card kpi"><h3>Zeiden "Ik ga"</h3><div class="v">${d.total_going}</div><div class="sub">in de app</div></div></div>
+${next ? `<div class="card" style="border-color:#8b5cf6"><h2>🎉 Volgende avond</h2><p><b>${esc(when(next.starts_at))}</b>${next.offer ? ' · voordeel: ' + esc(next.offer) : ''}</p><p class="sub">Nu al ${next.going} ${next.going === 1 ? 'persoon zegt' : 'mensen zeggen'} "Ik ga".</p></div>` : ''}
+<div class="card"><h2>Per avond</h2>${ev.length ? `<table><tr><th>Avond</th><th>Voordeel</th><th class="n">Ik ga</th><th class="n">Ingecheckt</th></tr>${ev.map(e => `<tr><td>${esc(when(e.starts_at))}</td><td>${esc(e.offer || '–')}</td><td class="n">${e.going}</td><td class="n">${e.checkins}</td></tr>`).join('')}</table>` : '<p class="sub">Nog geen avonden.</p>'}</div>
+<div class="card"><h2>Wanneer checken gasten in?</h2>${H.length ? `<svg viewBox="0 0 600 160" role="img" aria-label="Check-ins per uur" style="width:100%;display:block">${H.map((h, i) => { const bw = Math.min(60, 560 / H.length), x = 20 + i * (bw + 6), hh = 110 * h.n / max; return `<g data-t="${h.h}u: ${h.n} check-ins"><rect x="${x}" y="${130 - hh}" width="${bw}" height="${hh}" rx="4" fill="#3987e5"/><text x="${x + bw / 2}" y="148" text-anchor="middle" font-size="12" fill="#8f8aa8">${h.h}u</text><text x="${x + bw / 2}" y="${124 - hh}" text-anchor="middle" font-size="12" fill="#c3c2b7">${h.n}</text></g>` }).join('')}<line x1="14" x2="590" y1="130" y2="130" stroke="#8f8aa8"/></svg>` : '<p class="sub">Nog geen check-ins.</p>'}</div>
+<div class="card"><h2>Tips voor een volle avond</h2><p class="sub" style="font-size:14px;line-height:1.6">Hang de affiche minstens een week op voorhand op. Leg tafelkaartjes op elke tafel. Zeg het tegen je personeel, zodat ze het voordeel geven bij een geldige incheck (met de live klok). Een vaste avond per week of maand werkt het best.</p></div>
+<p class="sub">Vragen? galaxy.app.xv@gmail.com · Deel deze link niet met anderen.</p>`;
+  }
+  if (window.supabase) start(); else window.addEventListener('load', start);
+})();
+</script>
+</body>
+</html>

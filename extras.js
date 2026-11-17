@@ -116,7 +116,8 @@ ${e.checked_in ? `<button class="btn sm" onclick="GLXEXTRA._ticket('${e.id}')">�
     xs('🎟️ ' + t('Ingecheckt', 'Checked in'), `<div class="exTicket"><div style="font-size:15px;opacity:.9">${t('Ingecheckt bij', 'Checked in at')}</div><div style="font-size:26px;font-weight:800;margin-top:4px">${esc(d.venue || e.venue || '')}</div>
 <div class="clock" id="exClock">${hm(new Date())}</div><div style="font-size:12px;opacity:.85">${t('live klok: zo zien ze aan de bar dat het geen screenshot is', 'live clock: shows the bar it is not a screenshot')}</div>
 ${(d.offer || e.offer) ? `<div style="margin-top:14px;padding:12px;border-radius:14px;background:#ffffff26"><div style="font-size:12px;opacity:.9">${t('Toon dit aan de bar', 'Show this at the bar')}</div><div style="font-size:20px;font-weight:800">🎁 ${esc(d.offer || e.offer)}</div></div>` : ''}</div>
-<button class="btn" style="width:100%;margin-top:12px" onclick="closeO('xV');go('map')">🗺️ ${t('Zie wie er is', "See who's here")}</button>`, false);
+<button class="btn" style="width:100%;margin-top:12px" onclick="GLXEXTRA._ice('${id}')">🧊 ${t('IJsbrekers van de avond', "Tonight's icebreakers")}</button>
+<button class="btn ghost" style="width:100%;margin-top:8px" onclick="closeO('xV');go('map')">🗺️ ${t('Zie wie er is', "See who's here")}</button>`, false);
     clearInterval(tickT); tickT = setInterval(() => { const c = $('exClock'); if (!c) return clearInterval(tickT); const n = new Date(); c.textContent = n.toLocaleTimeString(nl() ? 'nl-BE' : undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }, 1000);
   }
   function showEv(id) {
@@ -181,7 +182,7 @@ ${(d.offer || e.offer) ? `<div style="margin-top:14px;padding:12px;border-radius
     } catch (e) { playing = null; T(t('Afspelen lukte niet', 'Playback failed')) }
   }
   function onProfile(c) {
-    const sh = $('xSheet'); if (!sh || !c) return;
+    const sh = $('xSheet'); if (!sh || !c) return; showPhoto(c);
     if (c.voice && !$('exVoiceBtn')) {
       const h = sh.querySelector('h2,h3,.pHead') || sh.firstElementChild;
       const html = `<button class="btn ghost exVoice" id="exVoiceBtn" type="button">▶️ ${t('Beluister de spraakintro', 'Play voice intro')}</button>`;
@@ -280,6 +281,52 @@ ${(d.offer || e.offer) ? `<div style="margin-top:14px;padding:12px;border-radius
     $('exSafeDateBtn').onclick = () => safeOpen(null);
   }
 
+  /* ==================== 🧊 ijsbrekers op een Galaxy-avond ==================== */
+  const QS = () => nl() ? ['Wat is het beste concert waar je ooit was?', 'Welk liedje zet jij op als het feest begint?', 'Wat is jouw verborgen talent?', 'Welke plek in België moet iedereen eens zien?', 'Wat zou je doen met een vrije dag morgen?', 'Wat is het raarste wat je ooit at?', 'Welke serie kan je eindeloos herbekijken?', 'Ben je meer van de zee of van de bergen?', 'Wat is je beste reisverhaal?', 'Welk spel win jij altijd?']
+    : ['Best concert you ever went to?', 'Which song do you play when the party starts?', 'What is your hidden talent?', 'Which place should everyone visit once?', 'What would you do with a free day tomorrow?', 'Weirdest thing you ever ate?', 'Which series could you rewatch forever?', 'Beach or mountains?', 'Your best travel story?', 'Which game do you always win?'];
+  const BINGO = () => nl() ? ['al eens in Japan was', 'een hond heeft', 'een instrument speelt', 'vandaag jarig is of deze maand', 'dezelfde favoriete serie heeft', 'in een andere stad woont', 'kan koken', 'graag danst', 'deze week sportte']
+    : ['has been to Japan', 'has a dog', 'plays an instrument', 'has a birthday this month', 'likes the same series', 'lives in another city', 'can cook', 'loves dancing', 'did sports this week'];
+  const hsh = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h };
+  function ice(id) {
+    const qs = QS(), q = qs[hsh(id + new Date().toDateString()) % qs.length], key = 'glxBingo_' + id; let got = []; try { got = JSON.parse(localStorage[key] || '[]') } catch (e) { }
+    const all = BINGO();
+    xs('🧊 ' + t('IJsbrekers van de avond', "Tonight's icebreakers"), `<div class="exCard" style="text-align:center"><div class="sub">${t('Vraag van de avond', 'Question of the night')}</div><p style="font-size:20px;font-weight:800;margin-top:6px">${esc(q)}</p><p class="sub" style="margin-top:6px">${t('Iedereen die incheckte, ziet dezelfde vraag. Een makkelijk begin van een gesprek.', 'Everyone who checked in sees the same question. An easy way to start talking.')}</p></div>
+<div class="exCard"><b>🎯 Galaxy-bingo</b><p class="sub" style="margin:4px 0 10px">${t('Zoek iemand die…', 'Find someone who…')} ${t('Tik een vakje aan als je iemand vond.', 'Tap a square when you found someone.')}</p>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${all.map((b, i) => `<button type="button" class="exChip${got.includes(i) ? ' on' : ''}" style="border-radius:12px;min-height:66px;font-size:12px" onclick="GLXEXTRA._bingo('${id}',${i})">${esc(b)}</button>`).join('')}</div>
+<p class="sub" style="margin-top:8px;text-align:center">${got.length}/9${got.length === 9 ? ' · 🎉 ' + t('Bingo! Toon dit aan de bar voor een high five', 'Bingo! Show this at the bar for a high five') : ''}</p></div>`, false);
+  }
+  function bingo(id, i) { const key = 'glxBingo_' + id; let got = []; try { got = JSON.parse(localStorage[key] || '[]') } catch (e) { } got = got.includes(i) ? got.filter(x => x !== i) : got.concat(i); try { localStorage[key] = JSON.stringify(got) } catch (e) { } buzz(got.length === 9 ? [40, 80, 40, 80, 120] : 10); ice(id) }
+
+  /* ==================== 📷 echte foto (alleen voor matches) ==================== */
+  function photo() {
+    if (!ready()) return;
+    xs('📷 ' + t('Mijn foto', 'My photo'), `<p class="sub">${t('Je figuur blijft je gezicht op de kaart. Een echte foto zien <b>alleen je matches</b>, zodat ze weten wie ze ontmoeten.', 'Your figure stays your face on the map. A real photo is <b>only shown to your matches</b>, so they know who they are meeting.')}</p>
+<div id="exPhPrev" style="margin:12px 0;text-align:center"></div>
+<label class="btn" style="display:block;width:100%;text-align:center;cursor:pointer">📷 ${t('Kies of maak een foto', 'Choose or take a photo')}<input type="file" accept="image/*" id="exPhIn" style="display:none"></label>
+<button class="btn sm ghost" style="width:100%;margin-top:8px;color:#fb7185" onclick="GLXEXTRA._delPhoto()">🗑️ ${t('Mijn foto verwijderen', 'Delete my photo')}</button>
+<p class="sub" style="font-size:12px;margin-top:8px">${t('Alleen jezelf, duidelijk herkenbaar. Geen naaktheid, geen kinderen, geen foto’s van anderen: zulke foto’s worden verwijderd en kunnen tot een schorsing leiden.', 'Only you, clearly recognisable. No nudity, no children, no photos of others: such photos are removed and can lead to suspension.')}</p>`, false);
+    myPhoto().then(u => { const p = $('exPhPrev'); if (p && u) p.innerHTML = `<img src="${u}" alt="${t('Mijn foto', 'My photo')}" style="width:180px;height:180px;object-fit:cover;border-radius:20px">` });
+    $('exPhIn').onchange = e => { const f = e.target.files && e.target.files[0]; if (f) savePhoto(f) };
+  }
+  async function myPhoto() { try { const r = await db().from('profiles').select('photo_at').eq('id', uid()).maybeSingle(); if (!r.data || !r.data.photo_at) return null; const s = await db().storage.from('photos').createSignedUrl(uid() + '/photo', 300); return s.data && s.data.signedUrl } catch (e) { return null } }
+  async function savePhoto(file) {
+    if (!/^image\//.test(file.type)) return T(t('Kies een foto', 'Choose a photo'));
+    try {
+      const img = await createImageBitmap(file); const k = Math.min(1, 900 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', .82));
+      const up = await db().storage.from('photos').upload(uid() + '/photo', blob, { upsert: true, contentType: 'image/jpeg' }); if (up.error) throw up.error;
+      await db().rpc('set_photo', { has: true }); buzz([20, 60, 30]); T('📷 ' + t('Je foto staat erop. Alleen je matches zien ze.', 'Photo saved. Only your matches can see it.')); photo();
+    } catch (e) { T(t('Opslaan lukte niet. Probeer een andere foto.', 'Saving failed. Try another photo.')) }
+  }
+  async function delPhoto() { if (!confirm(t('Je foto verwijderen?', 'Delete your photo?'))) return; await db().storage.from('photos').remove([uid() + '/photo']); await db().rpc('set_photo', { has: false }); T(t('Verwijderd', 'Deleted')); photo() }
+  async function showPhoto(c) {
+    const sh = $('xSheet'); if (!sh || $('exPhoto')) return;
+    if (c.photo) {
+      try { const s = await db().storage.from('photos').createSignedUrl(c.photo.split('?')[0], 300); if (!s.data) return;
+        sh.insertAdjacentHTML('afterbegin', `<div id="exPhoto" style="text-align:center;margin-bottom:10px"><img src="${s.data.signedUrl}" alt="${t('Foto van', 'Photo of')} ${esc(c.name)}" style="width:100%;max-height:340px;object-fit:cover;border-radius:20px"><div class="sub" style="margin-top:4px">📷 ${t('Alleen zichtbaar voor matches', 'Only visible to matches')}</div></div>`) } catch (e) { }
+    } else if (c.hasPhoto && !c.matched) sh.insertAdjacentHTML('afterbegin', `<div id="exPhoto" class="exCard" style="text-align:center;padding:10px"><span class="sub">📷 ${esc(c.name)} ${t('heeft een foto. Die zie je na een match.', 'has a photo. You will see it after a match.')}</span></div>`);
+  }
+
   /* ==================== in de app haken ==================== */
   window.GLXEXTRA = {
     invite, agenda, voice, emote, emotes, out, safe: safeOpen, onProfile, _link: '',
@@ -287,7 +334,7 @@ ${(d.offer || e.offer) ? `<div style="margin-top:14px;padding:12px;border-radius
     _going: going, _checkin: checkin, _ticket: id => ticket(id), _show: showEv,
     _rec: recToggle, _saveVoice: saveVoice, _delVoice: delVoice,
     _out: on => setOut(!!on), _outNote(b, n) { outPick.note = outPick.note === n ? '' : n; b.parentElement.querySelectorAll('.exChip').forEach(x => x.classList.toggle('on', x === b && !!outPick.note)) }, _outH(b, h) { outPick.h = h; b.parentElement.querySelectorAll('.exChip').forEach(x => x.classList.toggle('on', x === b)) },
-    _safeStart: safeStart, _safeDone: safeDone
+    _safeStart: safeStart, _safeDone: safeDone, photo, _delPhoto: delPhoto, _ice: ice, _bingo: bingo
   };
 
   function addHub() {
@@ -295,6 +342,7 @@ ${(d.offer || e.offer) ? `<div style="margin-top:14px;padding:12px;border-radius
       if (typeof HUB === 'undefined') return;
       const add = (i, n, f) => { if (!HUB.some(h => h[2] === f)) HUB.unshift([i, n, f]) };
       add('🛡️', t('Veilig thuis', 'Home safe'), 'GLXEXTRA.safe()');
+      add('📷', t('Mijn foto', 'My photo'), 'GLXEXTRA.photo()');
       add('🎙️', t('Spraakintro', 'Voice intro'), 'GLXEXTRA.voice()');
       add('💃', t('Emotes', 'Emotes'), 'GLXEXTRA.emotes()');
       add('🌙', t('Uit vanavond', 'Out tonight'), 'GLXEXTRA.out()');

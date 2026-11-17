@@ -172,7 +172,7 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
 <button class="btn ok" type="button" style="margin-top:12px" onclick="ADM.saveEv()">💾 Opslaan</button>${e.id ? '<button class="btn" type="button" onclick="ADM.newEv()">Annuleren</button>' : ''}</div>
 <div class="card"><h2>Gepland</h2>${EV.length ? EV.map(x => `<div class="rep"><b>${esc(x.venue)}</b> <span class="sub">${when(x.starts_at)}</span><div class="sub">👥 ${x.going} gaan · ✅ ${x.checkins} ingecheckt${x.offer ? ' · 🎁 ' + esc(x.offer) : ''}</div>
 <div style="display:flex;gap:12px;align-items:center;margin-top:8px"><canvas class="evQr" data-id="${x.id}" width="120" height="120" style="background:#fff;border-radius:8px"></canvas><div><p class="sub" style="word-break:break-all">${location.origin}${location.pathname.replace(/beheer\.html$/, '')}?ev=${x.id}</p>
-<button class="btn" onclick="ADM.dlQr('${x.id}','${esc(x.venue).replace(/'/g, '')}')">⬇️ QR</button><button class="btn" onclick="ADM.editEv('${x.id}')">✏️</button><button class="btn ban" onclick="ADM.delEv('${x.id}')">🗑️</button></div></div></div>`).join('') : '<p class="sub">Nog geen avonden.</p>'}
+<button class="btn" onclick="ADM.dlQr('${x.id}','${esc(x.venue).replace(/'/g, '')}')">⬇️ QR</button><button class="btn" onclick="ADM.cafeLink('${x.id}')">🔗 Link café</button><button class="btn" onclick="ADM.editEv('${x.id}')">✏️</button><button class="btn ban" onclick="ADM.delEv('${x.id}')">🗑️</button></div></div></div>`).join('') : '<p class="sub">Nog geen avonden.</p>'}
 <p class="sub">Print de QR-code en zet hem op de toog. Wie hem scant tijdens de avond, checkt in en ziet zijn voordeel met een live klok.</p></div></div>`;
   }
   let qrLib = null;
@@ -210,6 +210,7 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
       if (!v.venue || !v.lat) return alert('Vul het café in en zoek het adres op de kaart');
       const r = await sb.rpc('admin_event_save', { ev: v }); if (r.error) return alert(r.error.message); evEdit = null; await loadEv(); draw();
     },
+    async cafeLink(id) { const r = await sb.rpc('admin_event_token', { ev: id }); if (!r.data) return alert('Link niet gevonden'); const u = location.origin + location.pathname.replace(/beheer\.html$/, '') + 'cafe.html?t=' + r.data; try { await navigator.clipboard.writeText(u) } catch (e) { } prompt('Geheime link voor het café (gekopieerd). Hiermee ziet het café de totalen van zijn avonden, nooit wie er was:', u) },
     async delEv(id) { if (!confirm('Deze avond verwijderen?')) return; const r = await sb.rpc('admin_event_delete', { ev: id }); if (r.error) alert(r.error.message); await loadEv(); draw() },
     async dlQr(id, name) { await loadQr(); const cv = document.createElement('canvas'); drawQr(cv, id, 1200); const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'galaxy-avond-' + name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-qr.png'; a.click() },
     async reps(o) { openOnly = o; reps = (await sb.rpc('mod_reports', { only_open: o })).data || []; draw() },
