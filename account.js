@@ -129,6 +129,7 @@ ${pw('liPw', t('Wachtwoord', 'Password'))}
       geblokkeerd_door_jou: await get('blocks', q => q.eq('blocker', id)),
       berichten: await get('messages', q => q.order('at', { ascending: true }).limit(10000)),
       dates: await get('date_plans', q => q.order('starts_at', { ascending: true })),
+      badges_en_echtheid: await (async () => { try { return { badges: (await db().rpc('my_badges')).data, echtheid: (await db().rpc('verify_status')).data } } catch (e) { return null } })(),
       feed: await (async () => { try { return (await db().rpc('my_feed_data')).data } catch (e) { return null } })(),
       ontvangen_complimenten: await (async () => { try { return (await db().rpc('my_compliments')).data } catch (e) { return null } })(),
       op_dit_toestel: (() => { const o = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^glx/.test(k) && k !== 'glxAuth') { const v = localStorage.getItem(k); try { o[k] = JSON.parse(v) } catch (e) { o[k] = v } } } } catch (e) { } return o })()

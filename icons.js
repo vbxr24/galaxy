@@ -32,13 +32,16 @@
     palette: '<path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.2 0 1.6-.8 1.3-1.7-.4-1.2.3-2.3 1.6-2.3h1.8a4 4 0 0 0 4-4c0-5-3.8-9-8.7-9z"/><path d="M7.5 11.5h.01M10 7.5h.01M14.5 7.5h.01"/>',
     heart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/>',
     coin: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v9M9.5 9.5c0-1 1.1-1.8 2.5-1.8s2.5.7 2.5 1.8-1.1 1.6-2.5 1.8-2.5.8-2.5 1.9 1.1 1.8 2.5 1.8 2.5-.7 2.5-1.8"/>',
+    video: '<rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10.5l5-3v9l-5-3z"/>',
+    badge: '<circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5 5 2.5-1.5-7.5"/>',
+    idcard: '<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16a3.4 3.4 0 0 1 6.4 0M14.5 10h4M14.5 13.5h3"/>',
     grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>'
   };
   const svg = (n, s) => `<svg class="gi" viewBox="0 0 24 24" width="${s || 22}" height="${s || 22}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
   window.GLXICON = svg;
 
   /* welk emoji wordt welk icoon in de tegels van Galaxy Extra */
-  const TILE = { '🎉': 'party', '🎁': 'gift', '🌙': 'moon', '💃': 'smile', '🎙️': 'mic', '📷': 'image', '🛡️': 'shield', '🌿': 'leaf', '👤': 'user', '📱': 'qr', '📅': 'calendar', '👥': 'users', '🎨': 'palette', '🎰': 'gift', '💌': 'heart', '💬': 'chat', '⭐': 'spark', '🗺️': 'map' };
+  const TILE = { '🎉': 'party', '🎁': 'gift', '🌙': 'moon', '💃': 'smile', '🎙️': 'mic', '📷': 'image', '🛡️': 'shield', '🌿': 'leaf', '👤': 'user', '📱': 'qr', '📅': 'calendar', '👥': 'users', '🎨': 'palette', '🎰': 'gift', '💌': 'heart', '💬': 'chat', '⭐': 'spark', '🗺️': 'map', '🎬': 'video', '🪪': 'idcard', '🏅': 'badge' };
 
   const css = document.createElement('style');
   css.textContent = `

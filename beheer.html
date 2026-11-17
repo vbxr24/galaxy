@@ -175,6 +175,23 @@ ${x.target_banned ? `<button class="btn" onclick="ADM.unban('${x.target}')">Scho
 <p class="sub">Alles met 2 meldingen wordt meteen verborgen. Foto's die de automatische controle twijfelachtig vindt, komen hier ook terecht voor iemand anders ze ziet.</p>`;
   }
 
+  /* ---------------- echtheidscheck (selfies) ---------------- */
+  let VR = null, VURL = {};
+  const POSE = { 1: '✌️ peace-teken', 2: '👍 duim omhoog', 3: '☝️ vinger omhoog', 4: '🤚 open hand', 5: '👌 OK-teken', 6: '🤙 bel-me-gebaar' };
+  async function loadVerify() { const r = await sb.rpc('admin_verify_list'); VR = r.error ? { err: r.error.message } : (r.data || []); VURL = {};
+    if (Array.isArray(VR)) for (const v of VR) { const a = await sb.storage.from('verify').createSignedUrl(v.path, 900); VURL[v.uid] = { s: a.data && a.data.signedUrl };
+      if (v.photo) { const b = await sb.storage.from('photos').createSignedUrl(v.photo, 900); VURL[v.uid].p = b.data && b.data.signedUrl } } }
+  function echt() {
+    if (!VR) return '<div class="card">Laden…</div>'; if (VR.err) return `<div class="card">⚠️ ${esc(VR.err)}<p class="sub">Is server/more.sql al uitgevoerd in Supabase?</p></div>`;
+    return `<div class="card"><h2>🪪 Selfies om na te kijken (${VR.length})</h2><p class="sub">Keur goed als: het een echte persoon is, die duidelijk het gevraagde gebaar doet, er volwassen uitziet en (als er een profielfoto is) dezelfde persoon is. Na je beslissing wordt de selfie gewist.</p>
+${VR.length ? VR.map(v => `<div style="display:flex;gap:12px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid #ffffff14">
+<div><div class="sub">Selfie</div>${VURL[v.uid] && VURL[v.uid].s ? `<img src="${VURL[v.uid].s}" alt="selfie" style="width:150px;height:200px;object-fit:cover;border-radius:10px">` : '–'}</div>
+${VURL[v.uid] && VURL[v.uid].p ? `<div><div class="sub">Profielfoto</div><img src="${VURL[v.uid].p}" alt="profielfoto" style="width:150px;height:200px;object-fit:cover;border-radius:10px"></div>` : ''}
+<div style="flex:1;min-width:180px"><b>${esc(v.name)}, ${v.age}</b>${v.ageVerified ? ' <span class="sub">· 18+ gecontroleerd</span>' : ''}<p>Gevraagd: <b>${POSE[v.pose] || v.pose}</b></p><p class="sub">${esc(new Date(v.at).toLocaleString('nl-BE'))}</p>
+<button class="btn" onclick="ADM.vDecide('${v.uid}',true)">✅ Goedkeuren</button><button class="btn" style="background:#7f1d1d" onclick="ADM.vDecide('${v.uid}',false)">✖ Afwijzen</button></div></div>`).join('') : '<p class="sub">Niets na te kijken. 🎉</p>'}</div>
+<div class="card"><h2>🔔 Meldingen voor jou</h2><p class="sub">Bij een nieuwe melding, een gemelde post of een nieuwe selfie krijg je een pushmelding (max. 1 per 10 minuten) op elk toestel waar je in Galaxy ingelogd bent met je beheerdersaccount en meldingen hebt aangezet (Profiel → Account en meldingen).</p></div>`;
+  }
+
   let EV = [], evEdit = null;
   const local = d => { const x = new Date(d); return new Date(x - x.getTimezoneOffset() * 6e4).toISOString().slice(0, 16) };
   async function loadEv() { const r = await sb.rpc('admin_events'); EV = (r.data || []).map(x => x.admin_events || x) }
@@ -199,16 +216,16 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
   function drawQr(cv, id, px) { const q = window.qrcode(0, 'M'); q.addData(evUrl(id)); q.make(); const n = q.getModuleCount(), c = cv.getContext('2d'), s = px / (n + 4); cv.width = cv.height = px; c.fillStyle = '#fff'; c.fillRect(0, 0, px, px); c.fillStyle = '#1a1240'; for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) c.fillRect(Math.round((k + 2) * s), Math.round((r + 2) * s), Math.ceil(s), Math.ceil(s)) }
   async function evQr() { try { await loadQr(); document.querySelectorAll('canvas.evQr').forEach(cv => drawQr(cv, cv.dataset.id, 120)) } catch (e) { } }
 
-  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden'], ['feed', '📰 Feed']];
+  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden'], ['feed', '📰 Feed'], ['echt', '🪪 Echtheid']];
   function draw() {
-    const body = { over, groei, users, geld, veilig, avonden, feed }[tab]();
-    $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}${k === 'feed' && FR && FR.counts && FR.counts.to_review ? ` (${FR.counts.to_review})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
+    const body = { over, groei, users, geld, veilig, avonden, feed, echt }[tab]();
+    $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}${k === 'feed' && FR && FR.counts && FR.counts.to_review ? ` (${FR.counts.to_review})` : ''}${k === 'echt' && Array.isArray(VR) && VR.length ? ` (${VR.length})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
     hover($('app')); if (tab === 'avonden') evQr(); if (tab === 'geld') { ['ru', 'rp', 'rc'].forEach(id => $(id).oninput = calc); calc() }
   }
   async function load() {
     const [st, r] = await Promise.all([sb.rpc('admin_stats', { days }), sb.rpc('mod_reports', { only_open: openOnly })]);
     if (st.error) { $('app').innerHTML = `<div class="card">⚠️ Statistieken laden lukte niet: ${esc(st.error.message)}</div>`; return }
-    S = st.data; reps = r.data || []; if (tab === 'feed' || !FR) await loadFeed(); draw();
+    S = st.data; reps = r.data || []; if (tab === 'feed' || !FR) await loadFeed(); if (tab === 'echt' || !VR) await loadVerify(); draw();
   }
   async function start() {
     sb = supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } });
@@ -220,7 +237,10 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
     load(); setInterval(() => { if (document.visibilityState === 'visible' && tab !== 'geld') load() }, 60000);
   }
   window.ADM = {
-    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); if (k === 'feed') await loadFeed(); draw() },
+    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); if (k === 'feed') await loadFeed(); if (k === 'echt') await loadVerify(); draw() },
+    async vDecide(u, ok) { let note = null; if (!ok) { note = prompt('Reden (de gebruiker ziet dit), bv. "Gebaar niet zichtbaar" of "Niet dezelfde persoon":', 'Gebaar niet duidelijk zichtbaar'); if (note === null) return }
+      const v = (VR || []).find(x => x.uid === u); const r = await sb.rpc('admin_verify_decide', { u, ok, p_note: note }); if (r.error) return alert(r.error.message);
+      if (v) await sb.storage.from('verify').remove([v.path]); await loadVerify(); draw() },
     async feedSet(k, id, st) { const r = await sb.rpc('admin_feed_set', { p_kind: k, p_item: id, p_status: st }); if (r.error) alert(r.error.message); await loadFeed(); draw() }, reload: load,
     newEv() { evEdit = null; draw() }, editEv(id) { evEdit = EV.find(x => x.id === id) || null; draw() },
     async geo() { const a = $('evA').value.trim() || $('evV').value.trim(); if (!a) return alert('Vul eerst een adres in'); try { const r = await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(a))).json(); if (!r[0]) return alert('Adres niet gevonden'); $('evLa').value = r[0].lat; $('evLo').value = r[0].lon; $('evGeo').textContent = 'Gevonden: ' + r[0].display_name } catch (e) { alert('Zoeken lukte niet') } },

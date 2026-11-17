@@ -123,7 +123,7 @@ ${!others.length ? `<div class="fdNote">${t('Nog geen verhalen in je buurt. Post
 
     if (q) {
       h += `<div class="fdSec"><h3>${t('Vraag van de avond', 'Question of the night')}</h3><span>${A.length ? A.length + ' ' + t(A.length === 1 ? 'antwoord' : 'antwoorden', A.length === 1 ? 'answer' : 'answers') : ''}</span></div>
-<div class="fdQ"><small>${I('moon', 15)}${t('Vandaag, voor iedereen in je buurt', 'Today, for everyone nearby')}</small><h2>${esc(nl() ? q.nl : q.en)}</h2>
+<div class="fdQ"><small style="display:flex">${I('moon', 15)}${t('Vandaag, voor iedereen in je buurt', 'Today, for everyone nearby')}${window.GLXSOC ? GLXSOC.streakChip() : ''}</small><h2>${esc(nl() ? q.nl : q.en)}</h2>
 ${my ? `<div class="mine"><span style="flex:1">${esc(my.body)}</span><button type="button" onclick="GLXFEED.editAnswer()">${t('Wijzig', 'Edit')}</button></div>`
           : `<form onsubmit="event.preventDefault();GLXFEED.answer(this.a.value)"><input name="a" maxlength="140" autocomplete="off" placeholder="${t('Jouw antwoord…', 'Your answer…')}" aria-label="${t('Jouw antwoord', 'Your answer')}"><button>${t('Plaats', 'Post')}</button></form>`}
 </div>
@@ -156,7 +156,7 @@ ${my ? `<div class="mine"><span style="flex:1">${esc(my.body)}</span><button typ
     const r = await d.rpc('answer_post', { p_body: txt.slice(0, 140) });
     if (r.error) return T(/niet toegestaan/.test(r.error.message) ? t('Dat kan niet: geen links, nummers of grove woorden', 'Not allowed: no links, numbers or offensive words') : t('Plaatsen lukte niet', 'Could not post'));
     try { navigator.vibrate && navigator.vibrate(12) } catch (e) { }
-    T(t('Geplaatst', 'Posted')); load(true);
+    T(t('Geplaatst', 'Posted')); if (window.GLXSOC) await GLXSOC.loadMine(); load(true);
   }
   function editAnswer() {
     const my = (data.answers || []).find(a => a.mine) || {};

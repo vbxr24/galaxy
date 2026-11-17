@@ -104,6 +104,7 @@
   const api = window.GLXNET = {
     get state() { return state }, get uid() { return uid }, get db() { return state === 'verbonden' ? sb : null }, sync: syncProfile, poll,
     async client() { await loadLib(); if (!sb) sb = window.supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } }); return sb },
+    get chatWith() { return chatWith }, reloadMsgs: f => loadMsgs(f),
     nameOf: id => { const c = matchList.find(x => x.id === id); return c ? c.name : '' },
     async wave() {
       if (!target || !sb) return; const w = await sb.from('waves').insert({ from_id: uid, to_id: target });
@@ -136,28 +137,32 @@
     const cl = $('clist'), mr = $('mrow'); if (!cl) return; if (mr) mr.innerHTML = '';
     document.querySelectorAll('#v-chat > h2').forEach((h, i) => { h.style.display = i === 0 ? 'none' : ''; if (i === 1) h.textContent = 'Matches en berichten' });
     cl.innerHTML = matchList.length ? matchList.map(c => `<button class="gmRow" style="width:100%;text-align:left;margin-bottom:8px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line);display:flex;gap:12px;align-items:center" onclick="GLXNET.chat('${esc(c.id)}')">
-<span style="flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:20px;background:linear-gradient(135deg,#8b5cf6,#ec4899)">${esc((c.name || '?')[0])}</span>
-<span style="flex:1;min-width:0"><b>${esc(c.name)}${c.age ? ', ' + c.age : ''}</b><br><small class="sub" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.last ? (c.last.sender === uid ? 'Jij: ' : '') + esc(String(c.last.body).replace(/\s*\[#date:[0-9a-f-]{36}\]/gi, '')) : 'Jullie zwaaiden naar elkaar. Zeg hallo 👋'}</small></span>
+<span style="flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:800;font-size:20px;background:radial-gradient(circle at 50% 30%,#8b5cf655,#1e1b4b)"><img class="mThumb" data-id="${esc(c.id)}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:50% 12%" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="></span>
+<span style="flex:1;min-width:0"><b>${esc(c.name)}${c.age ? ', ' + c.age : ''}${c.real ? ' <span class="realTick">✓</span>' : ''}</b><br><small class="sub" style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.last ? (c.last.sender === uid ? 'Jij: ' : '') + esc(String(c.last.body).replace(/\s*\[#date:[0-9a-f-]{36}\]/gi, '')) : 'Jullie zwaaiden naar elkaar. Zeg hallo 👋'}</small></span>
 ${c.unread ? '<span style="flex:none;width:10px;height:10px;border-radius:50%;background:#ec4899"></span>' : ''}</button>`).join('')
       : '<div class="box"><p class="sub">Nog geen matches. Zwaai naar iemand in een zone op de kaart. Zwaait die terug, dan kunnen jullie hier chatten.</p></div>';
+    if (window.GLXAV) cl.querySelectorAll('img.mThumb').forEach(im => { const c = matchList.find(x => x.id === im.dataset.id); GLXAV.thumb((c && c.avatar) || (GLXAV.defaultFor && GLXAV.defaultFor(im.dataset.id)), im.dataset.id).then(u => { if (u) im.src = u }).catch(() => { }) });
     const b = document.getElementById('chatDot'); if (b) { b.textContent = unread || ''; b.style.display = unread ? '' : 'none' }
   }
-  async function loadMsgs() {
+  async function loadMsgs(force) {
     if (!chatWith || !sb) return; const o = chatWith;
-    const r = await sb.from('messages').select('id,sender,body,at').or(`and(sender.eq.${uid},to_id.eq.${o}),and(sender.eq.${o},to_id.eq.${uid})`).order('at', { ascending: true }).limit(300);
+    const r = await sb.from('messages').select('id,sender,body,at,kind,media,read_at').or(`and(sender.eq.${uid},to_id.eq.${o}),and(sender.eq.${o},to_id.eq.${uid})`).order('at', { ascending: true }).limit(300);
     if (r.error || chatWith !== o) return; const box = $('gcMsgs'); if (!box) return;
-    const sig = (r.data || []).length + ':' + ((r.data || []).slice(-1)[0] || {}).id; if (box.dataset.sig === sig) return; box.dataset.sig = sig;
-    box.innerHTML = (r.data || []).length ? r.data.map(m => `<div style="display:flex;justify-content:${m.sender === uid ? 'flex-end' : 'flex-start'};margin:6px 0"><div style="max-width:78%;padding:9px 13px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere;background:${m.sender === uid ? 'linear-gradient(135deg,#8b5cf6,#ec4899)' : 'var(--card2)'}">${window.GLXDATE ? GLXDATE.tokens(esc(m.body)) : esc(m.body)}<small style="display:block;opacity:.7;font-size:10px;text-align:right;margin-top:2px">${hm(m.at)}</small></div></div>`).join('')
+    const L = r.data || [], sig = L.length + ':' + (L.slice(-1)[0] || {}).id + ':' + L.filter(m => m.read_at).length; if (box.dataset.sig === sig && !force) return; box.dataset.sig = sig;
+    const lastMine = [...L].reverse().find(m => m.sender === uid);
+    box.innerHTML = (r.data || []).length ? r.data.map(m => `<div style="display:flex;justify-content:${m.sender === uid ? 'flex-end' : 'flex-start'};margin:6px 0"><div style="max-width:78%;padding:9px 13px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere;background:${m.sender === uid ? 'linear-gradient(135deg,#8b5cf6,#ec4899)' : 'var(--card2)'}">${m.kind === 'photo' ? `<img class="cmMedia" data-cm="${esc(m.media)}" alt="Foto" onclick="window.open(this.src)">` : m.kind === 'voice' ? `<audio class="cmAudio" controls preload="none" data-cm="${esc(m.media)}"></audio>` : (window.GLXDATE ? GLXDATE.tokens(esc(m.body)) : esc(m.body))}<small style="display:block;opacity:.7;font-size:10px;text-align:right;margin-top:2px">${hm(m.at)}${m === lastMine ? (m.read_at ? ' · ✓✓ Gelezen' : ' · ✓') : ''}</small></div></div>`).join('')
       : '<p class="sub" style="text-align:center;margin:30px 0">Nog geen berichten. Zeg hallo 👋</p>';
+    if (window.GLXSOC) GLXSOC.chatMedia(box);
+    if (L.some(m => m.sender === o && !m.read_at)) { sb.rpc('chat_read', { other: o }).then(() => { if (window.GLXSOC) GLXSOC.chatReadPing() }) }
     box.scrollTop = box.scrollHeight; const l = (r.data || []).slice(-1)[0]; if (l) { lastSeen[o] = l.at; try { localStorage.glxSeenMsg = JSON.stringify(lastSeen) } catch (e) { } }
   }
   function openChat2(id) {
     const c = matchList.find(x => x.id === id); if (!c) return; chatWith = id; target = id;
     xs('💬 ' + esc(c.name), `<div style="display:flex;gap:8px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none"><button class="pill" onclick="GLXDATE.plan('${esc(id)}')" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);border-color:transparent">📅 Date</button><button class="pill" onclick="openProfile('${esc(id)}')">👤 Profiel</button><button class="pill" onclick="GLXNET.report()">🚩 Meld</button><button class="pill" onclick="GLXNET.block()">🚫 Blokkeer</button></div>
 <div id="gcMsgs" style="height:46vh;overflow-y:auto;padding:4px 2px"></div>
-<form onsubmit="event.preventDefault();GLXNET.sendMsg()" style="display:flex;gap:8px;margin-top:8px"><input id="gcIn" class="fld" maxlength="1000" autocomplete="off" placeholder="Typ een bericht" style="margin:0;flex:1 1 auto;min-width:0;width:auto"><button class="btn" type="submit" aria-label="Verstuur" style="flex:none;width:52px;padding:0">➤</button></form>
+<div id="gcTyping" aria-live="polite"></div><form onsubmit="event.preventDefault();GLXNET.sendMsg()" style="display:flex;gap:8px;margin-top:4px"><button type="button" class="gcTool" aria-label="Foto sturen" onclick="GLXSOC.chatPhoto()">${window.GLXICON ? GLXICON('image') : '📷'}</button><button type="button" class="gcTool" aria-label="Spraakbericht" onclick="GLXSOC.chatVoice(this)">${window.GLXICON ? GLXICON('mic') : '🎙️'}</button><input id="gcIn" class="fld" maxlength="1000" autocomplete="off" placeholder="Typ een bericht" style="margin:0;flex:1 1 auto;min-width:0;width:auto"><button class="btn" type="submit" aria-label="Verstuur" style="flex:none;width:52px;padding:0">➤</button></form>
 <p class="sub" style="margin-top:8px;font-size:11px">🛡️ Deel geen adres, geld of bankgegevens. Spreek af op een openbare plek.</p>`, false);
-    loadMsgs(); clearInterval(chatT); chatT = setInterval(() => { const v = $('xV'); if (!v || !v.classList.contains('on') || !$('gcMsgs')) { clearInterval(chatT); chatWith = null; loadMatches(); return } loadMsgs() }, 4000);
+    loadMsgs(); if (window.GLXSOC) GLXSOC.chatOpen(id); clearInterval(chatT); chatT = setInterval(() => { const v = $('xV'); if (!v || !v.classList.contains('on') || !$('gcMsgs')) { clearInterval(chatT); chatWith = null; if (window.GLXSOC) GLXSOC.chatClose(); loadMatches(); return } loadMsgs() }, 4000);
   }
   async function sendMsg() {
     const i = $('gcIn'), body = (i && i.value || '').trim(); if (!body || !chatWith) return; i.value = '';

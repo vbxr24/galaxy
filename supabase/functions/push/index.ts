@@ -51,9 +51,25 @@ async function nearby(pid: number) {
   return new Response('ok');
 }
 
+// meldingen uit de wachtrij (feed, beheer, badges): één keer per rij, alleen verse rijen
+async function queued(qid: number) {
+  const { data: m } = await db.from('push_queue').update({ pushed_at: new Date().toISOString() })
+    .eq('id', qid).is('pushed_at', null).gte('created_at', new Date(Date.now() - 300000).toISOString())
+    .select('user_id,kind,title,body,url,tag').maybeSingle();
+  if (!m) return new Response('skip');
+  const { data: p } = await db.from('profiles').select('banned_at').eq('id', m.user_id).maybeSingle();
+  if (!p || p.banned_at) return new Response('skip');
+  let q = db.from('push_subs').select('endpoint,p256dh,auth').eq('user_id', m.user_id);
+  if (m.kind === 'feed') q = q.neq('feed', false);
+  const { data: subs } = await q;
+  await send(subs || [], { title: m.title, body: m.body, url: m.url, tag: m.tag, vibrate: m.kind === 'admin' ? [200, 100, 200] : [120, 80, 120] }, m.kind === 'feed' ? 7200 : 86400);
+  return new Response('ok');
+}
+
 Deno.serve(async (req) => {
   try {
-    const { id, near, safe, kind } = await req.json();
+    const { id, near, safe, kind, q } = await req.json();
+    if (Number.isInteger(q)) return await queued(q);
     if (Number.isInteger(safe)) return await safeHome(safe, kind);
     if (Number.isInteger(near)) return await nearby(near);
     if (!Number.isInteger(id)) return new Response('bad', { status: 400 });
