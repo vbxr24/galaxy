@@ -20,6 +20,25 @@ async function send(subs: any[], msg: object, ttl: number) {
   }));
 }
 
+// veilig-thuis-check: herinnering aan de gebruiker, of waarschuwing aan de gekozen match. Elk maar één keer.
+async function safeHome(sid: number, kind: string) {
+  const col = kind === 'alert' ? 'alert_pushed_at' : 'remind_pushed_at', when = kind === 'alert' ? 'alerted_at' : 'reminded_at';
+  const { data: c } = await db.from('safe_checks').update({ [col]: new Date().toISOString() })
+    .eq('id', sid).is(col, null).is('done_at', null).gte(when, new Date(Date.now() - 180000).toISOString())
+    .select('user_id,contact_id').maybeSingle();
+  if (!c) return new Response('skip');
+  if (kind === 'alert') {
+    if (!c.contact_id) return new Response('skip');
+    const { data: who } = await db.from('profiles').select('name').eq('id', c.user_id).maybeSingle();
+    const { data: subs } = await db.from('push_subs').select('endpoint,p256dh,auth').eq('user_id', c.contact_id);
+    await send(subs || [], { title: 'Galaxy – veiligheid', body: '⚠️ ' + ((who && who.name) || 'Je match') + ' meldde zich nog niet veilig thuis na een date. Stuur een bericht of bel even.', url: './?chat=1', tag: 'safe-' + sid, vibrate: [400, 150, 400, 150, 400] }, 3600);
+  } else {
+    const { data: subs } = await db.from('push_subs').select('endpoint,p256dh,auth').eq('user_id', c.user_id);
+    await send(subs || [], { title: 'Galaxy', body: '🛡️ Ben je veilig thuis? Tik om het te bevestigen.', url: './?safe=1', tag: 'safe-' + sid, vibrate: [200, 100, 200, 100, 200] }, 1800);
+  }
+  return new Response('ok');
+}
+
 // "iemand in de buurt": één keer per ping, alleen voor verse pings, alleen naar toestellen die het aanzetten
 async function nearby(pid: number) {
   const { data: p } = await db.from('near_pings').update({ pushed_at: new Date().toISOString() })
@@ -34,7 +53,8 @@ async function nearby(pid: number) {
 
 Deno.serve(async (req) => {
   try {
-    const { id, near } = await req.json();
+    const { id, near, safe, kind } = await req.json();
+    if (Number.isInteger(safe)) return await safeHome(safe, kind);
     if (Number.isInteger(near)) return await nearby(near);
     if (!Number.isInteger(id)) return new Response('bad', { status: 400 });
     // één keer per bericht, en alleen voor verse berichten

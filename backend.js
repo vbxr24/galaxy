@@ -88,7 +88,8 @@
     return {
       id: c.id, name: c.name, age: c.age, city: c.city, bio: c.bio, cat: c.cat, gender: c.gender, pron: c.pron, orient: c.orient, showOrient: !!c.orient, ints: c.ints || [], basics: c.basics || {}, music: c.music || '',
       ptheme: c.ptheme, respect: c.respect, matched: !!c.matched, socialVis: c.ig || c.snap ? 'iedereen' : 'verborgen', ig: c.ig || (c.hasSocials && !c.snap ? '•' : ''), snap: c.snap || '',
-      badges: [['🪐', 'Galaxy-lid']].concat(c.ageVerified ? [['🔞', 'Leeftijd gecontroleerd']] : []).concat(c.matched ? [['💜', 'Jullie zwaaiden naar elkaar']] : [])
+      voice: c.voice || null, out: c.out || null,
+      badges: [['🪐', 'Galaxy-lid']].concat(c.ageVerified ? [['✅', 'Leeftijd gecontroleerd (18+)']] : []).concat(c.out ? [['🌙', 'Uit vanavond' + (c.out.note ? ': ' + c.out.note : '')]] : []).concat(c.matched ? [['💜', 'Jullie zwaaiden naar elkaar']] : [])
     };
   }
   async function openOther(id) {
@@ -96,7 +97,7 @@
     if (!c) { const r = await sb.rpc('profile_card', { target: id }); c = r.data }
     if (!c) return T('Dit profiel is niet beschikbaar');
     target = c.id; const card = toCard(c); try { if (window.GLXDATE) (await GLXDATE.profileBadges(c.id)).forEach(b => card.badges.push(b)) } catch (e) { }
-    GLXPROFILE.show(card);
+    GLXPROFILE.show(card); try { if (window.GLXEXTRA) GLXEXTRA.onProfile(c) } catch (e) { }
     const sh = $('xSheet'); if (sh) sh.insertAdjacentHTML('beforeend', `<button class="btn ghost" style="width:100%;margin-top:8px;color:#fb7185" onclick="GLXNET.block()">🚫 Blokkeer ${esc(c.name)}</button>`);
   }
   const REASON = ['Lijkt minderjarig', 'Nepprofiel of oplichting', 'Intimidatie of bedreiging', 'Ongepaste foto of tekst', 'Vraagt geld of biedt seks tegen betaling', 'Iets anders'];

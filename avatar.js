@@ -72,7 +72,8 @@
       } else {
         ['leftUpperLeg', 'rightUpperLeg', 'leftLowerLeg', 'rightLowerLeg', 'hips'].forEach(n => R(n)); vrm.scene.position.y = 0;
         R('leftUpperArm', 0, 0, -1.22 - s(t * 2) * .02); R('leftLowerArm', 0, 0, -.12);
-        if (mode === 'Wave') { R('rightUpperArm', 0, 0, -.2); R('rightLowerArm', 0, -.2 + s(t * 9) * .45, -1.5); R('rightHand', 0, 0, 0) }
+        if (mode === 'Dance') { const b = s(t * 8); R('leftUpperArm', 0, 0, -.35 + b * .25); R('rightUpperArm', 0, 0, .35 + b * .25); R('leftLowerArm', 0, 0, -.6); R('rightLowerArm', 0, 0, .6); R('hips', 0, s(t * 4) * .25, 0); R('spine', 0, 0, b * .12); vrm.scene.position.y = Math.abs(s(t * 8)) * .06 }
+        else if (mode === 'Wave') { R('rightUpperArm', 0, 0, -.2); R('rightLowerArm', 0, -.2 + s(t * 9) * .45, -1.5); R('rightHand', 0, 0, 0) }
         else { R('rightUpperArm', 0, 0, 1.22 + s(t * 2) * .02); R('rightLowerArm', 0, 0, .12) }
       }
       if (once && t > once) { once = 0; mode = 'Idle' }
@@ -80,14 +81,14 @@
       if (E) {
         if (t > blinkAt) { blink = .16; blinkAt = t + 2 + Math.random() * 3 } if (blink > 0) blink -= dt;
         E.setValue('blink', blink > 0 ? Math.sin((blink / .16) * Math.PI) : 0);
-        const f = mode === 'Wave' ? 'happy' : (cfg.face || 'neutral'); FACES.forEach(([n]) => E.setValue(n, n === f && n !== 'neutral' ? (n === 'sad' ? .55 : .85) : 0));
+        const f = mode === 'Wave' || mode === 'Dance' ? 'happy' : (cfg.face || 'neutral'); FACES.forEach(([n]) => E.setValue(n, n === f && n !== 'neutral' ? (n === 'sad' ? .55 : .85) : 0));
       }
       vrm.update(dt);
     };
     const fig = {
       root: wrap, model: cfg.model, vrm,
       mixer: { update: pose },
-      play(n, o) { mode = n === 'Wave' || n === 'Walk' ? n : 'Idle'; once = o || n === 'Wave' ? t + 2.2 : 0 },
+      play(n, o) { mode = ['Wave', 'Walk', 'Dance'].includes(n) ? n : 'Idle'; once = o || n === 'Wave' || n === 'Dance' ? t + (n === 'Dance' ? 3.4 : 2.2) : 0 },
       tint(c) {
         const set = (names, hex) => names.forEach(n => (mats[n] || []).forEach(m => { if (!m.color) return; m.color.set(hex == null ? m.userData.base : hex); if (m.shadeColorFactor) { if (hex == null) m.shadeColorFactor.set(m.userData.shade); else m.shadeColorFactor.set(hex).multiplyScalar(.72) } }));
         set(['Body_00_SKIN', 'Face_00_SKIN'], c.skin); set(['Hair_00_HAIR', 'HairBack_00_HAIR'], c.hair); set(['EyeIris_00_EYE'], c.eyes);
@@ -232,11 +233,13 @@
     const loop = now => {
       const dt = Math.min(.1, (now - last) / 1000), s = mapState; last = now;
       let d = s.heading - s.cur; d = Math.atan2(Math.sin(d), Math.cos(d)); s.cur += d * .15;
-      if (mapFig) { mapFig.root.rotation.y = s.walk ? s.cur : s.cur + Math.sin(now / 3300) * .2; mapFig.mixer.update(dt) }
+      if (mapFig) { const em = s.emote && now < s.emoteEnd ? s.emote : null; if (s.emote && !em) { s.emote = null; mapFig.root.position.y = 0; mapFig.play(s.walk ? 'Walk' : 'Idle') }
+        mapFig.root.rotation.y = em === 'dance' && !mapFig.vrm ? now / 260 : s.walk ? s.cur : s.cur + Math.sin(now / 3300) * .2;
+        if (em === 'dance' && !mapFig.vrm) mapFig.root.position.y = Math.abs(Math.sin(now / 140)) * .18; mapFig.mixer.update(dt) }
       mapCam.position.set(0, 3.9, 5.4); mapCam.lookAt(0, .8, 0); mapR.render(mapScene, mapCam); mapRaf = requestAnimationFrame(loop);
     };
     mapRaf = requestAnimationFrame(loop);
-    return { el: mapR.domElement, setWalking: w => { w = !!w; if (w !== mapState.walk) { mapState.walk = w; if (mapFig) mapFig.play(w ? 'Walk' : 'Idle') } }, setHeading: rad => mapState.heading = rad };
+    return { el: mapR.domElement, setWalking: w => { w = !!w; if (w !== mapState.walk) { mapState.walk = w; if (mapFig) mapFig.play(w ? 'Walk' : 'Idle') } }, setHeading: rad => mapState.heading = rad, emote(n) { if (!mapFig) return; mapState.emote = n; mapState.emoteEnd = performance.now() + (n === 'dance' ? 3400 : 2400); mapFig.play(n === 'dance' ? (mapFig.vrm ? 'Dance' : 'Idle') : 'Wave', true) } };
   }
 
   /* ===================== figuurtjes van andere leden (foto van hun 3D-figuur) ===================== */

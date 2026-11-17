@@ -156,11 +156,36 @@ ${x.handled ? '' : `<button class="btn ok" onclick="ADM.resolve(${x.id},'geen ac
 ${x.target_banned ? `<button class="btn" onclick="ADM.unban('${x.target}')">Schorsing opheffen</button>` : `<button class="btn ban" onclick="ADM.ban('${x.target}')">Schorsen</button>`}</div>`;
   }
 
-  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid']];
+  /* ---------- Galaxy-avonden beheren ---------- */
+  let EV = [], evEdit = null;
+  const local = d => { const x = new Date(d); return new Date(x - x.getTimezoneOffset() * 6e4).toISOString().slice(0, 16) };
+  async function loadEv() { const r = await sb.rpc('admin_events'); EV = (r.data || []).map(x => x.admin_events || x) }
+  function avonden() {
+    const e = evEdit || {}, now = Date.now() + 864e5, st = e.starts_at ? local(e.starts_at) : local(new Date(new Date(now).setHours(20, 0, 0, 0))), en = e.ends_at ? local(e.ends_at) : local(new Date(new Date(now).setHours(23, 59, 0, 0)));
+    const inp = (id, lbl, val, extra) => `<label class="sub" style="display:block;margin-top:10px">${lbl}</label><input id="${id}" value="${esc(val == null ? '' : val)}" ${extra || ''} style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--s2);color:var(--t1);font:inherit">`;
+    return `<div class="grid c2"><div class="card"><h2>${e.id ? 'Avond wijzigen' : 'Nieuwe Galaxy-avond'}</h2>
+${inp('evV', 'Café', e.venue)}${inp('evA', 'Adres', e.address)}
+<button class="btn" type="button" onclick="ADM.geo()">📍 Zoek adres op de kaart</button><p class="sub" id="evGeo">${e.lat ? 'Locatie: ' + e.lat.toFixed(5) + ', ' + e.lng.toFixed(5) : 'Nog geen locatie'}</p>
+<input type="hidden" id="evLa" value="${e.lat || ''}"><input type="hidden" id="evLo" value="${e.lng || ''}">
+${inp('evS', 'Start', st, 'type="datetime-local"')}${inp('evE', 'Einde', en, 'type="datetime-local"')}
+${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je eerste drankje"')}${inp('evN', 'Extra info (optioneel)', e.note)}
+<button class="btn ok" type="button" style="margin-top:12px" onclick="ADM.saveEv()">💾 Opslaan</button>${e.id ? '<button class="btn" type="button" onclick="ADM.newEv()">Annuleren</button>' : ''}</div>
+<div class="card"><h2>Gepland</h2>${EV.length ? EV.map(x => `<div class="rep"><b>${esc(x.venue)}</b> <span class="sub">${when(x.starts_at)}</span><div class="sub">👥 ${x.going} gaan · ✅ ${x.checkins} ingecheckt${x.offer ? ' · 🎁 ' + esc(x.offer) : ''}</div>
+<div style="display:flex;gap:12px;align-items:center;margin-top:8px"><canvas class="evQr" data-id="${x.id}" width="120" height="120" style="background:#fff;border-radius:8px"></canvas><div><p class="sub" style="word-break:break-all">${location.origin}${location.pathname.replace(/beheer\.html$/, '')}?ev=${x.id}</p>
+<button class="btn" onclick="ADM.dlQr('${x.id}','${esc(x.venue).replace(/'/g, '')}')">⬇️ QR</button><button class="btn" onclick="ADM.editEv('${x.id}')">✏️</button><button class="btn ban" onclick="ADM.delEv('${x.id}')">🗑️</button></div></div></div>`).join('') : '<p class="sub">Nog geen avonden.</p>'}
+<p class="sub">Print de QR-code en zet hem op de toog. Wie hem scant tijdens de avond, checkt in en ziet zijn voordeel met een live klok.</p></div></div>`;
+  }
+  let qrLib = null;
+  function loadQr() { if (qrLib) return qrLib; qrLib = new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://unpkg.com/qrcode-generator@1.4.4/qrcode.js'; s.integrity = 'sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k'; s.crossOrigin = 'anonymous'; s.onload = () => ok(window.qrcode); s.onerror = no; document.head.appendChild(s) }); return qrLib }
+  const evUrl = id => location.origin + location.pathname.replace(/beheer\.html$/, '') + '?ev=' + id;
+  function drawQr(cv, id, px) { const q = window.qrcode(0, 'M'); q.addData(evUrl(id)); q.make(); const n = q.getModuleCount(), c = cv.getContext('2d'), s = px / (n + 4); cv.width = cv.height = px; c.fillStyle = '#fff'; c.fillRect(0, 0, px, px); c.fillStyle = '#1a1240'; for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) c.fillRect(Math.round((k + 2) * s), Math.round((r + 2) * s), Math.ceil(s), Math.ceil(s)) }
+  async function evQr() { try { await loadQr(); document.querySelectorAll('canvas.evQr').forEach(cv => drawQr(cv, cv.dataset.id, 120)) } catch (e) { } }
+
+  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden']];
   function draw() {
-    const body = { over, groei, users, geld, veilig }[tab]();
+    const body = { over, groei, users, geld, veilig, avonden }[tab]();
     $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
-    hover($('app')); if (tab === 'geld') { ['ru', 'rp', 'rc'].forEach(id => $(id).oninput = calc); calc() }
+    hover($('app')); if (tab === 'avonden') evQr(); if (tab === 'geld') { ['ru', 'rp', 'rc'].forEach(id => $(id).oninput = calc); calc() }
   }
   async function load() {
     const [st, r] = await Promise.all([sb.rpc('admin_stats', { days }), sb.rpc('mod_reports', { only_open: openOnly })]);
@@ -177,7 +202,16 @@ ${x.target_banned ? `<button class="btn" onclick="ADM.unban('${x.target}')">Scho
     load(); setInterval(() => { if (document.visibilityState === 'visible' && tab !== 'geld') load() }, 60000);
   }
   window.ADM = {
-    tab(k) { tab = k; draw() }, reload: load,
+    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); draw() }, reload: load,
+    newEv() { evEdit = null; draw() }, editEv(id) { evEdit = EV.find(x => x.id === id) || null; draw() },
+    async geo() { const a = $('evA').value.trim() || $('evV').value.trim(); if (!a) return alert('Vul eerst een adres in'); try { const r = await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(a))).json(); if (!r[0]) return alert('Adres niet gevonden'); $('evLa').value = r[0].lat; $('evLo').value = r[0].lon; $('evGeo').textContent = 'Gevonden: ' + r[0].display_name } catch (e) { alert('Zoeken lukte niet') } },
+    async saveEv() {
+      const v = { id: evEdit && evEdit.id, venue: $('evV').value.trim(), address: $('evA').value.trim(), lat: +$('evLa').value, lng: +$('evLo').value, starts_at: new Date($('evS').value).toISOString(), ends_at: new Date($('evE').value).toISOString(), offer: $('evO').value.trim() || null, note: $('evN').value.trim() || null };
+      if (!v.venue || !v.lat) return alert('Vul het café in en zoek het adres op de kaart');
+      const r = await sb.rpc('admin_event_save', { ev: v }); if (r.error) return alert(r.error.message); evEdit = null; await loadEv(); draw();
+    },
+    async delEv(id) { if (!confirm('Deze avond verwijderen?')) return; const r = await sb.rpc('admin_event_delete', { ev: id }); if (r.error) alert(r.error.message); await loadEv(); draw() },
+    async dlQr(id, name) { await loadQr(); const cv = document.createElement('canvas'); drawQr(cv, id, 1200); const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'galaxy-avond-' + name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-qr.png'; a.click() },
     async reps(o) { openOnly = o; reps = (await sb.rpc('mod_reports', { only_open: o })).data || []; draw() },
     async resolve(id, out) { const r = await sb.rpc('mod_resolve', { rid: id, result: out }); if (r.error) alert(r.error.message); load() },
     async ban(id) {
