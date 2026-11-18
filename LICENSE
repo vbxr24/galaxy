@@ -1,0 +1,13 @@
+Copyright (c) 2026 de maker van Galaxy. Alle rechten voorbehouden.
+All rights reserved.
+
+De code, teksten, vormgeving, logo's, 3D-figuren en andere inhoud van Galaxy zijn auteursrechtelijk beschermd.
+Niets hiervan mag gekopieerd, aangepast, verspreid of gebruikt worden zonder voorafgaande schriftelijke toestemming.
+Dat de code zichtbaar is op GitHub, geeft niemand het recht om ze te gebruiken.
+
+The source code, texts, design, logos, 3D figures and other content of Galaxy are protected by copyright.
+None of it may be copied, modified, distributed or used without prior written permission.
+The code being visible on GitHub does not grant anyone a licence to use it.
+
+Uitzonderingen / exceptions: de bibliotheken in de map vendor/ vallen onder hun eigen open-source licenties
+(three.js, three-vrm, MapLibre, Supabase, NSFWJS, qrcode-generator, jsQR). / Libraries in vendor/ keep their own open-source licences.
