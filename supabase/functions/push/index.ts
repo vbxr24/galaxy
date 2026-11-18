@@ -31,13 +31,28 @@ async function safeHome(sid: number, kind: string) {
     if (!c.contact_id) return new Response('skip');
     const { data: who } = await db.from('profiles').select('name').eq('id', c.user_id).maybeSingle();
     const { data: subs } = await db.from('push_subs').select('endpoint,p256dh,auth').eq('user_id', c.contact_id);
-    await send(subs || [], { title: 'Galaxy – veiligheid', body: '⚠️ ' + ((who && who.name) || 'Je match') + ' meldde zich nog niet veilig thuis na een date. Stuur een bericht of bel even.', url: './?chat=1', tag: 'safe-' + sid, vibrate: [400, 150, 400, 150, 400] }, 3600);
+    const lc = await langOf(c.contact_id);
+    await send(subs || [], { title: tx('safeTitle', lc), body: tx('safeAlert', lc, (who && who.name) || 'Match'), url: './?chat=1', tag: 'safe-' + sid, vibrate: [400, 150, 400, 150, 400] }, 3600);
   } else {
     const { data: subs } = await db.from('push_subs').select('endpoint,p256dh,auth').eq('user_id', c.user_id);
-    await send(subs || [], { title: 'Galaxy', body: '🛡️ Ben je veilig thuis? Tik om het te bevestigen.', url: './?safe=1', tag: 'safe-' + sid, vibrate: [200, 100, 200, 100, 200] }, 1800);
+    const lu = await langOf(c.user_id);
+    await send(subs || [], { title: 'Galaxy', body: tx('safeAsk', lu), url: './?safe=1', tag: 'safe-' + sid, vibrate: [200, 100, 200, 100, 200] }, 1800);
   }
   return new Response('ok');
 }
+
+
+// meldingen in de taal van de ontvanger (profiles.lang); onbekende taal → Engels
+const TX: Record<string, Record<string, string>> = {
+  safeAlert: { nl: '⚠️ {n} meldde zich nog niet veilig thuis na een date. Stuur een bericht of bel even.', en: "⚠️ {n} hasn't checked in safely at home after a date. Send a message or give them a call.", fr: "⚠️ {n} n'a pas encore confirmé être bien rentré(e) après un date. Envoie un message ou appelle.", de: '⚠️ {n} hat sich nach einem Date noch nicht sicher zuhause gemeldet. Schreib oder ruf kurz an.', es: '⚠️ {n} aún no ha confirmado que llegó bien a casa tras una cita. Envía un mensaje o llama.', it: '⚠️ {n} non ha ancora confermato di essere a casa dopo un appuntamento. Scrivi o chiama.', pt: '⚠️ {n} ainda não confirmou que chegou bem a casa depois de um encontro. Envia uma mensagem ou liga.', tr: '⚠️ {n} randevudan sonra evine güvenle vardığını henüz bildirmedi. Mesaj at ya da ara.', pl: '⚠️ {n} nie potwierdził(a) jeszcze bezpiecznego powrotu po randce. Napisz lub zadzwoń.', ru: '⚠️ {n} ещё не подтвердил(а), что добрался(лась) домой после свидания. Напиши или позвони.', uk: '⚠️ {n} ще не підтвердив(ла), що безпечно дістався(лась) додому після побачення. Напиши або зателефонуй.', ar: '⚠️ {n} لم يؤكد بعد وصوله إلى البيت بأمان بعد الموعد. أرسل رسالة أو اتصل.', zh: '⚠️ {n} 约会后还没有报平安。发个消息或打个电话吧。', ja: '⚠️ {n} さんがデート後まだ無事帰宅の連絡をしていません。メッセージか電話をしてみて。', ro: '⚠️ {n} nu a confirmat încă că a ajuns acasă în siguranță după întâlnire. Trimite un mesaj sau sună.' },
+  safeTitle: { nl: 'Galaxy – veiligheid', en: 'Galaxy – safety', fr: 'Galaxy – sécurité', de: 'Galaxy – Sicherheit', es: 'Galaxy – seguridad', it: 'Galaxy – sicurezza', pt: 'Galaxy – segurança', tr: 'Galaxy – güvenlik', pl: 'Galaxy – bezpieczeństwo', ru: 'Galaxy – безопасность', uk: 'Galaxy – безпека', ar: 'Galaxy – الأمان', zh: 'Galaxy – 安全', ja: 'Galaxy – 安全', ro: 'Galaxy – siguranță' },
+  safeAsk: { nl: '🛡️ Ben je veilig thuis? Tik om het te bevestigen.', en: '🛡️ Are you home safe? Tap to confirm.', fr: '🛡️ Es-tu bien rentré(e) ? Touche pour confirmer.', de: '🛡️ Bist du sicher zuhause? Tippe zum Bestätigen.', es: '🛡️ ¿Llegaste bien a casa? Toca para confirmar.', it: '🛡️ Sei a casa al sicuro? Tocca per confermare.', pt: '🛡️ Chegaste bem a casa? Toca para confirmar.', tr: '🛡️ Evine güvenle vardın mı? Onaylamak için dokun.', pl: '🛡️ Jesteś bezpiecznie w domu? Dotknij, aby potwierdzić.', ru: '🛡️ Ты благополучно дома? Нажми, чтобы подтвердить.', uk: '🛡️ Ти безпечно вдома? Натисни, щоб підтвердити.', ar: '🛡️ هل وصلت إلى البيت بأمان؟ اضغط للتأكيد.', zh: '🛡️ 你安全到家了吗？点击确认。', ja: '🛡️ 無事に帰宅しましたか？タップして確認。', ro: '🛡️ Ai ajuns acasă în siguranță? Atinge pentru a confirma.' },
+  nearMatch: { nl: '💞 Een match is in je buurt', en: '💞 A match is nearby', fr: '💞 Un match est près de toi', de: '💞 Ein Match ist in deiner Nähe', es: '💞 Un match está cerca', it: '💞 Un match è nelle vicinanze', pt: '💞 Um match está perto de ti', tr: '💞 Bir eşleşmen yakında', pl: '💞 Dopasowanie jest w pobliżu', ru: '💞 Твоя пара рядом', uk: '💞 Твоя пара поруч', ar: '💞 تطابقك قريب منك', zh: '💞 你的配对就在附近', ja: '💞 マッチが近くにいます', ro: '💞 Un match este în apropiere' },
+  near: { nl: '✨ Er is iemand in je buurt', en: '✨ Someone is nearby', fr: "✨ Quelqu'un est près de toi", de: '✨ Jemand ist in deiner Nähe', es: '✨ Hay alguien cerca', it: "✨ C'è qualcuno nelle vicinanze", pt: '✨ Está alguém perto de ti', tr: '✨ Yakınında biri var', pl: '✨ Ktoś jest w pobliżu', ru: '✨ Кто-то рядом', uk: '✨ Хтось поруч', ar: '✨ هناك شخص قريب منك', zh: '✨ 附近有人', ja: '✨ 近くに誰かいます', ro: '✨ Cineva este în apropiere' },
+  msg: { nl: '💬 Je hebt een nieuw bericht', en: '💬 You have a new message', fr: '💬 Tu as un nouveau message', de: '💬 Du hast eine neue Nachricht', es: '💬 Tienes un mensaje nuevo', it: '💬 Hai un nuovo messaggio', pt: '💬 Tens uma nova mensagem', tr: '💬 Yeni bir mesajın var', pl: '💬 Masz nową wiadomość', ru: '💬 У тебя новое сообщение', uk: '💬 У тебе нове повідомлення', ar: '💬 لديك رسالة جديدة', zh: '💬 你有一条新消息', ja: '💬 新しいメッセージがあります', ro: '💬 Ai un mesaj nou' },
+};
+const tx = (k: string, l?: string | null, n = '') => ((TX[k][l || 'nl'] || TX[k].en) as string).replace('{n}', n);
+async function langOf(u: string) { const { data } = await db.from('profiles').select('lang').eq('id', u).maybeSingle(); return (data && data.lang) || 'nl'; }
 
 // "iemand in de buurt": één keer per ping, alleen voor verse pings, alleen naar toestellen die het aanzetten
 async function nearby(pid: number) {
@@ -47,7 +62,8 @@ async function nearby(pid: number) {
   if (!p) return new Response('skip');
   const { data: subs } = await db.from('push_subs').select('endpoint,p256dh,auth,near').eq('user_id', p.to_id).neq('near', 'uit');
   const ok = (subs || []).filter((s) => s.near === 'iedereen' || p.is_match);
-  await send(ok, { title: 'Galaxy', body: p.is_match ? '💞 Een match is in je buurt' : '✨ Er is iemand in je buurt', url: './?map=1', tag: 'near', vibrate: [300, 150, 300, 150, 300] }, 900);
+  const ln = await langOf(p.to_id);
+  await send(ok, { title: 'Galaxy', body: tx(p.is_match ? 'nearMatch' : 'near', ln), url: './?map=1', tag: 'near', vibrate: [300, 150, 300, 150, 300] }, 900);
   return new Response('ok');
 }
 
@@ -81,7 +97,8 @@ Deno.serve(async (req) => {
     const { data: p } = await db.from('profiles').select('ghost,banned_at').eq('id', m.to_id).maybeSingle();
     if (!p || p.banned_at) return new Response('skip');
     const { data: subs } = await db.from('push_subs').select('endpoint,p256dh,auth').eq('user_id', m.to_id);
-    await send(subs || [], { title: 'Galaxy', body: '💬 Je hebt een nieuw bericht', url: './?chat=1', tag: 'msg', vibrate: [120, 80, 120] }, 3600);
+    const lm = await langOf(m.to_id);
+    await send(subs || [], { title: 'Galaxy', body: tx('msg', lm), url: './?chat=1', tag: 'msg', vibrate: [120, 80, 120] }, 3600);
     return new Response('ok');
   } catch (_) { return new Response('error', { status: 500 }); }
 });

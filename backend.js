@@ -122,7 +122,7 @@
   /* ---------- matches en chat ---------- */
   let matchList = [], chatWith = null, chatT = null, lastSeen = {};
   try { lastSeen = JSON.parse(localStorage.glxSeenMsg || '{}') } catch (e) { }
-  const hm = d => { try { return new Date(d).toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' }) } catch (e) { return '' } };
+  const hm = d => { try { return new Date(d).toLocaleTimeString((document.documentElement.lang||undefined), { hour: '2-digit', minute: '2-digit' }) } catch (e) { return '' } };
   async function loadMatches() {
     if (!sb || !uid || state !== 'verbonden') return;
     const r = await sb.rpc('my_matches'); if (r.error) { console.error('matches', r.error); return }

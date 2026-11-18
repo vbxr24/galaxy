@@ -5,7 +5,7 @@
   const ALL = [['nl', '🇧🇪🇳🇱', 'Nederlands'], ['fr', '🇫🇷', 'Français'], ['en', '🇬🇧', 'English'], ['de', '🇩🇪', 'Deutsch'], ['es', '🇪🇸', 'Español'],
   ['it', '🇮🇹', 'Italiano'], ['pt', '🇵🇹', 'Português'], ['tr', '🇹🇷', 'Türkçe'], ['pl', '🇵🇱', 'Polski'], ['ro', '🇷🇴', 'Română'],
   ['ru', '🇷🇺', 'Русский'], ['uk', '🇺🇦', 'Українська'], ['ar', '🇸🇦', 'العربية'], ['zh', '🇨🇳', '中文'], ['ja', '🇯🇵', '日本語']];
-  const V = '10';
+  const V = '11';
   try { if (typeof LANGS !== 'undefined') { LANGS.length = 0; ALL.forEach(l => LANGS.push(l)) } } catch (e) { }
   let lang = 'nl';
   try { lang = localStorage.getItem('glxLang') || (navigator.language || 'nl').slice(0, 2).toLowerCase() } catch (e) { }
@@ -52,7 +52,8 @@
     if (lang === 'nl') return o; const m = o.match(RX); if (!m || !m[2]) return o;
     const row = OLD[m[2]], oi = ['fr', 'en', 'de', 'es', 'it', 'pt', 'tr', 'pl'].indexOf(lang);
     if (row && oi >= 0 && row[oi]) return m[1] + row[oi] + m[3];
-    const v = D[m[2]]; return v ? m[1] + v + m[3] : o;
+    const v = D[m[2]]; if (v) return m[1] + v + m[3];
+    const t = o.trim(), x = D[t] || D[m[2] + m[3].trim()]; return x ? o.replace(t, x) : o;
   }
   window.trNode = function (n) {
     if (n.parentElement && /^(SCRIPT|STYLE|TEXTAREA)$/.test(n.parentElement.tagName)) return;
@@ -81,4 +82,7 @@
   /* knop bovenaan bijwerken */
   const fix = () => { const b = document.getElementById('langBtn'); const L = ALL.find(x => x[0] === lang); if (b && L) b.textContent = L[1].slice(0, 4); try { window.trAll(document.body) } catch (e) { } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fix); else fix();
+
+  /* je taal doorgeven aan de server, zodat meldingen in jouw taal komen (1× per taal) */
+  (function sendLang(n) { try { if (localStorage.getItem('glxLangSent') === lang) return; const db = window.GLXNET && GLXNET.db; if (!db) { if (n < 40) setTimeout(() => sendLang(n + 1), 3000); return } db.rpc('set_lang', { l: lang }).then(r => { if (!r.error) localStorage.setItem('glxLangSent', lang) }, () => { }) } catch (e) { } })(0);
 })();

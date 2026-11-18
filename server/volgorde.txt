@@ -9,3 +9,4 @@ security.sql
 hardening.sql
 venues.sql
 errors.sql
+world.sql

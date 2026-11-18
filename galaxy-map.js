@@ -360,12 +360,12 @@ ${pw().fc ? `<div class="gmRow"><span>Later vanavond</span><b>${h < 21 ? '🔥 d
     if (!pw().mix && G.groups.filter(x => new Date(x.at) > Date.now()).length >= 1) { closeO('xV'); try { toast('Gratis kun je 1 groepsdate tegelijk plaatsen') } catch (e) { } return openPower() }
     const v = venues.get(id) || {}; const g = { id: 'g' + Date.now(), at: $('gmGT').value, kind: $('gmGK').value, max: +$('gmGN').value, place: v.n || '', lat: v.lat, lng: v.lng };
     G.groups.push(g); save(); closeO('xV');
-    xs('👥 Geplaatst!', `<p>${esc(g.kind)} bij <b>${esc(g.place)}</b>, ${new Date(g.at).toLocaleString('nl-BE', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}.</p><p class="sub" style="margin-top:8px">Deel de link met vrienden. Zodra Galaxy live is, zien leden in de buurt je groepsdate op de kaart.</p><br><button class="btn" style="width:100%" onclick="typeof invite==='function'&&invite()">🔗 Deel</button>`);
+    xs('👥 Geplaatst!', `<p>${esc(g.kind)} bij <b>${esc(g.place)}</b>, ${new Date(g.at).toLocaleString((document.documentElement.lang||undefined), { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}.</p><p class="sub" style="margin-top:8px">Deel de link met vrienden. Zodra Galaxy live is, zien leden in de buurt je groepsdate op de kaart.</p><br><button class="btn" style="width:100%" onclick="typeof invite==='function'&&invite()">🔗 Deel</button>`);
   }
   function groupsList() {
     const up = G.groups.filter(g => new Date(g.at) > Date.now() - 3 * 3600e3).sort((a, b) => new Date(a.at) - new Date(b.at));
     xs('👥 Groepsdates', `<p class="sub">Spreek met een groep af op een Galaxy-stop of Hotspot. Tik op een stop op de kaart en kies "Plan hier een groepsdate".</p><br>` +
-      (up.length ? up.map(g => `<div class="gmRow"><span>${esc(g.kind)}<br><small class="sub">${esc(g.place)} · max ${g.max}</small></span><span style="text-align:right">${new Date(g.at).toLocaleString('nl-BE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}<br><button class="pill" onclick="GLXMAP.fly(${g.lng},${g.lat})">Toon</button></span></div>`).join('') : '<p>Nog geen groepsdates gepland.</p>'));
+      (up.length ? up.map(g => `<div class="gmRow"><span>${esc(g.kind)}<br><small class="sub">${esc(g.place)} · max ${g.max}</small></span><span style="text-align:right">${new Date(g.at).toLocaleString((document.documentElement.lang||undefined), { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}<br><button class="pill" onclick="GLXMAP.fly(${g.lng},${g.lat})">Toon</button></span></div>`).join('') : '<p>Nog geen groepsdates gepland.</p>'));
   }
 
   /* ---------- power-ups ---------- */
@@ -508,10 +508,11 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
 
   async function search(q, go) {
     const res = $('gmRes'); if (!q || q.length < 2) { res.style.display = 'none'; return }
-    const loc = (window.PLACES || []).filter(p => p[0].toLowerCase().startsWith(q.toLowerCase())).slice(0, 4).map(p => ({ n: p[0], d: 'België / Nederland', lat: p[1] / 1000, lng: p[2] / 1000, z: 14 }));
+    if (!window.PLACES && !search._pl) { search._pl = 1; const sc = document.createElement('script'); sc.src = 'places.js'; document.head.appendChild(sc) }  /* lijst met kleine plaatsen pas laden als je zoekt */
+    const loc = (window.PLACES || []).filter(p => p[0].toLowerCase().startsWith(q.toLowerCase())).slice(0, 3).map(p => ({ n: p[0], d: '', lat: p[1] / 1000, lng: p[2] / 1000, z: 14 }));
     render(loc);
     try {
-      const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=nl&q=' + encodeURIComponent(q));
+      const r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=' + encodeURIComponent(document.documentElement.lang || 'en') + '&q=' + encodeURIComponent(q));
       const j = await r.json();
       const glob = j.map(x => ({ n: x.name || x.display_name.split(',')[0], d: x.display_name.split(',').slice(1, 4).join(',').trim(), lat: +x.lat, lng: +x.lon, z: /city|town|administrative/.test(x.type + x.addresstype) ? 13 : /village|suburb/.test(x.type + x.addresstype) ? 14.5 : 17 }));
       const all = loc.concat(glob.filter(g => !loc.some(l => l.n === g.n))).slice(0, 8); render(all);
