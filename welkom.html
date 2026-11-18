@@ -128,5 +128,5 @@ footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--sub);fon
   let x0 = null; ph.addEventListener('touchstart', e => x0 = e.touches[0].clientX, { passive: true }); ph.addEventListener('touchend', e => { if (x0 == null) return; const d = e.changedTouches[0].clientX - x0; if (Math.abs(d) > 40) { go(i + (d < 0 ? 1 : -1)); restart() } x0 = null });
 })();
 </script>
-<script src="help.js?v=1" defer></script>
+<script src="help.js?v=2" defer></script>
 </body></html>

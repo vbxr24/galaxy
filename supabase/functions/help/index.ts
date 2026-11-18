@@ -2,6 +2,7 @@
 // anders met een eenvoudige vraag-en-antwoordlijst. De assistent kan zelf: een hulpvraag aanmaken, een café aanmelden,
 // en de juiste pagina openen. Hij kan nooit accounts wijzigen of verwijderen; daarvoor stuurt hij je naar de juiste knop.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { FAQ, NONE, URGENT } from './faq.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const KEY = Deno.env.get('ANTHROPIC_API_KEY') || '';
@@ -44,20 +45,16 @@ async function runTool(name: string, inp: any, lang: string, uid: string | null)
   return { ok: false };
 }
 
-// eenvoudige antwoorden zonder AI (als er nog geen API-sleutel is)
-const FAQ: [RegExp, Record<string, string>, string?][] = [
-  [/(verwijder|delete|supprim|lösch|borrar|account weg)/i, { nl: 'Je account verwijderen kan in de app via je profiel, of via deze pagina. Alles wordt binnen 30 dagen gewist.', en: 'You can delete your account in the app from your profile, or on this page. Everything is erased within 30 days.' }, 'delete_account'],
-  [/(locatie|location|exact|waar ik|where i am|privacy|zichtbaar|invisible|onzichtbaar)/i, { nl: 'Anderen zien hooguit een zone van ongeveer 300 meter, nooit je exacte plek. Met de onzichtbaar-knop zien ze niets.', en: 'Others only see an area of about 300 m, never your exact location. With the invisible button they see nothing.' }, 'privacy'],
-  [/(café|cafe|bar|club|zaak|venue|restaurant)/i, { nl: 'Heb je een café, bar of club? Meld je zaak gratis aan voor Galaxy-avonden.', en: 'Do you run a bar, café or club? Sign up your venue for free for Galaxy nights.' }, 'cafe_signup'],
-  [/(prijs|kost|betal|price|cost|pay|abonnement|subscription|forever)/i, { nl: 'Tijdens de testversie is alles gratis. Later: Galaxy+ €9,99/maand, Gold €19,99, Cosmic €34,99 of Galaxy Forever €149,99 eenmalig.', en: 'Everything is free during the beta. Later: Galaxy+ €9.99/month, Gold €19.99, Cosmic €34.99 or Galaxy Forever €149.99 one-time.' }],
-  [/(veilig|safe|melden|report|block|blokk|lastig|harass)/i, { nl: 'Tik op iemands profiel om te melden of te blokkeren. Spreek af op een openbare plek en vertel iemand waar je bent. In gevaar? Bel 112.', en: 'Tap someone\'s profile to report or block. Meet in a public place and tell someone where you are. In danger? Call your emergency number (112/911).' }, 'safety'],
-  [/(install|download|app store|play store|startscherm|home screen)/i, { nl: 'Galaxy werkt in je browser. Kies "Toevoegen aan startscherm" om het als app te openen.', en: 'Galaxy works in your browser. Choose "Add to Home Screen" to open it like an app.' }, 'app'],
-];
-
+// antwoorden zonder AI: het onderwerp met de meeste treffers wint
 function fallback(text: string, lang: string) {
-  const nl = lang === 'nl';
-  for (const [rx, ans, link] of FAQ) if (rx.test(text)) return { reply: nl ? ans.nl : ans.en, actions: link ? [{ type: 'link', url: LINKS[link], label: nl ? 'Openen' : 'Open' }] : [] };
-  return { reply: nl ? 'Dat kan ik nog niet zelf oplossen. Beschrijf je probleem kort, dan stuur ik het door naar het Galaxy-team.' : "I can't solve that myself yet. Describe your problem briefly and I'll pass it on to the Galaxy team.", actions: [{ type: 'ticket' }] };
+  const L = ['nl', 'en', 'fr', 'de', 'es'].includes(lang) ? lang : 'en';
+  let best: any = null, score = 0;
+  for (const e of FAQ) { const n = (text.match(new RegExp(e[0].source, 'gi')) || []).length; if (n > score) { score = n; best = e } }
+  if (!best) return { reply: NONE[L], actions: [{ type: 'ticket' }] };
+  const acts: any[] = [];
+  if (best[1]) acts.push({ type: 'link', url: LINKS[best[1]], label: { nl: 'Openen', en: 'Open', fr: 'Ouvrir', de: 'Öffnen', es: 'Abrir' }[L] });
+  if (/bug|error|fout|werkt niet|refund|terugbetal|inlog|login/i.test(best[0].source)) acts.push({ type: 'ticket' });
+  return { reply: best[2][L] || best[2].en, actions: acts };
 }
 
 Deno.serve(async (req) => {
@@ -73,7 +70,11 @@ Deno.serve(async (req) => {
     const key = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('glx' + ip)))).slice(0, 12).map((b) => b.toString(16).padStart(2, '0')).join('');
     const { data: allowed } = await db.rpc('help_allow', { p_key: key, n: 30 });
     if (allowed === false) return json({ reply: lang === 'nl' ? 'Je hebt veel vragen gesteld. Probeer het over een uurtje opnieuw.' : 'You asked a lot of questions. Please try again in an hour.', actions: [] });
-    if (!KEY) return json(fallback(msgs[msgs.length - 1].content, lang));
+    if (!KEY) {
+      const last = msgs[msgs.length - 1].content, out: any = fallback(last, lang);
+      if (URGENT.test(last)) { const r = await runTool('create_ticket', { topic: 'veiligheid', summary: last }, lang, null); if (r.ok) out.actions.push({ type: 'done', label: lang === 'nl' ? '✅ Doorgestuurd naar het Galaxy-team' : '✅ Sent to the Galaxy team' }) }
+      return json(out);
+    }
 
     const actions: any[] = []; let convo: any[] = msgs; let reply = '';
     for (let step = 0; step < 4; step++) {
