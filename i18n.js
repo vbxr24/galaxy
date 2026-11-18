@@ -5,7 +5,7 @@
   const ALL = [['nl', '🇧🇪🇳🇱', 'Nederlands'], ['fr', '🇫🇷', 'Français'], ['en', '🇬🇧', 'English'], ['de', '🇩🇪', 'Deutsch'], ['es', '🇪🇸', 'Español'],
   ['it', '🇮🇹', 'Italiano'], ['pt', '🇵🇹', 'Português'], ['tr', '🇹🇷', 'Türkçe'], ['pl', '🇵🇱', 'Polski'], ['ro', '🇷🇴', 'Română'],
   ['ru', '🇷🇺', 'Русский'], ['uk', '🇺🇦', 'Українська'], ['ar', '🇸🇦', 'العربية'], ['zh', '🇨🇳', '中文'], ['ja', '🇯🇵', '日本語']];
-  const V = '2';
+  const V = '3';
   try { if (typeof LANGS !== 'undefined') { LANGS.length = 0; ALL.forEach(l => LANGS.push(l)) } } catch (e) { }
   let lang = 'nl';
   try { lang = localStorage.getItem('glxLang') || (navigator.language || 'nl').slice(0, 2).toLowerCase() } catch (e) { }

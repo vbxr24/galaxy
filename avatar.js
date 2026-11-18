@@ -72,8 +72,92 @@
     const t = new THREE.CanvasTexture(cv); ['flipY', 'colorSpace', 'wrapS', 'wrapT', 'channel', 'anisotropy'].forEach(k => { if (ud.orig.map[k] !== undefined) t[k] = ud.orig.map[k] }); t.needsUpdate = true;
     if (m.map !== ud.orig.map && m.map) m.map.dispose(); m.map = t; if (ud.orig.shade) m.shadeMultiplyTexture = t; m.needsUpdate = true;
   }
+
+  /* ===== accessoires: 3D-spulletjes vastgemaakt aan het skelet (werkt op elk model) ===== */
+  const METAL = { goud: [0xe3b341, 1, .28], zilver: [0xd7dde5, 1, .25], rose: [0xe7a28f, 1, .3], zwart: [0x1f2329, .6, .35] };
+  const ACC = [
+    ['ketting', 'Ketting', 'metal', ['goud', 'zilver', 'rose']], ['hanger', 'Hanger', 'pick', [['hart', '❤️ Hart'], ['ster', '⭐ Ster'], ['maan', '🌙 Maan']]],
+    ['ring', 'Ringen', 'metal', ['goud', 'zilver', 'rose', 'zwart']], ['horloge', 'Horloge', 'metal', ['zilver', 'goud', 'zwart', 'rose']],
+    ['oorbel', 'Oorbellen', 'metal', ['goud', 'zilver', 'rose']], ['bril', 'Bril', 'pick', [['bril', '👓 Bril'], ['zon', '🕶️ Zonnebril']]],
+    ['pet', 'Pet', 'col'], ['muts', 'Muts', 'col'], ['hoodie', 'Hoodie (kap)', 'col'], ['tas', 'Handtas', 'col'], ['rugzak', 'Rugzak', 'col'], ['laars', 'Laarzen', 'col']];
+  const ACOL = ['#111827', '#f8fafc', '#9ca3af', '#7c4a2d', '#d6b48a', '#ef4444', '#ec4899', '#8b5cf6', '#2563eb', '#38bdf8', '#16a34a', '#fbbf24'];
+  const GLBB = { hips: 'Hips', spine: 'Abdomen', chest: 'Torso', upperChest: 'Chest', neck: 'Neck', head: 'Head', leftUpperArm: 'UpperArm.L', rightUpperArm: 'UpperArm.R', leftLowerArm: 'LowerArm.L', rightLowerArm: 'LowerArm.R', leftHand: 'Wrist.L', rightHand: 'Wrist.R', leftRingProximal: 'Ring1.L', leftRingIntermediate: 'Ring2.L', rightRingProximal: 'Ring1.R', rightRingIntermediate: 'Ring2.R', leftUpperLeg: 'UpperLeg.L', rightUpperLeg: 'UpperLeg.R', leftLowerLeg: 'LowerLeg.L', rightLowerLeg: 'LowerLeg.R', leftFoot: 'Foot.L', rightFoot: 'Foot.R' };
+  function addAcc(fig, wrap, getBone, skip) {
+    const T = THREE, V3 = (x, y, z) => new T.Vector3(x, y, z), wp = b => b ? b.getWorldPosition(V3()) : null, items = {}, mats = {};
+    wrap.updateMatrixWorld(true);
+    const B = n => getBone(n) || (n === 'upperChest' ? getBone('chest') : null), P = n => wp(B(n));
+    const head = P('head'), neck = P('neck') || head, chest = P('upperChest') || P('chest'), hips = P('hips');
+    if (!head || !chest || !hips) return;
+    /* hoofdmaat meten op de echte vertices (ook geskinde) */
+    let top = head.y + .12; const all = [], v = V3();
+    wrap.traverse(o => { if (!o.isMesh || !o.visible || !o.geometry || !o.geometry.attributes.position) return; const pa = o.geometry.attributes.position, st = Math.max(1, Math.floor(pa.count / 6000)); for (let i = 0; i < pa.count; i += st) { v.fromBufferAttribute(pa, i); if (o.isSkinnedMesh && o.applyBoneTransform) o.applyBoneTransform(i, v); v.applyMatrix4(o.matrixWorld); all.push(v.clone()) } });
+    const vs = all.filter(p => p.y > head.y - .02 && Math.abs(p.x - head.x) < .22 && Math.abs(p.z - head.z) < .25);
+    vs.forEach(p => { if (Math.abs(p.x - head.x) < .12 && p.y > top) top = p.y });
+    const HH = top - head.y; let fz = head.z + HH * .45; vs.forEach(p => { if (Math.abs(p.x - head.x) < .03 && p.y > head.y + HH * .2 && p.y < head.y + HH * .6 && p.z > fz) fz = p.z });
+    const hR = Math.max(.08, Math.min(.2, HH * .52)), hc = V3(head.x, head.y + HH * .5, fz - hR * .95);
+    /* lichaamsoppervlak: voor- en achterkant per hoogte */
+    const zr = (y0, y1, cx, xr) => { let f = -9, b = 9, w = 0; all.forEach(p => { if (p.y >= y0 && p.y <= y1 && Math.abs(p.x - cx) < xr) { if (p.z > f) f = p.z; if (p.z < b) b = p.z } }); return f < -8 ? { f: chest.z + .1, b: chest.z - .1 } : { f, b } };
+    const wr = (y0, y1, zr0) => { let l = 0, r = 0; all.forEach(p => { if (p.y >= y0 && p.y <= y1 && Math.abs(p.z - zr0) < .2) { const d = p.x - hips.x; if (d > r) r = d; if (d < l) l = d } }); return { l, r } };
+    const shW = (() => { const a = P('leftUpperArm'), b = P('rightUpperArm'); return a && b ? a.distanceTo(b) : .3 })();
+    const mat = (k, o) => (mats[k] = mats[k] || []).push(o) && o;
+    const std = (k, c, r) => mat(k, new T.MeshStandardMaterial({ color: c || 0x888888, roughness: r == null ? .7 : r, metalness: 0 }));
+    const add = (key, bone, ...objs) => { const g = new T.Group(); objs.forEach(o => { if (o.isMesh) o.castShadow = true; g.add(o) }); wrap.add(g); g.updateMatrixWorld(true); const b = B(bone); if (b) b.attach(g); g.visible = false; (items[key] = items[key] || []).push(g); return g };
+    const M = (geo, m, pos, rot, sc) => { const o = new T.Mesh(geo, m); if (pos) o.position.copy(pos); if (rot) o.rotation.set(...rot); if (sc) o.scale.set(...sc); return o };
+    const alignTo = (o, from, to) => { o.quaternion.setFromUnitVectors(V3(0, 1, 0), to.clone().sub(from).normalize()) };
+    /* ketting + hanger */
+    const nb = zr(neck.y - .06, neck.y + .01, neck.x, .06), nRad = Math.max(.045, (nb.f - nb.b) / 2 + .012), ncz = (nb.f + nb.b) / 2, cs = zr(chest.y, neck.y - .04, chest.x, .05);
+    const nk = V3(neck.x, neck.y - .035, ncz), nR = nRad, km = std('ketting', 0, .3); add('ketting', 'upperChest', M(new T.TorusGeometry(nR, .0045, 6, 40), km, nk, [Math.PI / 2 - .55, 0, 0], [1.08, 1, 1]));
+    nk.z = cs.f - nR * 1.02 + .006;
+    const pend = V3(nk.x, nk.y - nR * Math.cos(Math.PI / 2 - .55) - .03, cs.f + .012), pm = std('ketting', 0, .3), hs = new T.Shape(); { const s = .018; hs.moveTo(0, -s); hs.bezierCurveTo(-s * 1.9, s * .4, -s * .6, s * 1.5, 0, s * .55); hs.bezierCurveTo(s * .6, s * 1.5, s * 1.9, s * .4, 0, -s) }
+    const st = new T.Shape(); for (let i = 0; i < 10; i++) { const a = Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? .009 : .022; i ? st.lineTo(Math.cos(a) * r, Math.sin(a) * r) : st.moveTo(Math.cos(a) * r, Math.sin(a) * r) }
+    const mo = new T.Shape(); mo.absarc(0, 0, .02, Math.PI * .35, Math.PI * 1.65, false); mo.absarc(.009, 0, .016, Math.PI * 1.55, Math.PI * .45, true);
+    const ex = { depth: .006, bevelEnabled: true, bevelSize: .002, bevelThickness: .002, bevelSegments: 2 };
+    [['hart', hs], ['ster', st], ['maan', mo]].forEach(([k, sh]) => { const g = add('hanger_' + k, 'upperChest', M(new T.ExtrudeGeometry(sh, ex), pm, pend, [-.25, 0, 0])); });
+    /* ringen */
+    const rm = std('ring', 0, .3);
+    ['left', 'right'].forEach(sd => { const a = P(sd + 'RingProximal'), b = P(sd + 'RingIntermediate'); if (!a || !b) return; const o = M(new T.TorusGeometry(.0085, .0028, 6, 18), rm, a.clone().lerp(b, .45)); o.quaternion.setFromUnitVectors(V3(0, 0, 1), b.clone().sub(a).normalize()); add('ring', sd + 'RingProximal', o) });
+    /* horloge links */
+    { const a = P('leftLowerArm'), b = P('leftHand'); if (a && b) { const d = b.clone().sub(a).normalize(), c = a.clone().lerp(b, .86), hm = std('horloge', 0, .3), q = new T.Quaternion().setFromUnitVectors(V3(0, 0, 1), d); const band = M(new T.TorusGeometry(.03, .007, 8, 24), hm, c); band.quaternion.copy(q); const face = M(new T.CylinderGeometry(.016, .016, .008, 20), std('horloge', 0, .3), c.clone().add(V3(0, .03, 0))); const glass = M(new T.CylinderGeometry(.013, .013, .009, 20), new T.MeshStandardMaterial({ color: 0x0f172a, roughness: .1, metalness: .2 }), c.clone().add(V3(0, .031, 0))); add('horloge', 'leftLowerArm', band, face, glass) } }
+    /* oorbellen */
+    { const om = std('oorbel', 0, .3); [-1, 1].forEach(sx => add('oorbel', 'head', M(new T.SphereGeometry(.009, 12, 10), om, V3(hc.x + sx * hR * .78, head.y + HH * .22, hc.z)), M(new T.TorusGeometry(.012, .002, 6, 16), om, V3(hc.x + sx * hR * .78, head.y + HH * .1, hc.z), [0, Math.PI / 2, 0]))) }
+    /* bril + zonnebril */
+    { const eyeB = P('leftEye'), ey = eyeB ? eyeB.y : head.y + HH * .4, ez = fz + .006, fr = std('brilR', 0x1f2937, .4); [['bril', new T.MeshStandardMaterial({ color: 0xbfe3ff, transparent: true, opacity: .18, roughness: .05 })], ['zon', new T.MeshStandardMaterial({ color: 0x0b0f19, transparent: true, opacity: .88, roughness: .1, metalness: .3 })]].forEach(([k, lm]) => { const parts = []; [-1, 1].forEach(sx => { const c = V3(hc.x + sx * hR * .36, ey, ez); parts.push(M(new T.TorusGeometry(hR * .27, .0045, 6, 24), fr, c, [0, 0, 0], [1, .8, 1]), M(new T.CircleGeometry(hR * .27, 24), lm, c.clone().add(V3(0, 0, .001)), [0, 0, 0], [1, .8, 1]), M(new T.BoxGeometry(.005, .005, hR * .95), fr, V3(hc.x + sx * hR * .9, ey + .004, ez - hR * .45))) }); parts.push(M(new T.BoxGeometry(hR * .2, .005, .005), fr, V3(hc.x, ey + .006, ez))); add('bril_' + k, 'head', ...parts) }) }
+    /* pet */
+    { const pm2 = std('pet', 0, .8), cr = hR * 1.07, by = head.y + HH * .54, sy = (top + .012 - by) / cr, cap = M(new T.SphereGeometry(cr, 28, 14, 0, Math.PI * 2, 0, Math.PI * .5), pm2, V3(hc.x, by, hc.z), 0, [1, sy, 1.06]); const vis = M(new T.CylinderGeometry(cr * .82, cr * .82, .008, 28, 1, false, -Math.PI * .5, Math.PI), pm2, V3(hc.x, by + .004, hc.z + cr * .62), [.14, 0, 0], [1, 1, .95]); const btn = M(new T.SphereGeometry(.012, 10, 8), pm2, V3(hc.x, top + .014, hc.z)); add('pet', 'head', cap, vis, btn) }
+    /* muts */
+    { const mm = std('muts', 0, .95), cr = hR * 1.1, by = head.y + HH * .56, sy = (top + .02 - by) / cr, cap = M(new T.SphereGeometry(cr, 28, 14, 0, Math.PI * 2, 0, Math.PI * .5), mm, V3(hc.x, by, hc.z - hR * .04), 0, [1, sy, 1.04]); const rim = M(new T.TorusGeometry(cr, cr * .12, 10, 32), mm, V3(hc.x, by + cr * .06, hc.z - hR * .04), [Math.PI / 2, 0, 0], [1, 1.04, 1]); const pom = M(new T.SphereGeometry(cr * .25, 14, 10), mm, V3(hc.x, top + .02 + cr * .15, hc.z - hR * .04)); add('muts', 'head', cap, rim, pom) }
+    /* hoodie-kap + koordjes */
+    { const hm = std('hoodie', 0, .9), ub = zr(neck.y - .14, neck.y - .02, chest.x, .1), hw = shW * .3, hood = M(new T.SphereGeometry(1, 24, 16), hm, V3(neck.x, neck.y - .07, ub.b - .02), [.3, 0, 0], [hw * 1.45, .11, .065]); const fold = M(new T.TorusGeometry(hw * .55, .018, 8, 24, Math.PI), hm, V3(neck.x, neck.y - .025, ub.b + .005), [-.2, 0, 0], [1, .8, 1]);
+      const col = M(new T.TorusGeometry(nRad + .012, .011, 8, 30), hm, V3(neck.x, neck.y - .05, ncz - .005), [Math.PI / 2 - .35, 0, 0], [1.1, 1, 1]); const cords = [-1, 1].map(sx => M(new T.CylinderGeometry(.0035, .0035, .12, 6), std('hoodieC', 0xf1f5f9, .6), V3(neck.x + sx * .028, neck.y - .13, cs.f + .012), [-.12, 0, 0])); add('hoodie', 'upperChest', hood, fold, col, ...cords) }
+    /* handtas (schoudertas) */
+    { const tm = std('tas', 0, .55), hw2 = wr(hips.y - .05, hips.y + .05, hips.z), hz = zr(hips.y - .06, hips.y + .04, hips.x, .3), bp = V3(hips.x + hw2.r + .045, hips.y - .03, (hz.f + hz.b) / 2 + .02), ry = .0;
+      const bag = M(new T.BoxGeometry(.05, .12, .16, 2, 2, 2), tm, bp, [0, ry, 0]); const flap = M(new T.BoxGeometry(.054, .055, .162), std('tas', 0, .45), bp.clone().add(V3(.002, .035, 0))); const clasp = M(new T.BoxGeometry(.01, .016, .022), std('tasG', 0xe3b341, .3), bp.clone().add(V3(.029, .012, 0)));
+      const sh = zr(neck.y - .1, neck.y - .02, chest.x - shW * .25, .05), sA = V3(chest.x - shW * .27, neck.y - .02, (sh.f + sh.b) / 2), sB = bp.clone().add(V3(0, .055, 0)), cf = zr(chest.y - .05, chest.y + .05, chest.x, shW * .4), cb = cf;
+      const strap = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([sA.clone().add(V3(0, .01, 0)), V3(chest.x - shW * .1, chest.y + .03, cf.f + .012), V3(hips.x + hw2.r * .7, hips.y + .08, hz.f + .02), sB]), 30, .005, 5), std('tas', 0, .55));
+      const strap2 = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([sA.clone().add(V3(0, .01, 0)), V3(chest.x - shW * .1, chest.y + .03, cb.b - .012), V3(hips.x + hw2.r * .7, hips.y + .08, hz.b - .02), sB]), 30, .005, 5), std('tas', 0, .55));
+      add('tas', 'hips', bag, flap, clasp); add('tas', 'upperChest', strap, strap2) }
+    /* rugzak */
+    { const rm2 = std('rugzak', 0, .75), bk = zr(chest.y - .12, neck.y - .06, chest.x, shW * .3), d = .12, c = V3(chest.x, (chest.y + neck.y) / 2 - .1, bk.b - d / 2 + .01);
+      const bag = M(new T.CapsuleGeometry(.085, .17, 6, 14), rm2, c, 0, [shW * .42 / .085 / 1, 1, d / 2 / .085]); const pocket = M(new T.CapsuleGeometry(.05, .04, 6, 12), std('rugzak', 0, .75), c.clone().add(V3(0, -.07, -d / 2 - .01)), 0, [1.6, 1, .5]);
+      const straps = [-1, 1].map(sx => { const xs = chest.x + sx * shW * .2, top2 = zr(neck.y - .08, neck.y, xs, .04), fr = zr(chest.y - .1, chest.y, xs, .04); return new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([V3(xs, c.y + .12, bk.b - .005), V3(xs, neck.y - .03, (top2.f + top2.b) / 2), V3(xs, chest.y + .02, fr.f + .01), V3(xs + sx * .03, chest.y - .14, fr.f + .0)]), 24, .011, 5), std('rugzak', 0, .75)) });
+      add('rugzak', 'upperChest', bag, pocket, ...straps) }
+    /* laarzen */
+    ['left', 'right'].forEach(sd => { const k = P(sd + 'LowerLeg'), f = P(sd + 'Foot'); if (!k || !f) return; const lm = std('laars', 0, .5), up = M(new T.CylinderGeometry(.062, .052, (k.y - f.y) * .62, 16), lm, V3(f.x, f.y + (k.y - f.y) * .28, f.z - .005)); const ft = M(new T.CapsuleGeometry(.05, .12, 6, 12), lm, V3(f.x, .055, f.z + .045), [Math.PI / 2, 0, 0], [1.05, 1, 1.15]); const sole = M(new T.BoxGeometry(.11, .028, .25), std('laarsZ', 0x1f2937, .8), V3(f.x, .014, f.z + .04)); add('laars', sd + 'LowerLeg', up); add('laars', sd + 'Foot', ft, sole) });
+    const old = fig.tint.bind(fig);
+    fig.tint = c => {
+      old(c); const a = c.acc || {}, show = (k, on) => (items[k] || []).forEach(g => g.visible = !!on);
+      ACC.forEach(([k, , type]) => {
+        const v = a[k];
+        if (k === 'hanger') { ['hart', 'ster', 'maan'].forEach(h => show('hanger_' + h, a.ketting && (v || 'hart') === h)); return }
+        if (k === 'bril') { show('bril_bril', v === 'bril'); show('bril_zon', v === 'zon'); return }
+        show(k, v); if (!v) return;
+        (mats[k] || []).forEach(m => { if (type === 'metal') { const [cc, me, ro] = METAL[v] || METAL.zilver; m.color.setHex(cc); m.metalness = me; m.roughness = ro } else m.color.set(v) });
+      });
+      if (skip) skip(a);
+    };
+  }
   const DEF = { model: 'm_casual', skin: null, hair: null, parts: {} };
-  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {}, prints: a.prints || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
+  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {}, prints: a.prints || {}, acc: a.acc || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
   function has() { try { return !!localStorage[KEY] } catch (e) { return false } }
   let A = load();
 
@@ -170,6 +254,7 @@
       face(f) { cfg = Object.assign({}, cfg, { face: f }) },
       lookAt(o) { look = o || null; if (vrm.lookAt && !o) vrm.lookAt.target = null }
     };
+    try { addAcc(fig, wrap, n => H.getRawBoneNode(n), a => { (mats.glx_shoe ? wrap : null) && wrap.traverse(o => { if (o.material === mats.glx_shoe[0]) o.visible = !a.laars }) }) } catch (e) { console.warn(e) }
     fig.tint(cfg); pose(0); return fig;
   }
   const cache = new Map();
@@ -200,6 +285,7 @@
         set(M.hair, c.hair); M.parts.forEach(([, mat]) => set([mat], (c.parts || {})[mat]));
       }
     };
+    try { const bn = {}; root.traverse(o => { if (o.isBone) bn[o.name] = o }); addAcc(fig, wrap, n => bn[GLBB[n]]) } catch (e) { console.warn(e) }
     fig.tint(cfg); fig.play('Idle'); mixer.update(0); return fig;
   }
 
@@ -238,7 +324,7 @@
 .avSw.on{border-color:#fff!important;box-shadow:0 0 0 3px #ec4899!important}
 .avSw.std{background:conic-gradient(#888,#ddd,#888)!important;font-size:10px;color:#111}
 .avLbl{font-size:12px;color:var(--mut);margin-top:6px}`;
-  const TABS = [['stijl', '🧍 Stijl'], ['huid', '🎨 Huid'], ['haar', '💇 Haar'], ['kleren', '👕 Kleren'], ['gezicht', '😊 Gezicht']];
+  const TABS = [['stijl', '🧍 Stijl'], ['huid', '🎨 Huid'], ['haar', '💇 Haar'], ['kleren', '👕 Kleren'], ['extra', '💍 Extra'], ['gezicht', '😊 Gezicht']];
   let tab = 'stijl';
   function ensureDom() {
     if ($('avV')) return;
@@ -261,6 +347,12 @@
     let h = '';
     if (tab === 'stijl') h = `<div class="avOpts">${Object.entries(MODELS).map(([k, m]) => `<button class="${A.model === k ? 'on' : ''}" onclick="GLXAV.set('model','${k}')">${m.vrm ? '✨' : k[0] === 'f' ? '👩' : '👨'} ${m.n}</button>`).join('')}</div><p class="avLbl">Kies een stijl. Daarna pas je huid, haar en kleuren aan.${M.vrm ? ' ✨ Anime knippert met de ogen en toont gezichtjes.' : ''}</p>`;
     if (tab === 'gezicht') h = M.vrm ? `<div class="avLbl">Gezichtje</div><div class="avOpts">${FACES.map(([f, n]) => `<button class="${(A.face || 'neutral') === f ? 'on' : ''}" onclick="GLXAV.set('face','${f}')">${n}</button>`).join('')}</div><div class="avLbl">Oogkleur</div>${sw("set.bind(null,'eyes')", A.eyes, EYES)}` : `<p class="avLbl">Gezichtjes en oogkleur kan je kiezen bij de stijl ✨ Anime.</p>`;
+    if (tab === 'extra') { const a = A.acc || {}, b = (k, v, l, on) => `<button class="${on ? 'on' : ''}" onclick="GLXAV.acc('${k}',${v == null ? 'null' : `'${v}'`})">${l}</button>`;
+      h = ACC.map(([k, n, type, opts]) => { if (k === 'hanger' && !a.ketting) return ''; let o = '';
+        if (type === 'metal') o = `<div class="avOpts">${b(k, null, '✖️', !a[k])}${opts.map(v => b(k, v, { goud: '🟡 Goud', zilver: '⚪ Zilver', rose: '🌸 Rosé', zwart: '⚫ Zwart' }[v], a[k] === v)).join('')}</div>`;
+        else if (type === 'pick') o = `<div class="avOpts">${k === 'hanger' ? '' : b(k, null, '✖️', !a[k])}${opts.map(([v, l]) => b(k, v, l, (a[k] || (k === 'hanger' ? 'hart' : '')) === v)).join('')}</div>`;
+        else o = `<div class="avOpts"><button class="avSw std ${!a[k] ? 'on' : ''}" title="Geen" onclick="GLXAV.acc('${k}',null)">✖️</button>${ACOL.map(c => `<button class="avSw ${a[k] === c ? 'on' : ''}" style="background:${c}" aria-label="kleur ${c}" onclick="GLXAV.acc('${k}','${c}')"></button>`).join('')}</div>`;
+        return `<div class="avLbl">${n}</div>${o}` }).join('') }
     if (tab === 'huid') h = `<div class="avLbl">Huidskleur</div>${sw("set.bind(null,'skin')", A.skin, SKIN)}`;
     if (tab === 'haar') h = `<div class="avLbl">${M.hairLbl || 'Haarkleur'}</div>${sw("set.bind(null,'hair')", A.hair, HAIRC)}`;
     if (tab === 'kleren') h = M.parts.map(([n, mat]) => `<div class="avLbl">${n}</div>${sw(`part.bind(null,'${mat}')`, (A.parts || {})[mat] || null, CLOTH)}`).join('')
@@ -344,7 +436,8 @@
   const api = window.GLXAV = {
     open() { ensureDom(); panel(); document.querySelectorAll('.ov.on').forEach(o => o.classList.remove('on')); $('avV').classList.add('on'); start().catch(fail) },
     close() { $('avV').classList.remove('on') },
-    set(k, v) { if (k === 'model') { if (!MODELS[v] || v === A.model) return; A = { model: v, skin: A.skin, hair: null, eyes: null, face: A.face || null, parts: {}, prints: {} }; panel(); rebuild().catch(fail); return } A[k] = v; if (fig) { fig.tint(A); if (k === 'face' && fig.face) fig.face(v) } panel() },
+    set(k, v) { if (k === 'model') { if (!MODELS[v] || v === A.model) return; A = { model: v, skin: A.skin, hair: null, eyes: null, face: A.face || null, parts: {}, prints: {}, acc: A.acc || {} }; panel(); rebuild().catch(fail); return } A[k] = v; if (fig) { fig.tint(A); if (k === 'face' && fig.face) fig.face(v) } panel() },
+    acc(k, v) { A.acc = Object.assign({}, A.acc); if (!v) delete A.acc[k]; else A.acc[k] = v; if (k === 'pet' && v) delete A.acc.muts; if (k === 'muts' && v) delete A.acc.pet; if (fig) fig.tint(A); panel() },
     print(k, v) { A.prints = Object.assign({}, A.prints); if (!v) delete A.prints[k]; else A.prints[k] = v; if (fig) fig.tint(A); panel() },
     part(mat, v) { A.parts = A.parts || {}; if (v == null) delete A.parts[mat]; else A.parts[mat] = v; if (fig) fig.tint(A); panel() },
     random() {
