@@ -6,3 +6,4 @@ feed.sql
 more.sql
 auto.sql
 security.sql
+hardening.sql
