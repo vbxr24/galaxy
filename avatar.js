@@ -441,14 +441,19 @@
     },
     save() {
       try { localStorage[KEY] = JSON.stringify(A) } catch (e) { }
-      const img = snapshot(); if (img) try { localStorage[IMG] = img } catch (e) { }
+      const img = snapshot(); if (img) try { localStorage[IMG] = img; localStorage[IMG + 'V'] = 'v2:' + A.model } catch (e) { }
       if (window.ME) ME.avatar = A;
       if (mapR) mapRebuild().catch(() => { });
       window.dispatchEvent(new Event('glx-avatar'));
       if (window.GLXLIVE && GLXLIVE.send) GLXLIVE.send({ t: 'avatar', avatar: A });
       api.close(); try { toast('✅ Je mannetje is opgeslagen') } catch (e) { }
     },
-    image() { try { return localStorage[IMG] || null } catch (e) { return null } },
+    image() {
+      let old = null; try { old = localStorage[IMG] || null } catch (e) { }
+      const want = 'v2:' + load().model; let have = null; try { have = localStorage[IMG + 'V'] } catch (e) { }
+      if (have !== want && !api._regen) { api._regen = 1; thumb(load(), 'me', 2).then(u => { api._regen = 0; if (!u) return; try { localStorage[IMG] = u; localStorage[IMG + 'V'] = want } catch (e) { } document.querySelectorAll('img').forEach(im => { if (old && im.src === old) im.src = u }); if (!old) document.querySelectorAll('span').forEach(sp => { if (sp.textContent === '🧍' && sp.parentElement && /GLXAV.open/.test(sp.parentElement.getAttribute('onclick') || '')) sp.outerHTML = `<img src="${u}" alt="" style="width:170px;height:170px;object-fit:contain;margin:0 -25px">` }) }) }
+      return old;
+    },
     mapAvatar, config: () => A, has, models: MODELS, figure, thumb, defaultFor
   };
 
