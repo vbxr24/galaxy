@@ -242,7 +242,7 @@
   function scanPois() {
     if (!map || map.getZoom() < 13.5) return;
     let feats = []; const st = map.getStyle();
-    Object.keys(st.sources).forEach(src => { if (st.sources[src].type === 'vector') { try { feats = feats.concat(map.querySourceFeatures(src, { sourceLayer: 'poi' })) } catch (e) { } } });
+    if (!st || !st.sources) return; Object.keys(st.sources).forEach(src => { if (st.sources[src].type === 'vector') { try { feats = feats.concat(map.querySourceFeatures(src, { sourceLayer: 'poi' })) } catch (e) { } } });
     feats.forEach(f => {
       const p = f.properties || {}, c = SUB[p.subclass] || CLS[p.class]; if (!c || f.geometry.type !== 'Point') return;
       const [lng, lat] = f.geometry.coordinates, n = p['name:nl'] || p.name || p['name:latin'] || '';
