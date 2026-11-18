@@ -4,3 +4,7 @@ Vrij te gebruiken, ook commercieel, zonder naamsvermelding. Bedankt, Quaternius!
 
 Anime_A.vrm: "VRM1_Constraint_Twist_Sample" van pixiv Inc. (uit github.com/pixiv/three-vrm, MIT).
 VRM-licentie van het model: commercieel gebruik toegestaan, aanpassen en herverdelen toegestaan, naamsvermelding niet nodig. Texturen verkleind voor mobiel.
+
+Anime_B.vrm: "Seed-san" van VirtualCast, Inc. (uit github.com/vrm-c/vrm-specification).
+Licentie: VRM Public License 1.0 — commercieel gebruik en aanpassen toegestaan. Naamsvermelding: © VirtualCast, Inc.
+Aangepast: robot-onderdelen verborgen, texturen verkleind voor mobiel.

@@ -22,7 +22,8 @@
     f_suit: { f: 'Female_Suit', n: 'Pak vrouw', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Pak', 'Black'], ['Hemd', 'White']] },
     m_beach: { f: 'Male_Beach', n: 'Zomer man', hair: ['Hair', 'Eyebrows'], parts: [['Top', 'LightBrown'], ['Short', 'Red_Dark']] },
     f_punk: { f: 'Female_Punk', n: 'Punk vrouw', hair: ['Pink'], hairLbl: 'Haar en top', parts: [['Broek', 'Black'], ['Schoenen', 'Grey']] },
-    a_anime: { vrm: 'Anime_A', n: 'Anime', g: 'f', hairLbl: 'Haarkleur', parts: [['Top', 'Tops_01_CLOTH'], ['Rok', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], eyes: true },
+    a_anime: { vrm: 'Anime_A', n: 'Anime vrouw', g: 'f', hairLbl: 'Haarkleur', skinM: ['Body_00_SKIN', 'Face_00_SKIN'], hairM: ['Hair_00_HAIR', 'HairBack_00_HAIR'], eyeM: ['EyeIris_00_EYE'], parts: [['Top', 'Tops_01_CLOTH'], ['Rok', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], eyes: true },
+    a_boy: { vrm: 'Anime_B', n: 'Anime man', g: 'm', hairLbl: 'Haarkleur', skinM: ['body_bake'], hairM: ['hair'], eyeM: ['eye'], hide: /backpack|^arm_|armgear|anim_logo|green_emit|robo_face|glass/i, armZ: 1.36, parts: [['Kleren', 'huku_bake']], eyes: true },
     m_punk: { f: 'Male_Punk', n: 'Punk man', hair: ['Red', 'Red_Dark'], parts: [['Top', 'White'], ['Vest', 'Black'], ['Broek', 'LightBlue']] }
   };
   const SKIN = ['#f8d9c4', '#f1c7a5', '#e0ac85', '#c98f66', '#a56f48', '#7d4f30', '#5a3620', '#3b2314'];
@@ -54,27 +55,42 @@
     loader.register(p => new V.VRMLoaderPlugin(p));
     const g = await new Promise((ok, no) => loader.parse(buf.slice(0), new URL(BASE, location.href).href, ok, no));
     const vrm = g.userData.vrm; V.VRMUtils.removeUnnecessaryVertices(g.scene); V.VRMUtils.combineSkeletons ? V.VRMUtils.combineSkeletons(g.scene) : 0; V.VRMUtils.rotateVRM0(vrm);
-    vrm.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false } });
+    vrm.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; if (M.hide && (Array.isArray(o.material) ? o.material : [o.material]).some(m => M.hide.test((m.name || '').replace(/ \(Outline\)$/, '')))) o.visible = false } });
     const mats = {}; vrm.scene.traverse(o => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { const n = (m.name || '').replace(/ \(Outline\)$/, ''); (mats[n] = mats[n] || []).push(m); if (m.color && m.userData.base == null) m.userData.base = m.color.getHex(); if (m.shadeColorFactor && m.userData.shade == null) m.userData.shade = m.shadeColorFactor.getHex() }) });
     const H = vrm.humanoid, bone = n => H.getNormalizedBoneNode(n);
     vrm.scene.updateMatrixWorld(true); const head = bone('head'), v = new THREE.Vector3(); const hh = head ? head.getWorldPosition(v).y + .14 : 1.6;
     const k = 1.62 / hh, wrap = new THREE.Group(); vrm.scene.scale.setScalar(k); wrap.add(vrm.scene);
-    let mode = 'Idle', once = 0, t = 0, blinkAt = 1.5, blink = 0;
+    let mode = 'Idle', once = 0, t = Math.random() * 10, blinkAt = 1.5, blink = 0, look = null;
+    const AZ = M.armZ || 1.24;
     const R = (n, x, y, z) => { const b = bone(n); if (b) b.rotation.set(x || 0, y || 0, z || 0) };
+    /* ontspannen staan: armen los langs het lichaam, ellebogen licht gebogen, gewicht op één been */
+    const relaxedArms = (sw, lift) => {
+      R('leftShoulder', 0, 0, .06 + lift); R('rightShoulder', 0, 0, -.06 - lift);
+      R('leftUpperArm', .1 + sw, -.08, -AZ); R('rightUpperArm', .1 - sw, .08, AZ);
+      R('leftLowerArm', 0, -.32, -.05); R('rightLowerArm', 0, .32, .05);
+      R('leftHand', 0, -.1, -.12); R('rightHand', 0, .1, .12);
+    };
     const pose = dt => {
-      t += dt; const s = Math.sin, br = s(t * 2) * .02;
-      R('spine', br, 0, 0); R('chest', br, 0, 0); R('neck', 0, s(t * .5) * .08, 0);
+      t += dt; const s = Math.sin, br = s(t * 1.8) * .025, sway = s(t * .55);
+      vrm.scene.position.y = 0;
       if (mode === 'Walk') {
-        const w = t * 7, a = s(w) * .55;
-        R('leftUpperLeg', a, 0, 0); R('rightUpperLeg', -a, 0, 0); R('leftLowerLeg', Math.max(0, -s(w)) * .9, 0, 0); R('rightLowerLeg', Math.max(0, s(w)) * .9, 0, 0);
-        R('leftUpperArm', -a * .6, 0, -1.2); R('rightUpperArm', a * .6, 0, 1.2); R('leftLowerArm', 0, 0, -.2); R('rightLowerArm', 0, 0, .2);
-        R('hips', 0, s(w) * .08, 0); vrm.scene.position.y = Math.abs(s(w)) * .03;
+        const w = t * 7, a = s(w) * .5;
+        R('hips', 0, s(w) * .1, s(w) * .03); R('spine', .04, -s(w) * .08, 0); R('chest', br, -s(w) * .05, 0); R('neck', 0, 0, 0); R('head', -.03, s(w) * .04, 0);
+        R('leftUpperLeg', a, 0, 0); R('rightUpperLeg', -a, 0, 0);
+        R('leftLowerLeg', Math.max(0, -s(w + .6)) * 1.0, 0, 0); R('rightLowerLeg', Math.max(0, s(w + .6)) * 1.0, 0, 0);
+        R('leftFoot', Math.max(0, s(w)) * .3 - .1, 0, 0); R('rightFoot', Math.max(0, -s(w)) * .3 - .1, 0, 0);
+        relaxedArms(0, 0); R('leftUpperArm', -a * .7, -.08, -1.2); R('rightUpperArm', a * .7, .08, 1.2);
+        R('leftLowerArm', 0, -.45 - Math.max(0, a) * .4, 0); R('rightLowerArm', 0, .45 + Math.max(0, -a) * .4, 0);
+        vrm.scene.position.y = Math.abs(s(w)) * .025;
       } else {
-        ['leftUpperLeg', 'rightUpperLeg', 'leftLowerLeg', 'rightLowerLeg', 'hips'].forEach(n => R(n)); vrm.scene.position.y = 0;
-        R('leftUpperArm', 0, 0, -1.22 - s(t * 2) * .02); R('leftLowerArm', 0, 0, -.12);
-        if (mode === 'Dance') { const b = s(t * 8); R('leftUpperArm', 0, 0, -.35 + b * .25); R('rightUpperArm', 0, 0, .35 + b * .25); R('leftLowerArm', 0, 0, -.6); R('rightLowerArm', 0, 0, .6); R('hips', 0, s(t * 4) * .25, 0); R('spine', 0, 0, b * .12); vrm.scene.position.y = Math.abs(s(t * 8)) * .06 }
-        else if (mode === 'Wave') { R('rightUpperArm', 0, 0, -.2); R('rightLowerArm', 0, -.2 + s(t * 9) * .45, -1.5); R('rightHand', 0, 0, 0) }
-        else { R('rightUpperArm', 0, 0, 1.22 + s(t * 2) * .02); R('rightLowerArm', 0, 0, .12) }
+        /* rustig staan, een beetje wiegen van het ene op het andere been */
+        R('hips', 0, sway * .04, .035 + sway * .012); R('spine', br * .6, -sway * .02, -.03); R('chest', br, 0, -.01); R('upperChest', br * .5, 0, 0);
+        R('leftUpperLeg', -.03, .05, -.035); R('rightUpperLeg', .05, -.05, -.06); R('leftLowerLeg', .02, 0, 0); R('rightLowerLeg', .14, 0, 0);
+        R('leftFoot', 0, 0, .03); R('rightFoot', -.08, -.05, .05);
+        R('neck', .03, s(t * .37) * .06, 0); R('head', .02 + s(t * .29) * .025, s(t * .43) * .08, sway * .025);
+        relaxedArms(s(t * 1.1) * .02, br * .4);
+        if (mode === 'Dance') { const b = s(t * 8); R('leftUpperArm', 0, 0, -.35 + b * .25); R('rightUpperArm', 0, 0, .35 + b * .25); R('leftLowerArm', 0, -.6, 0); R('rightLowerArm', 0, .6, 0); R('hips', 0, s(t * 4) * .25, 0); R('spine', 0, 0, b * .12); R('leftLowerLeg', Math.max(0, b) * .4, 0, 0); R('rightLowerLeg', Math.max(0, -b) * .4, 0, 0); vrm.scene.position.y = Math.abs(s(t * 8)) * .05 }
+        else if (mode === 'Wave') { R('rightShoulder', 0, 0, -.15); R('rightUpperArm', 0, -.2, -.25); R('rightLowerArm', 0, -.1 + s(t * 9) * .4, -1.45); R('rightHand', 0, 0, .1); R('head', .05, .12, -.06) }
       }
       if (once && t > once) { once = 0; mode = 'Idle' }
       const E = vrm.expressionManager;
@@ -83,18 +99,20 @@
         E.setValue('blink', blink > 0 ? Math.sin((blink / .16) * Math.PI) : 0);
         const f = mode === 'Wave' || mode === 'Dance' ? 'happy' : (cfg.face || 'neutral'); FACES.forEach(([n]) => E.setValue(n, n === f && n !== 'neutral' ? (n === 'sad' ? .55 : .85) : 0));
       }
+      if (vrm.lookAt && look) vrm.lookAt.target = look;
       vrm.update(dt);
     };
     const fig = {
-      root: wrap, model: cfg.model, vrm,
+      root: wrap, model: cfg.model, vrm, headY: 1.47,
       mixer: { update: pose },
       play(n, o) { mode = ['Wave', 'Walk', 'Dance'].includes(n) ? n : 'Idle'; once = o || n === 'Wave' || n === 'Dance' ? t + (n === 'Dance' ? 3.4 : 2.2) : 0 },
       tint(c) {
         const set = (names, hex) => names.forEach(n => (mats[n] || []).forEach(m => { if (!m.color) return; m.color.set(hex == null ? m.userData.base : hex); if (m.shadeColorFactor) { if (hex == null) m.shadeColorFactor.set(m.userData.shade); else m.shadeColorFactor.set(hex).multiplyScalar(.72) } }));
-        set(['Body_00_SKIN', 'Face_00_SKIN'], c.skin); set(['Hair_00_HAIR', 'HairBack_00_HAIR'], c.hair); set(['EyeIris_00_EYE'], c.eyes);
+        set(M.skinM || [], c.skin); set(M.hairM || [], c.hair); set(M.eyeM || [], c.eyes);
         M.parts.forEach(([, mat]) => set([mat], (c.parts || {})[mat]));
       },
-      face(f) { cfg = Object.assign({}, cfg, { face: f }) }
+      face(f) { cfg = Object.assign({}, cfg, { face: f }) },
+      lookAt(o) { look = o || null; if (vrm.lookAt && !o) vrm.lookAt.target = null }
     };
     fig.tint(cfg); pose(0); return fig;
   }
@@ -118,7 +136,7 @@
     const mixer = new THREE.AnimationMixer(root), acts = {}; g.animations.forEach(c => { if (/^(Idle|Walk|Wave|Run)$/.test(c.name)) acts[c.name] = mixer.clipAction(c) });
     let cur = null;
     const fig = {
-      root: wrap, mixer, model: cfg.model,
+      root: wrap, mixer, model: cfg.model, headY: 1.5,
       play(n, once) { const a = acts[n] || acts.Idle; if (!a || a === cur) return; a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = !!once; a.fadeIn(.25).play(); if (cur) cur.fadeOut(.25); cur = a },
       tint(c) {
         const set = (names, hex) => names.forEach(n => { const m = mats[n]; if (m) m.color.set(hex == null ? m.userData.base : hex) });
@@ -196,7 +214,7 @@
     const my = ++busy, msg = $('avMsg'); if (msg) { msg.style.display = ''; msg.textContent = 'Mannetje laden…' }
     try {
       const f = await figure(A); if (my !== busy) return;
-      if (fig) scene.remove(fig.root); fig = f; scene.add(f.root); f.play(previewWalk ? 'Walk' : 'Idle'); if (msg) msg.style.display = 'none';
+      if (fig) scene.remove(fig.root); fig = f; scene.add(f.root); if (f.lookAt) f.lookAt(cam); f.play(previewWalk ? 'Walk' : 'Idle'); if (msg) msg.style.display = 'none';
     } catch (e) { if (my === busy && msg) { msg.style.display = ''; msg.textContent = '⚠️ Het mannetje kon niet laden. Controleer je internet en probeer opnieuw.' } throw e }
   }
   async function start() {
@@ -208,7 +226,7 @@
     const loop = now => {
       if (!$('avV').classList.contains('on')) return; const dt = Math.min(.1, (now - last) / 1000); last = now;
       if (fig) { if (!drag && !previewWalk) spin += .003; fig.root.rotation.y = spin; if (waveT && now > waveT) { waveT = 0; fig.play(previewWalk ? 'Walk' : 'Idle') } fig.mixer.update(dt) }
-      cam.position.set(0, 1.0, 5.4); cam.lookAt(0, .86, 0); fit(); renderer.render(scene, cam); raf = requestAnimationFrame(loop);
+      cam.position.set(0, 1.02, 4.3); cam.lookAt(0, .88, 0); fit(); renderer.render(scene, cam); raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     if (!fig || fig.model !== A.model) await rebuild(); else fig.tint(A);
@@ -259,7 +277,7 @@
       await lib();
       if (!tR || tR._sc !== sc) { tR = newRenderer(200 * sc, 260 * sc, true); tR._sc = sc; tR.setPixelRatio(1); tR.setSize(200 * sc, 260 * sc, false); tS = makeScene(true); tS.userData.env(tR); tC = new THREE.PerspectiveCamera(24, 200 / 260, .1, 50) }
       const f = await figure(cfg); f.root.rotation.y = .3; f.mixer.update(.016); tS.add(f.root);
-      tC.position.set(0, .95, 5.1); tC.lookAt(0, .9, 0); tR.render(tS, tC); await new Promise(r => requestAnimationFrame(r)); f.mixer.update(.016); tR.render(tS, tC); const url = tR.domElement.toDataURL('image/png');
+      { const hb = f.headY || 1.45; tC.position.set(0, hb - .05, 2.0); tC.lookAt(0, hb - .12, 0) } if (f.lookAt) f.lookAt(tC); tR.render(tS, tC); await new Promise(r => requestAnimationFrame(r)); f.mixer.update(.016); tR.render(tS, tC); const url = tR.domElement.toDataURL('image/png');
       tS.remove(f.root); f.root.traverse(o => { if (o.isMesh && o.geometry && !o.isSkinnedMesh) { } }); return url;
     }).catch(() => null);
     thumbs.set(key, p); return p;
