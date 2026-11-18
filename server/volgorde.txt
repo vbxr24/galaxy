@@ -5,3 +5,4 @@ extras2.sql
 feed.sql
 more.sql
 auto.sql
+security.sql

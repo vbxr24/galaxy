@@ -9,8 +9,8 @@
 (function () {
   'use strict';
   const STYLE = 'https://tiles.openfreemap.org/styles/liberty';
-  const ML_JS = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js';
-  const ML_CSS = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css';
+  const ML_JS = 'vendor/maplibre-gl-5.24.1.js';
+  const ML_CSS = 'vendor/maplibre-gl-5.24.1.css';
   const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -466,8 +466,8 @@ ${cur === 'cosmic' || cur === 'lifetime' ? '' : `<br><button class="btn" style="
     bMarkers.forEach(m => m.remove()); bMarkers = [];
     const b = live.busy; if (!map || !b || map.getZoom() < 12) return;
     (b.zones || []).forEach(z => {
-      const el = document.createElement('div'); el.className = 'gmLive'; el.innerHTML = `<i></i><b>${z.n}</b> nu`; el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', z.n + ' leden nu in deze zone');
-      el.onclick = e => xs('🟢 Live drukte', `<p><b>${z.n} leden</b> zijn nu in deze zone (±300 m).</p><p class="sub" style="margin-top:8px">Dit getal is live en ververst elke 15 seconden. Je ziet alleen het aantal. Wie er zit, zie je pas na 15 minuten: zo kan niemand een ander live volgen.</p>`);
+      const el = document.createElement('div'); el.className = 'gmLive'; el.innerHTML = `<i></i><b>${+z.n || 0}</b> nu`; el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-label', z.n + ' leden nu in deze zone');
+      el.onclick = e => xs('🟢 Live drukte', `<p><b>${+z.n || 0} leden</b> zijn nu in deze zone (±300 m).</p><p class="sub" style="margin-top:8px">Dit getal is live en ververst elke 15 seconden. Je ziet alleen het aantal. Wie er zit, zie je pas na 15 minuten: zo kan niemand een ander live volgen.</p>`);
       hush(el); bMarkers.push(new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([z.lng, z.lat]).addTo(map));
     });
     if (map.getZoom() >= 13.5) Object.keys(b.places || {}).forEach(id => {

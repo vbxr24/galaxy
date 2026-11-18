@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://dqodwuemdpzyvvvxvgtz.supabase.co https://tiles.openfreemap.org https://*.openstreetmap.org; media-src 'self' data: blob: https://dqodwuemdpzyvvvxvgtz.supabase.co; connect-src 'self' data: blob: https://dqodwuemdpzyvvvxvgtz.supabase.co wss://dqodwuemdpzyvvvxvgtz.supabase.co https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://api.open-meteo.com; font-src 'self' data:; frame-src https://open.spotify.com https://verification.didit.me; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="referrer" content="strict-origin-when-cross-origin"><script>if(top!==self){try{top.location=self.location}catch(e){document.documentElement.style.display="none"}}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
@@ -26,7 +26,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:8px 6px;b
 <div id="app"><p class="sub">Laden…</p></div>
 </main>
 <div class="tip" id="tip"></div>
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="vendor/supabase-2.119.0.js"></script>
 <script>
 (function () {
   const CFG = { url: 'https://dqodwuemdpzyvvvxvgtz.supabase.co', key: 'sb_publishable_nxc3zbKKIR6zpx8iYz4fFA_9yN0JY6p' };

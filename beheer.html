@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://dqodwuemdpzyvvvxvgtz.supabase.co https://tiles.openfreemap.org https://*.openstreetmap.org; media-src 'self' data: blob: https://dqodwuemdpzyvvvxvgtz.supabase.co; connect-src 'self' data: blob: https://dqodwuemdpzyvvvxvgtz.supabase.co wss://dqodwuemdpzyvvvxvgtz.supabase.co https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://overpass-api.de https://overpass.kumi.systems https://api.open-meteo.com; font-src 'self' data:; frame-src https://open.spotify.com https://verification.didit.me; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"><meta name="referrer" content="strict-origin-when-cross-origin"><script>if(top!==self){try{top.location=self.location}catch(e){document.documentElement.style.display="none"}}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Galaxy – Beheer</title>
@@ -47,7 +47,7 @@ blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid #8b5cf6;backgroun
 <div id="app"><p class="sub">Laden…</p></div>
 </main>
 <div class="tip" id="tip"></div>
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="vendor/supabase-2.119.0.js"></script>
 <script>
 (function () {
   const CFG = { url: 'https://dqodwuemdpzyvvvxvgtz.supabase.co', key: 'sb_publishable_nxc3zbKKIR6zpx8iYz4fFA_9yN0JY6p' };
@@ -211,7 +211,7 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
 <p class="sub">Print de QR-code en zet hem op de toog. Wie hem scant tijdens de avond, checkt in en ziet zijn voordeel met een live klok.</p></div></div>`;
   }
   let qrLib = null;
-  function loadQr() { if (qrLib) return qrLib; qrLib = new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://unpkg.com/qrcode-generator@1.4.4/qrcode.js'; s.integrity = 'sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k'; s.crossOrigin = 'anonymous'; s.onload = () => ok(window.qrcode); s.onerror = no; document.head.appendChild(s) }); return qrLib }
+  function loadQr() { if (qrLib) return qrLib; qrLib = new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'vendor/qrcode-1.4.4.js'; s.integrity = 'sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k'; s.crossOrigin = 'anonymous'; s.onload = () => ok(window.qrcode); s.onerror = no; document.head.appendChild(s) }); return qrLib }
   const evUrl = id => location.origin + location.pathname.replace(/beheer\.html$/, '') + '?ev=' + id;
   function drawQr(cv, id, px) { const q = window.qrcode(0, 'M'); q.addData(evUrl(id)); q.make(); const n = q.getModuleCount(), c = cv.getContext('2d'), s = px / (n + 4); cv.width = cv.height = px; c.fillStyle = '#fff'; c.fillRect(0, 0, px, px); c.fillStyle = '#1a1240'; for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) c.fillRect(Math.round((k + 2) * s), Math.round((r + 2) * s), Math.ceil(s), Math.ceil(s)) }
   async function evQr() { try { await loadQr(); document.querySelectorAll('canvas.evQr').forEach(cv => drawQr(cv, cv.dataset.id, 120)) } catch (e) { } }

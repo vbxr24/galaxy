@@ -9,7 +9,7 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const KEY = 'glxAvatar', IMG = 'glxAvatarImg', BASE = 'models/';
-  const THREE_URL = 'https://unpkg.com/three@0.160.0/';
+  const THREE_URL = new URL('vendor/three/', location.href).href;
   let THREE, GLTFLoader, cloneSkinned;
 
   /* stijl -> bestand, materialen voor haar en per kledingstuk */
@@ -38,7 +38,7 @@
   /* ===================== 3D laden ===================== */
   async function lib() {
     if (THREE) return;
-    if (!document.querySelector('script[type="importmap"]')) { const s = document.createElement('script'); s.type = 'importmap'; s.textContent = JSON.stringify({ imports: { three: THREE_URL + 'build/three.module.js', 'three/addons/': THREE_URL + 'examples/jsm/' } }); document.head.appendChild(s) }
+    if (!document.querySelector('script[type="importmap"]')) { const s = document.createElement('script'); s.type = 'importmap'; s.textContent = JSON.stringify({ imports: { three: THREE_URL + 'build/three.module.min.js', 'three/addons/': THREE_URL + 'examples/jsm/' } }); document.head.appendChild(s) }
     const T = await import('three'), L = await import('three/addons/loaders/GLTFLoader.js'), U = await import('three/addons/utils/SkeletonUtils.js');
     try { RoomEnv = (await import('three/addons/environments/RoomEnvironment.js')).RoomEnvironment; creased = (await import('three/addons/utils/BufferGeometryUtils.js')).toCreasedNormals } catch (e) { }
     THREE = T; GLTFLoader = L.GLTFLoader; cloneSkinned = U.clone;

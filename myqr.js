@@ -13,8 +13,8 @@
   const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const BASE = 'https://vbxr24.github.io/galaxy/';
   const LIBS = {
-    qr: ['https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js', 'sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k', () => window.qrcode],
-    scan: ['https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js', 'sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx', () => window.jsQR]
+    qr: ['vendor/qrcode-1.4.4.js', 'sha384-8FWZA6BGMXhsfO+BLtrJK0We6gg5o1JyO8xQm6peWDEUs17ACA5ziE/NIAkl9z2k', () => window.qrcode],
+    scan: ['vendor/jsQR-1.4.0.js', 'sha384-b5Ya4Bq3qCyz39m2ISh+4DxjAIljdeFwK/BsXLuj9gugaNwAcj/ia15fxNZL9Nlx', () => window.jsQR]
   };
   const lib = k => new Promise((ok, no) => { const [src, sri, get] = LIBS[k]; if (get()) return ok(get()); const s = document.createElement('script'); s.src = src; s.integrity = sri; s.crossOrigin = 'anonymous'; s.onload = () => ok(get()); s.onerror = () => no(new Error('lib')); document.head.appendChild(s) });
   const link = id => BASE + '?u=' + id;

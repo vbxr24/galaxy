@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const CFG = window.GALAXY_BACKEND = { url: 'https://dqodwuemdpzyvvvxvgtz.supabase.co', key: 'sb_publishable_nxc3zbKKIR6zpx8iYz4fFA_9yN0JY6p' };
-  const LIB = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';
+  const LIB = 'vendor/supabase-2.119.0.js';
   const Z = 0.003, T = m => { try { toast(m) } catch (e) { } }, $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let sb = null, uid = null, state = 'uit', lastZone = '', lastSent = 0, pollT = null, target = null, lastPos = null, busyT = null, rtCh = null;
