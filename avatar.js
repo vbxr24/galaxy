@@ -682,6 +682,7 @@
     await mapRebuild();
     cancelAnimationFrame(mapRaf); let last = performance.now();
     const loop = now => {
+      if (document.hidden || !mapR.domElement.isConnected || !mapR.domElement.offsetParent || now - last < 31) { mapRaf = requestAnimationFrame(loop); return }  /* niet tekenen als je het niet ziet, max ~30 fps: spaart batterij */
       const dt = Math.min(.1, (now - last) / 1000), s = mapState; last = now;
       let d = s.heading - s.cur; d = Math.atan2(Math.sin(d), Math.cos(d)); s.cur += d * .15;
       if (mapFig) { const em = s.emote && now < s.emoteEnd ? s.emote : null; if (s.emote && !em) { s.emote = null; mapFig.root.position.y = 0; mapFig.play(s.walk ? 'Walk' : 'Idle') }
