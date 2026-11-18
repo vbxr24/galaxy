@@ -14,13 +14,17 @@
 
   /* stijl -> bestand, materialen voor haar en per kledingstuk */
   const MODELS = {
-    a_anime: { vrm: 'Anime_A', n: 'Vrouw', g: 'f', hairLbl: 'Haarkleur', skinM: ['Body_00_SKIN', 'Face_00_SKIN'], hairM: ['Hair_00_HAIR', 'HairBack_00_HAIR'], eyeM: ['EyeIris_00_EYE'], parts: [['Top', 'Tops_01_CLOTH'], ['Broekje', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], prints: [['Top', 'Tops_01_CLOTH', 'top', null, 0], ['Broekje', 'Bottoms_01_CLOTH', 'bot', null, 0, 1]], eyes: true },
-    a_boy: { vrm: 'Anime_B', n: 'Man', g: 'm', hairLbl: 'Haarkleur', skinM: ['body_bake'], hairM: ['hair'], eyeM: ['eye'], hide: /backpack|^arm_|armgear|anim_logo|green_emit|robo_face|glass/i, armZ: 1.36, shoes: 1, parts: [['Kleren', 'huku_bake'], ['Schoenen', 'glx_shoe']], prints: [['Shirt', 'huku_bake', 'top', [[0, .05, .24, .46], [.24, .05, .48, .46]], .5], ['Broek', 'huku_bake', 'bot', [[0, .46, .62, .95]], .5]], eyes: true },
+    a_anime: { vrm: 'Anime_A', n: 'Vrouw', g: 'f', hairLbl: 'Haarkleur', skinM: ['Body_00_SKIN', 'Face_00_SKIN'], hairM: ['Hair_00_HAIR', 'HairBack_00_HAIR'], eyeM: ['EyeIris_00_EYE'], browM: ['FaceBrow_00_FACE'], hairDef: '#6b4226', face: { m: 'Face_00_SKIN', r: [.34, .54, .655, .75] }, hs: [['', 'Lang'], ['kort', 'Kort', ['HairBack_00_HAIR']], ['staart', 'Paardenstaart', ['HairBack_00_HAIR'], 'staart'], ['knot', 'Knot', ['HairBack_00_HAIR'], 'knot'], ['staartjes', 'Twee staartjes', ['HairBack_00_HAIR'], 'staartjes'], ['vlecht', 'Vlecht', ['HairBack_00_HAIR'], 'vlecht'], ['lang2', 'Extra lang', [], 'lang']], parts: [['Top', 'Tops_01_CLOTH'], ['Broekje', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], prints: [['Top', 'Tops_01_CLOTH', 'top', null, 0], ['Broekje', 'Bottoms_01_CLOTH', 'bot', null, 0, 1]], eyes: true },
+    a_boy: { vrm: 'Anime_B', n: 'Man', g: 'm', hairLbl: 'Haarkleur', skinM: ['body_bake'], hairM: ['hair'], eyeM: ['eye'], hairDef: '#1a1a1a', face: { m: 'body_bake', r: [.26, .48, .405, .58] }, hs: [['', 'Kort'], ['lang', 'Lang', [], 'lang'], ['staart', 'Staartje', [], 'staartK'], ['knot', 'Man bun', [], 'knotK'], ['kaal', 'Kaal', ['hair']]], hide: /backpack|^arm_|armgear|anim_logo|green_emit|robo_face|glass/i, armZ: 1.36, shoes: 1, parts: [['Kleren', 'huku_bake'], ['Schoenen', 'glx_shoe']], prints: [['Shirt', 'huku_bake', 'top', [[0, .05, .24, .46], [.24, .05, .48, .46]], .5], ['Broek', 'huku_bake', 'bot', [[0, .46, .62, .95]], .5]], eyes: true },
   };
   const SKIN = ['#f8d9c4', '#f1c7a5', '#e0ac85', '#c98f66', '#a56f48', '#7d4f30', '#5a3620', '#3b2314'];
   const HAIRC = ['#17120f', '#3a2618', '#6b4226', '#a8703a', '#d8b46a', '#f2e3b0', '#b8402a', '#8e9099', '#f5f5f5', '#ec4899', '#3b82f6', '#22c55e', '#8b5cf6'];
   const CLOTH = ['#f8fafc', '#cbd5e1', '#64748b', '#1f2937', '#0b0a1f', '#ef4444', '#f97316', '#fbbf24', '#84cc16', '#16a34a', '#14b8a6', '#38bdf8', '#2563eb', '#8b5cf6', '#ec4899', '#9d174d', '#92400e', '#d6b48a'];
   const EYES = ['#3b2314', '#6b4226', '#2563eb', '#38bdf8', '#16a34a', '#8b5cf6', '#ec4899', '#ef4444', '#fbbf24', '#8e9099'];
+  const FACEX = { blos: [['', 'Geen'], ['#f9a8b8', 'Roze'], ['#fb7185', 'Rood'], ['#fdba74', 'Perzik']], sproet: [['', 'Geen'], ['licht', 'Licht'], ['veel', 'Veel']],
+    shadow: [['', 'Geen'], ['#a78bfa', 'Paars'], ['#f9a8d4', 'Roze'], ['#93c5fd', 'Blauw'], ['#d4a373', 'Bruin'], ['#fde68a', 'Goud']], lip: [['', 'Naturel'], ['#e11d48', 'Rood'], ['#f472b6', 'Roze'], ['#9f1239', 'Bordeaux'], ['#c08457', 'Nude']],
+    baard: [['', 'Geen'], ['stop', 'Stoppels'], ['snor', 'Snor'], ['sik', 'Sik'], ['baard', 'Baard']], oog: [['.85', 'Klein'], ['', 'Normaal'], ['1.15', 'Groot'], ['1.3', 'Extra groot']] };
+  const BODYX = { len: [['.92', 'Klein'], ['.96', 'Iets kleiner'], ['', 'Normaal'], ['1.04', 'Iets groter'], ['1.08', 'Groot']], hoofd: [['.92', 'Kleiner'], ['', 'Normaal'], ['1.08', 'Groter']] };
   const FACES = [['neutral', '🙂 Gewoon'], ['happy', '😄 Blij'], ['relaxed', '😌 Relaxed'], ['surprised', '😮 Verrast'], ['sad', '🥺 Verlegen']];
 
   /* kleding-prints: patroon over de stof-textuur (vermenigvuldigen, zodat de kleurkeuze blijft werken) */
@@ -39,16 +43,28 @@
     else if (kind === 'sterren') { const g = c.createLinearGradient(X, Y, X + w, Y + h); g.addColorStop(0, '#1e1b4b'); g.addColorStop(.5, '#4c1d95'); g.addColorStop(1, '#0f172a'); c.fillStyle = g; c.fillRect(X, Y, w, h); for (let i = 0; i < 700; i++) { c.fillStyle = r() < .2 ? '#f9a8d4' : '#ffffff'; const s = (r() < .1 ? 4 : 1.6) * u; c.fillRect(X + r() * w, Y + r() * h, s, s) } }
     else if (kind === 'tie') { for (let i = 0; i < 9; i++) { const cx = X + r() * w, cy = Y + r() * h, g = c.createRadialGradient(cx, cy, 0, cx, cy, 260 * u); g.addColorStop(0, ['#f472b6', '#60a5fa', '#facc15', '#a78bfa', '#34d399'][i % 5]); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(X, Y, w, h) } }
     else if (kind === 'hart') { c.fillStyle = '#e11d48'; for (let y = Y + 20 * u, row = 0; y < Y + h; y += 64 * u, row++) for (let x = X + (row % 2 ? 32 : 0) * u; x < X + w; x += 64 * u) { const s = 9 * u; c.beginPath(); c.moveTo(x, y + s); c.bezierCurveTo(x - 2 * s, y - s * .6, x - s * .4, y - 2 * s, x, y - s * .7); c.bezierCurveTo(x + s * .4, y - 2 * s, x + 2 * s, y - s * .6, x, y + s); c.fill() } }
+    else if (kind.indexOf('fx:') === 0) {
+      const [, typ, val] = kind.split(':'), [ax, ay, bx, my] = rect, L = { x: ax * W, y: ay * H }, Rr = { x: bx * W, y: ay * H }, sp = Rr.x - L.x, d = my * H - L.y, cx = (L.x + Rr.x) / 2, rg = (x, y, rx, ry, col, a) => { c.save(); c.translate(x, y); c.scale(1, ry / rx); const g = c.createRadialGradient(0, 0, 0, 0, 0, rx); g.addColorStop(0, col); g.addColorStop(1, 'rgba(255,255,255,0)'); c.globalAlpha = a; c.fillStyle = g; c.beginPath(); c.arc(0, 0, rx, 0, 7); c.fill(); c.restore() };
+      c.restore(); c.save();
+      if (typ === 'blos') [L, Rr].forEach(e => rg(e.x + (e === L ? -1 : 1) * sp * .06, e.y + d * .5, sp * .26, sp * .16, val, .55));
+      if (typ === 'shadow') [L, Rr].forEach(e => rg(e.x, e.y - d * .2, sp * .3, sp * .17, val, .6));
+      if (typ === 'lip') { c.globalAlpha = .75; c.fillStyle = val; c.beginPath(); c.ellipse(cx, my * H, sp * .13, sp * .045, 0, 0, 7); c.fill(); c.globalAlpha = 1 }
+      if (typ === 'sproet') { const n = val === 'veel' ? 70 : 32; for (let i = 0; i < n; i++) { const side = i % 2 ? 1 : -1, x = cx + side * sp * (.1 + r() * .55), y = L.y + d * (.25 + r() * .4); c.fillStyle = 'rgba(150,90,50,.55)'; c.beginPath(); c.arc(x, y, sp * (.008 + r() * .01), 0, 7); c.fill() } }
+      if (typ === 'baard') { const col = val.split('|')[1] || '#2a1d14', v = val.split('|')[0];
+        if (v === 'stop' || v === 'baard') { c.save(); c.beginPath(); c.rect(0, my * H - d * .32, W, H); c.clip(); c.filter = `blur(${Math.round(sp * (v === 'baard' ? .025 : .05))}px)`; c.globalAlpha = v === 'baard' ? .92 : .24; c.fillStyle = col; c.beginPath(); c.ellipse(cx, my * H + d * .12, sp * .64, d * .78, 0, 0, 7); c.fill(); c.restore(); c.save(); c.globalCompositeOperation = 'destination-out'; c.filter = 'blur(2px)'; c.beginPath(); c.ellipse(cx, my * H + d * .02, sp * .15, d * .1, 0, 0, 7); c.fill(); c.restore() }
+        if (v === 'snor' || v === 'baard') { c.save(); c.filter = 'blur(2px)'; c.globalAlpha = .9; c.fillStyle = col; c.beginPath(); c.ellipse(cx, my * H - d * .17, sp * .19, d * .07, 0, 0, 7); c.fill(); c.restore() }
+        if (v === 'sik') { c.save(); c.filter = 'blur(2px)'; c.globalAlpha = .9; c.fillStyle = col; c.beginPath(); c.ellipse(cx, my * H + d * .3, sp * .11, d * .22, 0, 0, 7); c.fill(); c.beginPath(); c.ellipse(cx, my * H - d * .17, sp * .17, d * .06, 0, 0, 7); c.fill(); c.restore() } }
+    }
     else if (kind === 'logo') { const cx = X + w / 2, cy = Y + h * .42, R = Math.min(w, h) * .2; c.fillStyle = '#6d28d9'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? R * .45 : R; c.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr) } c.fill(); c.font = `800 ${R * .55}px sans-serif`; c.textAlign = 'center'; c.fillStyle = '#1f2937'; c.fillText('GALAXY', cx, cy + R * 1.75) }
     c.restore();
   }
   function printTex(m, kind, rects, lum, lighten, key) {
     const tex = m.map; if (!tex) return; const ud = m.userData;
-    if (!ud.orig) ud.orig = { map: tex, shade: m.shadeMultiplyTexture === tex };
+    if (!ud.orig) { const sh = m.shadeMultiplyTexture; ud.orig = { map: tex, shade: !!sh && (sh === tex || sh.image === tex.image || (sh.name && sh.name === tex.name)), shadeTex: sh } }
     ud.prints = ud.prints || {}; ud.prints[key] = kind;
     const all = Object.entries(ud.prints).filter(([, k]) => k), sig = JSON.stringify(all) + (lighten ? 'L' : '');
     if (ud.sig === sig) return; ud.sig = sig;
-    if (!all.length && !lighten) { m.map = ud.orig.map; if (ud.orig.shade) m.shadeMultiplyTexture = ud.orig.map; m.needsUpdate = true; return }
+    if (!all.length && !lighten) { m.map = ud.orig.map; if (ud.orig.shade) m.shadeMultiplyTexture = ud.orig.shadeTex; m.needsUpdate = true; return }
     const img = ud.orig.map.image, W = img.width, H = img.height, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d', { willReadFrequently: true });
     c.drawImage(img, 0, 0); const flip = ud.orig.map.flipY;
     if (lighten) { const d = c.getImageData(0, 0, W, H), a = d.data; for (let i = 0; i < a.length; i += 4) { const l = (a[i] + a[i + 1] + a[i + 2]) / 3; if (l < 90) { const v = 150 + l * 1.15; a[i] = a[i + 1] = a[i + 2] = v } } c.putImageData(d, 0, 0) }
@@ -132,6 +148,19 @@
       const bag = M(new T.CapsuleGeometry(.085, .17, 6, 14), rm2, c, 0, [shW * .42 / .085 / 1, 1, d / 2 / .085]); const pocket = M(new T.CapsuleGeometry(.05, .04, 6, 12), std('rugzak', 0, .75), c.clone().add(V3(0, -.07, -d / 2 - .01)), 0, [1.6, 1, .5]);
       const straps = [-1, 1].map(sx => { const xs = chest.x + sx * shW * .2, top2 = zr(neck.y - .08, neck.y, xs, .04), fr = zr(chest.y - .1, chest.y, xs, .04); return new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3([V3(xs, c.y + .12, bk.b - .005), V3(xs, neck.y - .03, (top2.f + top2.b) / 2), V3(xs, chest.y + .02, fr.f + .01), V3(xs + sx * .03, chest.y - .14, fr.f + .0)]), 24, .011, 5), std('rugzak', 0, .75)) });
       add('rugzak', 'upperChest', bag, pocket, ...straps) }
+
+    /* extra kapsels (in haarkleur) */
+    { const hm = () => std('hairP', 0x3a2618, .55), back = V3(hc.x, hc.y + hR * .25, hc.z - hR * .92);
+      const taper = (pts, r0, r1, seg) => { const cv = new T.CatmullRomCurve3(pts), rad = 12, g = new T.TubeGeometry(cv, seg, 1, rad, false), pa = g.attributes.position, fr = cv.computeFrenetFrames(seg, false); for (let i = 0; i <= seg; i++) { const t = i / seg, ctr = cv.getPointAt(t), r = r0 + (r1 - r0) * Math.pow(t, 1.3); for (let j = 0; j <= rad; j++) { const k = i * (rad + 1) + j, q = V3(pa.getX(k), pa.getY(k), pa.getZ(k)).sub(ctr).multiplyScalar(r); pa.setXYZ(k, ctr.x + q.x, ctr.y + q.y, ctr.z + q.z) } } g.computeVertexNormals(); return g };
+      const tie = p => M(new T.TorusGeometry(hR * .13, hR * .045, 8, 16), std('hairTie', 0xec4899, .5), p, [0, 0, 0]);
+      { const p0 = back.clone(), pts = [p0, p0.clone().add(V3(0, -.03, -.06)), p0.clone().add(V3(0, -.16, -.085)), p0.clone().add(V3(0, -.32, -.06)), p0.clone().add(V3(0, -.42, -.03))]; add('hs_staart', 'head', M(taper(pts, hR * .3, hR * .06, 30), hm()), tie(p0.clone().add(V3(0, -.005, -.02)))) }
+      { const p0 = back.clone(), pts = [p0, p0.clone().add(V3(0, -.02, -.05)), p0.clone().add(V3(0, -.09, -.06)), p0.clone().add(V3(0, -.15, -.04))]; add('hs_staartK', 'head', M(taper(pts, hR * .2, hR * .05, 16), hm())) }
+      add('hs_knot', 'head', M(new T.SphereGeometry(hR * .42, 20, 16), hm(), V3(hc.x, top - hR * .18, hc.z - hR * .6), 0, [1, .9, 1]), tie(V3(hc.x, top - hR * .5, hc.z - hR * .55)));
+      add('hs_knotK', 'head', M(new T.SphereGeometry(hR * .3, 18, 14), hm(), V3(hc.x, hc.y + hR * .55, hc.z - hR * .98), 0, [1, .85, 1]));
+      { const parts = []; [-1, 1].forEach(sx => { const p0 = V3(hc.x + sx * hR * .78, hc.y + hR * .35, hc.z - hR * .3), pts = [p0, p0.clone().add(V3(sx * .06, -.04, -.02)), p0.clone().add(V3(sx * .09, -.2, -.03)), p0.clone().add(V3(sx * .07, -.36, -.01))]; parts.push(M(taper(pts, hR * .24, hR * .05, 24), hm()), tie(p0.clone().add(V3(sx * .015, -.01, 0)))) }); add('hs_staartjes', 'head', ...parts) }
+      { const parts = [], p0 = back.clone(); for (let i = 0; i < 11; i++) { const t = i / 10; parts.push(M(new T.SphereGeometry(hR * (.24 - t * .11), 12, 10), hm(), p0.clone().add(V3((i % 2 ? 1 : -1) * hR * .05, -.02 - t * .4, -.05 - Math.sin(t * 3) * .03)), 0, [1, 1.25, .9])) } parts.push(tie(p0.clone().add(V3(0, -.45, -.04)))); add('hs_vlecht', 'head', ...parts) }
+      { const o = M(new T.CapsuleGeometry(hR * .55, .2, 8, 16), hm(), V3(hc.x, head.y - .07, hc.z - hR * .7), [.12, 0, 0], [1.55, 1, .45]); add('hs_lang', 'head', o) }
+    }
     /* laarzen */
     ['left', 'right'].forEach(sd => { const k = P(sd + 'LowerLeg'), f = P(sd + 'Foot'); if (!k || !f) return; const lm = std('laars', 0, .5), up = M(new T.CylinderGeometry(.062, .052, (k.y - f.y) * .62, 16), lm, V3(f.x, f.y + (k.y - f.y) * .28, f.z - .005)); const ft = M(new T.CapsuleGeometry(.05, .12, 6, 12), lm, V3(f.x, .055, f.z + .045), [Math.PI / 2, 0, 0], [1.05, 1, 1.15]); const sole = M(new T.BoxGeometry(.11, .028, .25), std('laarsZ', 0x1f2937, .8), V3(f.x, .014, f.z + .04)); add('laars', sd + 'LowerLeg', up); add('laars', sd + 'Foot', ft, sole) });
     const old = fig.tint.bind(fig);
@@ -144,12 +173,12 @@
         show(k, v); if (!v) return;
         (mats[k] || []).forEach(m => { if (type === 'metal') { const [cc, me, ro] = METAL[v] || METAL.zilver; m.color.setHex(cc); m.metalness = me; m.roughness = ro } else m.color.set(v) });
       });
-      if (skip) skip(a);
+      if (skip) skip(a, c, show, (k, hex) => (mats[k] || []).forEach(m => m.color.set(hex)));
     };
   }
   const DEF = { model: 'a_anime', skin: null, hair: null, parts: {} };
   const OLD = m => MODELS[m] ? m : /^m_/.test(m || '') ? 'a_boy' : /^f_/.test(m || '') ? 'a_anime' : null;
-  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && OLD(a.model) && OLD(a.model) !== a.model) { a.model = OLD(a.model); a.parts = {}; a.hair = null } if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {}, prints: a.prints || {}, acc: a.acc || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
+  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && OLD(a.model) && OLD(a.model) !== a.model) { a.model = OLD(a.model); a.parts = {}; a.hair = null } if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {}, prints: a.prints || {}, acc: a.acc || {}, hs: a.hs || '', fx: a.fx || {}, body: a.body || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
   function has() { try { return !!localStorage[KEY] } catch (e) { return false } }
   let A = load();
 
@@ -175,6 +204,8 @@
     vrm.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; if (M.hide && (Array.isArray(o.material) ? o.material : [o.material]).some(m => M.hide.test((m.name || '').replace(/ \(Outline\)$/, '')))) o.visible = false } });
     const mats = {}; vrm.scene.traverse(o => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { const n = (m.name || '').replace(/ \(Outline\)$/, ''); (mats[n] = mats[n] || []).push(m); if (m.color && m.userData.base == null) m.userData.base = m.color.getHex(); if (m.shadeColorFactor && m.userData.shade == null) m.userData.shade = m.shadeColorFactor.getHex() }) });
     (M.prints || []).forEach(p => { if (p[5]) (mats[p[1]] || []).forEach(m => { m.userData.base = 0x2b2d38; if (m.userData.shade != null) m.userData.shade = 0x1a1b22 }) });
+    const hairVis = {}; vrm.scene.traverse(o => { if (!o.isMesh) return; [].concat(o.material).forEach(m => { const n = (m.name || '').replace(/ \(Outline\)$/, ''); (M.hs || []).forEach(x => (x[2] || []).forEach(h => { if (h === n) { (hairVis[n] = hairVis[n] || []).includes(o) || hairVis[n].push(o) } })) }) });
+    const set2 = (names, hex) => names.forEach(n => (mats[n] || []).forEach(m => { if (m.color) m.color.set(hex == null ? m.userData.base : hex) }));
     const H = vrm.humanoid, bone = n => H.getNormalizedBoneNode(n);
     vrm.scene.updateMatrixWorld(true); const head = bone('head'), v = new THREE.Vector3(); const hh = head ? head.getWorldPosition(v).y + .14 : 1.6;
     const k = 1.62 / hh, wrap = new THREE.Group(); vrm.scene.scale.setScalar(k); wrap.add(vrm.scene);
@@ -246,7 +277,19 @@
       face(f) { cfg = Object.assign({}, cfg, { face: f }) },
       lookAt(o) { look = o || null; if (vrm.lookAt && !o) vrm.lookAt.target = null }
     };
-    try { addAcc(fig, wrap, n => H.getRawBoneNode(n), a => { (mats.glx_shoe ? wrap : null) && wrap.traverse(o => { if (o.material === mats.glx_shoe[0]) o.visible = !a.laars }) }) } catch (e) { console.warn(e) }
+    try { addAcc(fig, wrap, n => H.getRawBoneNode(n), (a, c, show, colorize) => {
+      if (mats.glx_shoe) wrap.traverse(o => { if (o.material === mats.glx_shoe[0]) o.visible = !a.laars });
+      const st = (M.hs || []).find(x => x[0] === (c.hs || '')) || (M.hs || [])[0] || [], hid = st[2] || [];
+      (M.hs || []).forEach(x => { if (x[3]) show('hs_' + x[3], x === st) });
+      Object.keys(hairVis).forEach(n => hairVis[n].forEach(o => o.visible = !hid.includes(n)));
+      colorize('hairP', c.hair || M.hairDef || '#3a2618');
+      const fx = c.fx || {}, fm = M.face && mats[M.face.m];
+      if (fm) fm.forEach(m => { const ud = m.userData; ud.rects = ud.rects || {}; ud.lums = ud.lums || {}; [['blos', fx.blos], ['shadow', fx.shadow], ['lip', fx.lip], ['sproet', fx.sproet], ['baard', fx.baard ? fx.baard + '|' + (c.hair || M.hairDef) : '']].forEach(([k, v]) => { const key = 'fx_' + k; ud.rects[key] = [M.face.r]; ud.lums[key] = 0; try { printTex(m, v ? 'fx:' + k + ':' + v : '', null, 0, false, key) } catch (e) { } }) });
+      if (M.browM) set2(M.browM, fx.brow || null);
+      const es = +(fx.oog || 1); ['leftEye', 'rightEye'].forEach(n => { const b = H.getRawBoneNode(n); if (b) b.scale.setScalar(es) });
+      const hb = H.getRawBoneNode('head'); if (hb) hb.scale.setScalar(+((c.body || {}).hoofd || 1));
+      const L = +((c.body || {}).len || 1); wrap.scale.setScalar(L); fig.headY = 1.47 * L;
+    }) } catch (e) { console.warn(e) }
     fig.tint(cfg); pose(0); return fig;
   }
   const cache = new Map();
@@ -316,7 +359,7 @@
 .avSw.on{border-color:#fff!important;box-shadow:0 0 0 3px #ec4899!important}
 .avSw.std{background:conic-gradient(#888,#ddd,#888)!important;font-size:10px;color:#111}
 .avLbl{font-size:12px;color:var(--mut);margin-top:6px}`;
-  const TABS = [['stijl', '🧍 Stijl'], ['huid', '🎨 Huid'], ['haar', '💇 Haar'], ['kleren', '👕 Kleren'], ['extra', '💍 Extra'], ['gezicht', '😊 Gezicht']];
+  const TABS = [['stijl', '🧍 Stijl'], ['huid', '🎨 Huid'], ['haar', '💇 Haar'], ['kleren', '👕 Kleren'], ['extra', '💍 Extra'], ['gezicht', '😊 Gezicht'], ['lichaam', '📏 Lichaam']];
   let tab = 'stijl';
   function ensureDom() {
     if ($('avV')) return;
@@ -334,19 +377,25 @@
     stg.addEventListener('pointerup', () => drag = null);
   }
   const sw = (fn, cur, cols) => `<div class="avOpts"><button class="avSw std ${cur == null ? 'on' : ''}" title="Standaard" onclick="GLXAV.${fn}(null)">↺</button>${cols.map(c => `<button class="avSw ${cur === c ? 'on' : ''}" style="background:${c}" aria-label="kleur ${c}" onclick="GLXAV.${fn}('${c}')"></button>`).join('')}</div>`;
+  const optRow = (fn, k, cur, list) => `<div class="avOpts">${list.map(([v, l]) => `<button class="${(cur || '') === v ? 'on' : ''}" onclick="GLXAV.${fn}('${k}','${v}')">${l}</button>`).join('')}</div>`;
+  const fxRows = M => { const f = A.fx || {}; let h = `<div class="avLbl">Ogen</div>${optRow('fx', 'oog', f.oog, FACEX.oog)}`;
+    if (M.browM) h += `<div class="avLbl">Wenkbrauwen</div>${sw("fx.bind(null,'brow')", f.brow || null, HAIRC)}`;
+    h += `<div class="avLbl">Blos</div>${optRow('fx', 'blos', f.blos, FACEX.blos)}<div class="avLbl">Sproetjes</div>${optRow('fx', 'sproet', f.sproet, FACEX.sproet)}<div class="avLbl">Oogschaduw</div>${optRow('fx', 'shadow', f.shadow, FACEX.shadow)}<div class="avLbl">Lippen</div>${optRow('fx', 'lip', f.lip, FACEX.lip)}<div class="avLbl">Baard en snor</div>${optRow('fx', 'baard', f.baard, FACEX.baard)}`;
+    return h };
   function panel() {
     const M = MODELS[A.model]; $('avTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
     let h = '';
     if (tab === 'stijl') h = `<div class="avOpts">${Object.entries(MODELS).map(([k, m]) => `<button class="${A.model === k ? 'on' : ''}" onclick="GLXAV.set('model','${k}')">${m.g === 'f' ? '👩' : '👨'} ${m.n}</button>`).join('')}</div><p class="avLbl">Kies vrouw of man. Pas daarna huid, haar, kleren en extra's aan.</p>`;
-    if (tab === 'gezicht') h = M.vrm ? `<div class="avLbl">Gezichtje</div><div class="avOpts">${FACES.map(([f, n]) => `<button class="${(A.face || 'neutral') === f ? 'on' : ''}" onclick="GLXAV.set('face','${f}')">${n}</button>`).join('')}</div><div class="avLbl">Oogkleur</div>${sw("set.bind(null,'eyes')", A.eyes, EYES)}` : `<p class="avLbl">Gezichtjes en oogkleur kan je kiezen bij de stijl ✨ Anime.</p>`;
+    if (tab === 'gezicht') h = M.vrm ? `<div class="avLbl">Gezichtje</div><div class="avOpts">${FACES.map(([f, n]) => `<button class="${(A.face || 'neutral') === f ? 'on' : ''}" onclick="GLXAV.set('face','${f}')">${n}</button>`).join('')}</div><div class="avLbl">Oogkleur</div>${sw("set.bind(null,'eyes')", A.eyes, EYES)}${fxRows(M)}` : `<p class="avLbl">Gezichtjes en oogkleur kan je kiezen bij de stijl ✨ Anime.</p>`;
     if (tab === 'extra') { const a = A.acc || {}, b = (k, v, l, on) => `<button class="${on ? 'on' : ''}" onclick="GLXAV.acc('${k}',${v == null ? 'null' : `'${v}'`})">${l}</button>`;
       h = ACC.map(([k, n, type, opts]) => { if (k === 'hanger' && !a.ketting) return ''; let o = '';
         if (type === 'metal') o = `<div class="avOpts">${b(k, null, '✖️', !a[k])}${opts.map(v => b(k, v, { goud: '🟡 Goud', zilver: '⚪ Zilver', rose: '🌸 Rosé', zwart: '⚫ Zwart' }[v], a[k] === v)).join('')}</div>`;
         else if (type === 'pick') o = `<div class="avOpts">${k === 'hanger' ? '' : b(k, null, '✖️', !a[k])}${opts.map(([v, l]) => b(k, v, l, (a[k] || (k === 'hanger' ? 'hart' : '')) === v)).join('')}</div>`;
         else o = `<div class="avOpts"><button class="avSw std ${!a[k] ? 'on' : ''}" title="Geen" onclick="GLXAV.acc('${k}',null)">✖️</button>${ACOL.map(c => `<button class="avSw ${a[k] === c ? 'on' : ''}" style="background:${c}" aria-label="kleur ${c}" onclick="GLXAV.acc('${k}','${c}')"></button>`).join('')}</div>`;
         return `<div class="avLbl">${n}</div>${o}` }).join('') }
+    if (tab === 'lichaam') { const b = A.body || {}; h = `<div class="avLbl">Lengte</div>${optRow('bod', 'len', b.len, BODYX.len)}<div class="avLbl">Hoofd</div>${optRow('bod', 'hoofd', b.hoofd, BODYX.hoofd)}` }
     if (tab === 'huid') h = `<div class="avLbl">Huidskleur</div>${sw("set.bind(null,'skin')", A.skin, SKIN)}`;
-    if (tab === 'haar') h = `<div class="avLbl">${M.hairLbl || 'Haarkleur'}</div>${sw("set.bind(null,'hair')", A.hair, HAIRC)}`;
+    if (tab === 'haar') h = (M.hs ? `<div class="avLbl">Kapsel</div><div class="avOpts">${M.hs.map(([v, l]) => `<button class="${(A.hs || '') === v ? 'on' : ''}" onclick="GLXAV.set('hs','${v}')">${l}</button>`).join('')}</div>` : '') + `<div class="avLbl">${M.hairLbl || 'Haarkleur'}</div>${sw("set.bind(null,'hair')", A.hair, HAIRC)}`;
     if (tab === 'kleren') h = M.parts.map(([n, mat]) => `<div class="avLbl">${n}</div>${sw(`part.bind(null,'${mat}')`, (A.parts || {})[mat] || null, CLOTH)}`).join('')
     if (tab === 'kleren' && M.prints) h = M.prints.map(([n, mat, kind]) => { const k = mat + ':' + kind, cur = (A.prints || {})[k] || ''; return `<div class="avLbl"><span>${n}</span> – <span>patroon</span></div><div class="avOpts">${PRINTS[kind].map(([v, l]) => `<button class="${cur === v ? 'on' : ''}" onclick="GLXAV.print('${k}','${v}')">${l}</button>`).join('')}</div>` }).join('') + h;
     $('avPanel').innerHTML = h;
@@ -431,7 +480,9 @@
   const api = window.GLXAV = {
     open() { ensureDom(); panel(); document.querySelectorAll('.ov.on').forEach(o => o.classList.remove('on')); $('avV').classList.add('on'); start().catch(fail) },
     close() { $('avV').classList.remove('on') },
-    set(k, v) { if (k === 'model') { if (!MODELS[v] || v === A.model) return; A = { model: v, skin: A.skin, hair: null, eyes: null, face: A.face || null, parts: {}, prints: {}, acc: A.acc || {} }; panel(); rebuild().catch(fail); return } A[k] = v; if (fig) { fig.tint(A); if (k === 'face' && fig.face) fig.face(v) } panel() },
+    set(k, v) { if (k === 'model') { if (!MODELS[v] || v === A.model) return; A = { model: v, skin: A.skin, hair: null, eyes: null, face: A.face || null, parts: {}, prints: {}, acc: A.acc || {}, fx: A.fx || {}, body: A.body || {}, hs: '' }; panel(); rebuild().catch(fail); return } A[k] = v; if (fig) { fig.tint(A); if (k === 'face' && fig.face) fig.face(v) } panel() },
+    fx(k, v) { A.fx = Object.assign({}, A.fx); if (!v) delete A.fx[k]; else A.fx[k] = v; if (fig) fig.tint(A); panel() },
+    bod(k, v) { A.body = Object.assign({}, A.body); if (!v) delete A.body[k]; else A.body[k] = v; if (fig) fig.tint(A); panel() },
     acc(k, v) { A.acc = Object.assign({}, A.acc); if (!v) delete A.acc[k]; else A.acc[k] = v; if (k === 'pet' && v) delete A.acc.muts; if (k === 'muts' && v) delete A.acc.pet; if (fig) fig.tint(A); panel() },
     print(k, v) { A.prints = Object.assign({}, A.prints); if (!v) delete A.prints[k]; else A.prints[k] = v; if (fig) fig.tint(A); panel() },
     part(mat, v) { A.parts = A.parts || {}; if (v == null) delete A.parts[mat]; else A.parts[mat] = v; if (fig) fig.tint(A); panel() },
