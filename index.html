@@ -1551,8 +1551,12 @@ function reallyDelete(){try{localStorage.clear();sessionStorage.clear()}catch(e)
 #songBtn.on{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff}</style>
 <script>
 /* fouten bijhouden voor het dev-venster (blijft op dit toestel) */
-(function(){function log(m){try{const a=JSON.parse(localStorage.glxErr||'[]');a.push({t:Date.now(),m:String(m).slice(0,300)});localStorage.glxErr=JSON.stringify(a.slice(-40))}catch(e){}}
- addEventListener('error',e=>log((e.message||'fout')+' @'+(e.filename||'').split('/').pop()+':'+(e.lineno||'')));
+(function(){const sent={};let n=0;
+ function up(m,src){/* ook naar de server, max 5 per sessie, geen dubbele; geen persoonlijke tekst, alleen de foutmelding */
+  if(n>=5||sent[m]||/ResizeObserver|Script error\.|extension:\/\//.test(m))return;sent[m]=1;n++;
+  setTimeout(()=>{try{const db=window.GLXNET&&GLXNET.db;if(db&&db.rpc)db.rpc('log_client_error',{p_msg:String(m).slice(0,400),p_src:src||null,p_ver:(document.querySelector('script[src*="avatar.js"]')||{}).src?.split('v=')[1]||null,p_ua:navigator.userAgent.slice(0,200)}).then(()=>{},()=>{})}catch(e){}},4000)}
+ function log(m,src){try{const a=JSON.parse(localStorage.glxErr||'[]');a.push({t:Date.now(),m:String(m).slice(0,300)});localStorage.glxErr=JSON.stringify(a.slice(-40))}catch(e){}up(m,src)}
+ addEventListener('error',e=>{if(!e.message)return;log(e.message,(e.filename||'').split('/').pop().split('?')[0]+':'+(e.lineno||''))});
  addEventListener('unhandledrejection',e=>log('promise: '+(e.reason&&e.reason.message||e.reason)));
  try{localStorage.glxSeen=Date.now()}catch(e){}
  const h=document.querySelector('header .sp');if(h)h.insertAdjacentHTML('afterend','<button class="ico" id="songBtn" title="Themalied" onclick="GLXSONG&&GLXSONG.toggle()">🎵</button>');

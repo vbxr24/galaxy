@@ -8,3 +8,4 @@ auto.sql
 security.sql
 hardening.sql
 venues.sql
+errors.sql
