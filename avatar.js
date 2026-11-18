@@ -22,8 +22,8 @@
     f_suit: { f: 'Female_Suit', n: 'Pak vrouw', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Pak', 'Black'], ['Hemd', 'White']] },
     m_beach: { f: 'Male_Beach', n: 'Zomer man', hair: ['Hair', 'Eyebrows'], parts: [['Top', 'LightBrown'], ['Short', 'Red_Dark']] },
     f_punk: { f: 'Female_Punk', n: 'Punk vrouw', hair: ['Pink'], hairLbl: 'Haar en top', parts: [['Broek', 'Black'], ['Schoenen', 'Grey']] },
-    a_anime: { vrm: 'Anime_A', n: 'Anime vrouw', g: 'f', hairLbl: 'Haarkleur', skinM: ['Body_00_SKIN', 'Face_00_SKIN'], hairM: ['Hair_00_HAIR', 'HairBack_00_HAIR'], eyeM: ['EyeIris_00_EYE'], parts: [['Top', 'Tops_01_CLOTH'], ['Rok', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], eyes: true },
-    a_boy: { vrm: 'Anime_B', n: 'Anime man', g: 'm', hairLbl: 'Haarkleur', skinM: ['body_bake'], hairM: ['hair'], eyeM: ['eye'], hide: /backpack|^arm_|armgear|anim_logo|green_emit|robo_face|glass/i, armZ: 1.36, parts: [['Kleren', 'huku_bake']], eyes: true },
+    a_anime: { vrm: 'Anime_A', n: 'Anime vrouw', g: 'f', hairLbl: 'Haarkleur', skinM: ['Body_00_SKIN', 'Face_00_SKIN'], hairM: ['Hair_00_HAIR', 'HairBack_00_HAIR'], eyeM: ['EyeIris_00_EYE'], parts: [['Top', 'Tops_01_CLOTH'], ['Broekje', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], prints: [['Top', 'Tops_01_CLOTH', 'top', null, 0], ['Broekje', 'Bottoms_01_CLOTH', 'bot', null, 0, 1]], eyes: true },
+    a_boy: { vrm: 'Anime_B', n: 'Anime man', g: 'm', hairLbl: 'Haarkleur', skinM: ['body_bake'], hairM: ['hair'], eyeM: ['eye'], hide: /backpack|^arm_|armgear|anim_logo|green_emit|robo_face|glass/i, armZ: 1.36, shoes: 1, parts: [['Kleren', 'huku_bake'], ['Schoenen', 'glx_shoe']], prints: [['Shirt', 'huku_bake', 'top', [[0, .05, .24, .46], [.24, .05, .48, .46]], .5], ['Broek', 'huku_bake', 'bot', [[0, .46, .62, .95]], .5]], eyes: true },
     m_punk: { f: 'Male_Punk', n: 'Punk man', hair: ['Red', 'Red_Dark'], parts: [['Top', 'White'], ['Vest', 'Black'], ['Broek', 'LightBlue']] }
   };
   const SKIN = ['#f8d9c4', '#f1c7a5', '#e0ac85', '#c98f66', '#a56f48', '#7d4f30', '#5a3620', '#3b2314'];
@@ -31,8 +31,49 @@
   const CLOTH = ['#f8fafc', '#cbd5e1', '#64748b', '#1f2937', '#0b0a1f', '#ef4444', '#f97316', '#fbbf24', '#84cc16', '#16a34a', '#14b8a6', '#38bdf8', '#2563eb', '#8b5cf6', '#ec4899', '#9d174d', '#92400e', '#d6b48a'];
   const EYES = ['#3b2314', '#6b4226', '#2563eb', '#38bdf8', '#16a34a', '#8b5cf6', '#ec4899', '#ef4444', '#fbbf24', '#8e9099'];
   const FACES = [['neutral', '🙂 Gewoon'], ['happy', '😄 Blij'], ['relaxed', '😌 Relaxed'], ['surprised', '😮 Verrast'], ['sad', '🥺 Verlegen']];
+
+  /* kleding-prints: patroon over de stof-textuur (vermenigvuldigen, zodat de kleurkeuze blijft werken) */
+  const PRINTS = { top: [['', 'Effen'], ['streep', 'Strepen'], ['breton', 'Marinière'], ['ruit', 'Ruitjes'], ['logo', 'Galaxy-logo'], ['hart', 'Hartjes'], ['sterren', 'Sterrenhemel'], ['camo', 'Camouflage'], ['tie', 'Tie-dye']],
+    bot: [['', 'Effen'], ['jeans', 'Jeans'], ['ruit', 'Ruitjes'], ['streep', 'Sportstreep'], ['camo', 'Camouflage'], ['sterren', 'Sterrenhemel']] };
+  function rnd(seed) { let x = seed || 7; return () => (x = (x * 16807) % 2147483647) / 2147483647 }
+  function drawPrint(c, W, H, kind, rect) {
+    const [x0, y0, x1, y1] = rect, X = x0 * W, Y = y0 * H, w = (x1 - x0) * W, h = (y1 - y0) * H, u = Math.max(W, H) / 1024, r = rnd(42);
+    c.save(); c.beginPath(); c.rect(X, Y, w, h); c.clip();
+    const fill = (col, a, b, cc, d) => { c.fillStyle = col; c.fillRect(a, b, cc, d) };
+    if (kind === 'streep') { for (let y = Y; y < Y + h; y += 46 * u) fill('#5b6478', X, y, w, 20 * u) }
+    else if (kind === 'breton') { fill('#ffffff', X, Y, w, h); for (let y = Y + 10 * u; y < Y + h; y += 30 * u) fill('#1e3a8a', X, y, w, 11 * u) }
+    else if (kind === 'ruit') { c.globalAlpha = .5; for (let x = X; x < X + w; x += 70 * u) { fill('#7f1d1d', x, Y, 26 * u, h); fill('#334155', x + 40 * u, Y, 5 * u, h) } for (let y = Y; y < Y + h; y += 70 * u) { fill('#7f1d1d', X, y, w, 26 * u); fill('#334155', X, y + 40 * u, w, 5 * u) } c.globalAlpha = 1 }
+    else if (kind === 'jeans') { fill('#5b7fb3', X, Y, w, h); c.strokeStyle = 'rgba(30,50,90,.35)'; c.lineWidth = 2 * u; for (let i = -h; i < w; i += 7 * u) { c.beginPath(); c.moveTo(X + i, Y); c.lineTo(X + i + h, Y + h); c.stroke() } for (let i = 0; i < 900; i++) { c.fillStyle = r() < .5 ? 'rgba(255,255,255,.25)' : 'rgba(10,20,50,.2)'; c.fillRect(X + r() * w, Y + r() * h, 9 * u, 1.5 * u) } }
+    else if (kind === 'camo') { const cols = ['#4d5d2c', '#7a7a46', '#2f3a22', '#a39a6a']; fill('#8c8a5c', X, Y, w, h); for (let i = 0; i < 260; i++) { c.fillStyle = cols[i % 4]; c.beginPath(); c.ellipse(X + r() * w, Y + r() * h, (20 + r() * 50) * u, (12 + r() * 30) * u, r() * 3, 0, 7); c.fill() } }
+    else if (kind === 'sterren') { const g = c.createLinearGradient(X, Y, X + w, Y + h); g.addColorStop(0, '#1e1b4b'); g.addColorStop(.5, '#4c1d95'); g.addColorStop(1, '#0f172a'); c.fillStyle = g; c.fillRect(X, Y, w, h); for (let i = 0; i < 700; i++) { c.fillStyle = r() < .2 ? '#f9a8d4' : '#ffffff'; const s = (r() < .1 ? 4 : 1.6) * u; c.fillRect(X + r() * w, Y + r() * h, s, s) } }
+    else if (kind === 'tie') { for (let i = 0; i < 9; i++) { const cx = X + r() * w, cy = Y + r() * h, g = c.createRadialGradient(cx, cy, 0, cx, cy, 260 * u); g.addColorStop(0, ['#f472b6', '#60a5fa', '#facc15', '#a78bfa', '#34d399'][i % 5]); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(X, Y, w, h) } }
+    else if (kind === 'hart') { c.fillStyle = '#e11d48'; for (let y = Y + 20 * u, row = 0; y < Y + h; y += 64 * u, row++) for (let x = X + (row % 2 ? 32 : 0) * u; x < X + w; x += 64 * u) { const s = 9 * u; c.beginPath(); c.moveTo(x, y + s); c.bezierCurveTo(x - 2 * s, y - s * .6, x - s * .4, y - 2 * s, x, y - s * .7); c.bezierCurveTo(x + s * .4, y - 2 * s, x + 2 * s, y - s * .6, x, y + s); c.fill() } }
+    else if (kind === 'logo') { const cx = X + w / 2, cy = Y + h * .42, R = Math.min(w, h) * .2; c.fillStyle = '#6d28d9'; c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? R * .45 : R; c.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr) } c.fill(); c.font = `800 ${R * .55}px sans-serif`; c.textAlign = 'center'; c.fillStyle = '#1f2937'; c.fillText('GALAXY', cx, cy + R * 1.75) }
+    c.restore();
+  }
+  function printTex(m, kind, rects, lum, lighten, key) {
+    const tex = m.map; if (!tex) return; const ud = m.userData;
+    if (!ud.orig) ud.orig = { map: tex, shade: m.shadeMultiplyTexture === tex };
+    ud.prints = ud.prints || {}; ud.prints[key] = kind;
+    const all = Object.entries(ud.prints).filter(([, k]) => k), sig = JSON.stringify(all) + (lighten ? 'L' : '');
+    if (ud.sig === sig) return; ud.sig = sig;
+    if (!all.length && !lighten) { m.map = ud.orig.map; if (ud.orig.shade) m.shadeMultiplyTexture = ud.orig.map; m.needsUpdate = true; return }
+    const img = ud.orig.map.image, W = img.width, H = img.height, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d', { willReadFrequently: true });
+    c.drawImage(img, 0, 0); const flip = ud.orig.map.flipY;
+    if (lighten) { const d = c.getImageData(0, 0, W, H), a = d.data; for (let i = 0; i < a.length; i += 4) { const l = (a[i] + a[i + 1] + a[i + 2]) / 3; if (l < 90) { const v = 150 + l * 1.15; a[i] = a[i + 1] = a[i + 2] = v } } c.putImageData(d, 0, 0) }
+    const base = c.getImageData(0, 0, W, H);
+    all.forEach(([k2, kind2]) => {
+      const R = (m.userData.rects || {})[k2] || [[0, 0, 1, 1]], L = (m.userData.lums || {})[k2] || 0;
+      const p = document.createElement('canvas'); p.width = W; p.height = H; const pc = p.getContext('2d', { willReadFrequently: true });
+      R.forEach(rc => drawPrint(pc, W, H, kind2, rc));
+      if (L) { const pd = pc.getImageData(0, 0, W, H), b = base.data; for (let i = 0; i < b.length; i += 4) if ((b[i] + b[i + 1] + b[i + 2]) / 765 < L || Math.abs(b[i] - b[i + 2]) > 40) pd.data[i + 3] = 0; pc.putImageData(pd, 0, 0) }
+      c.globalCompositeOperation = 'multiply'; c.drawImage(p, 0, 0); c.globalCompositeOperation = 'source-over';
+    });
+    const t = new THREE.CanvasTexture(cv); ['flipY', 'colorSpace', 'wrapS', 'wrapT', 'channel', 'anisotropy'].forEach(k => { if (ud.orig.map[k] !== undefined) t[k] = ud.orig.map[k] }); t.needsUpdate = true;
+    if (m.map !== ud.orig.map && m.map) m.map.dispose(); m.map = t; if (ud.orig.shade) m.shadeMultiplyTexture = t; m.needsUpdate = true;
+  }
   const DEF = { model: 'm_casual', skin: null, hair: null, parts: {} };
-  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
+  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {}, prints: a.prints || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
   function has() { try { return !!localStorage[KEY] } catch (e) { return false } }
   let A = load();
 
@@ -57,9 +98,23 @@
     const vrm = g.userData.vrm; V.VRMUtils.removeUnnecessaryVertices(g.scene); V.VRMUtils.combineSkeletons ? V.VRMUtils.combineSkeletons(g.scene) : 0; V.VRMUtils.rotateVRM0(vrm);
     vrm.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; if (M.hide && (Array.isArray(o.material) ? o.material : [o.material]).some(m => M.hide.test((m.name || '').replace(/ \(Outline\)$/, '')))) o.visible = false } });
     const mats = {}; vrm.scene.traverse(o => { if (!o.isMesh) return; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { const n = (m.name || '').replace(/ \(Outline\)$/, ''); (mats[n] = mats[n] || []).push(m); if (m.color && m.userData.base == null) m.userData.base = m.color.getHex(); if (m.shadeColorFactor && m.userData.shade == null) m.userData.shade = m.shadeColorFactor.getHex() }) });
+    (M.prints || []).forEach(p => { if (p[5]) (mats[p[1]] || []).forEach(m => { m.userData.base = 0x2b2d38; if (m.userData.shade != null) m.userData.shade = 0x1a1b22 }) });
     const H = vrm.humanoid, bone = n => H.getNormalizedBoneNode(n);
     vrm.scene.updateMatrixWorld(true); const head = bone('head'), v = new THREE.Vector3(); const hh = head ? head.getWorldPosition(v).y + .14 : 1.6;
     const k = 1.62 / hh, wrap = new THREE.Group(); vrm.scene.scale.setScalar(k); wrap.add(vrm.scene);
+
+    if (M.shoes) {
+      const sm = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: .55, name: 'glx_shoe' }), so = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: .8 });
+      sm.userData.base = 0xf1f5f9; mats.glx_shoe = [sm]; wrap.updateMatrixWorld(true);
+      ['left', 'right'].forEach(sd => {
+        const f = H.getRawBoneNode(sd + 'Foot'), te = H.getRawBoneNode(sd + 'Toes'); if (!f) return;
+        const a = f.getWorldPosition(new THREE.Vector3()), b = te ? te.getWorldPosition(new THREE.Vector3()) : a.clone().add(new THREE.Vector3(0, 0, .12));
+        const dir = b.clone().sub(a).setY(0).normalize(), heel = a.clone().addScaledVector(dir, -.06), tip = b.clone().addScaledVector(dir, .075), L = heel.distanceTo(tip) - 0.0;
+        const g = new THREE.Group(), up = new THREE.Mesh(new THREE.CapsuleGeometry(.047, Math.max(.05, L - .094), 6, 14), sm), sole = new THREE.Mesh(new THREE.BoxGeometry(.096, .026, L + .012), so);
+        up.rotation.x = Math.PI / 2; up.scale.set(.9, 1, 1.18); up.position.y = .066; sole.position.y = .013; up.castShadow = sole.castShadow = true; g.add(up, sole);
+        const mid = heel.clone().add(tip).multiplyScalar(.5); g.position.set(mid.x, 0, mid.z); g.rotation.y = Math.atan2(dir.x, dir.z); wrap.add(g); g.updateMatrixWorld(true); f.attach(g);
+      });
+    }
     let mode = 'Idle', once = 0, t = Math.random() * 10, blinkAt = 1.5, blink = 0, look = null;
     const AZ = M.armZ || 1.24;
     const R = (n, x, y, z) => { const b = bone(n); if (b) b.rotation.set(x || 0, y || 0, z || 0) };
@@ -109,7 +164,8 @@
       tint(c) {
         const set = (names, hex) => names.forEach(n => (mats[n] || []).forEach(m => { if (!m.color) return; m.color.set(hex == null ? m.userData.base : hex); if (m.shadeColorFactor) { if (hex == null) m.shadeColorFactor.set(m.userData.shade); else m.shadeColorFactor.set(hex).multiplyScalar(.72) } }));
         set(M.skinM || [], c.skin); set(M.hairM || [], c.hair); set(M.eyeM || [], c.eyes);
-        M.parts.forEach(([, mat]) => set([mat], (c.parts || {})[mat]));
+        M.parts.forEach(([, mat]) => { const pr = (M.prints || []).some(p => p[5] && p[1] === mat && (c.prints || {})[mat + ':' + p[2]]); set([mat], (c.parts || {})[mat] || (pr ? '#ffffff' : null)) });
+        (M.prints || []).forEach(([, mat, kind, rects, lum, lighten], i) => (mats[mat] || []).forEach(m => { const key = kind + i; m.userData.rects = m.userData.rects || {}; m.userData.lums = m.userData.lums || {}; if (rects) m.userData.rects[key] = rects; m.userData.lums[key] = lum; try { printTex(m, (c.prints || {})[mat + ':' + kind] || '', rects, lum, lighten, key) } catch (e) { } }));
       },
       face(f) { cfg = Object.assign({}, cfg, { face: f }) },
       lookAt(o) { look = o || null; if (vrm.lookAt && !o) vrm.lookAt.target = null }
@@ -207,7 +263,8 @@
     if (tab === 'gezicht') h = M.vrm ? `<div class="avLbl">Gezichtje</div><div class="avOpts">${FACES.map(([f, n]) => `<button class="${(A.face || 'neutral') === f ? 'on' : ''}" onclick="GLXAV.set('face','${f}')">${n}</button>`).join('')}</div><div class="avLbl">Oogkleur</div>${sw("set.bind(null,'eyes')", A.eyes, EYES)}` : `<p class="avLbl">Gezichtjes en oogkleur kan je kiezen bij de stijl ✨ Anime.</p>`;
     if (tab === 'huid') h = `<div class="avLbl">Huidskleur</div>${sw("set.bind(null,'skin')", A.skin, SKIN)}`;
     if (tab === 'haar') h = `<div class="avLbl">${M.hairLbl || 'Haarkleur'}</div>${sw("set.bind(null,'hair')", A.hair, HAIRC)}`;
-    if (tab === 'kleren') h = M.parts.map(([n, mat]) => `<div class="avLbl">${n}</div>${sw(`part.bind(null,'${mat}')`, (A.parts || {})[mat] || null, CLOTH)}`).join('');
+    if (tab === 'kleren') h = M.parts.map(([n, mat]) => `<div class="avLbl">${n}</div>${sw(`part.bind(null,'${mat}')`, (A.parts || {})[mat] || null, CLOTH)}`).join('')
+    if (tab === 'kleren' && M.prints) h = M.prints.map(([n, mat, kind]) => { const k = mat + ':' + kind, cur = (A.prints || {})[k] || ''; return `<div class="avLbl"><span>${n}</span> – <span>patroon</span></div><div class="avOpts">${PRINTS[kind].map(([v, l]) => `<button class="${cur === v ? 'on' : ''}" onclick="GLXAV.print('${k}','${v}')">${l}</button>`).join('')}</div>` }).join('') + h;
     $('avPanel').innerHTML = h;
   }
   async function rebuild() {
@@ -287,7 +344,8 @@
   const api = window.GLXAV = {
     open() { ensureDom(); panel(); document.querySelectorAll('.ov.on').forEach(o => o.classList.remove('on')); $('avV').classList.add('on'); start().catch(fail) },
     close() { $('avV').classList.remove('on') },
-    set(k, v) { if (k === 'model') { if (!MODELS[v] || v === A.model) return; A = { model: v, skin: A.skin, hair: null, eyes: null, face: A.face || null, parts: {} }; panel(); rebuild().catch(fail); return } A[k] = v; if (fig) { fig.tint(A); if (k === 'face' && fig.face) fig.face(v) } panel() },
+    set(k, v) { if (k === 'model') { if (!MODELS[v] || v === A.model) return; A = { model: v, skin: A.skin, hair: null, eyes: null, face: A.face || null, parts: {}, prints: {} }; panel(); rebuild().catch(fail); return } A[k] = v; if (fig) { fig.tint(A); if (k === 'face' && fig.face) fig.face(v) } panel() },
+    print(k, v) { A.prints = Object.assign({}, A.prints); if (!v) delete A.prints[k]; else A.prints[k] = v; if (fig) fig.tint(A); panel() },
     part(mat, v) { A.parts = A.parts || {}; if (v == null) delete A.parts[mat]; else A.parts[mat] = v; if (fig) fig.tint(A); panel() },
     random() {
       const r = a => a[Math.floor(Math.random() * a.length)], k = r(Object.keys(MODELS)), parts = {}; MODELS[k].parts.forEach(([, m]) => { if (Math.random() < .7) parts[m] = r(CLOTH) });
