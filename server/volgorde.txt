@@ -1,0 +1,7 @@
+# Deze bestanden zet GitHub automatisch in Supabase, in deze volgorde.
+# Verandert er één, dan worden dat bestand en alle bestanden eronder opnieuw uitgevoerd (ze zijn allemaal veilig om te herhalen).
+extras.sql
+extras2.sql
+feed.sql
+more.sql
+auto.sql

@@ -1,0 +1,25 @@
+# Galaxy – controleert elke 6 uur of de app en de server werken.
+# Werkt iets niet, dan mislukt deze controle en stuurt GitHub je automatisch een e-mail.
+# Houdt ook de gratis Supabase-database wakker (die gaat anders na 7 dagen zonder gebruik slapen).
+name: Gezondheidscontrole
+on:
+  schedule: [{ cron: '23 */6 * * *' }]
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Website bereikbaar
+        run: curl -fsS -o /dev/null --max-time 30 https://vbxr24.github.io/galaxy/ && echo "✓ website"
+      - name: Server bereikbaar
+        run: |
+          KEY=$(grep -oE 'sb_publishable_[A-Za-z0-9_-]+' backend.js | head -1)
+          curl -fsS -o /dev/null --max-time 30 -H "apikey: $KEY" https://dqodwuemdpzyvvvxvgtz.supabase.co/auth/v1/health && echo "✓ server"
+      - name: Database wakker houden en controleren
+        env: { DB: '${{ secrets.SUPABASE_DB_URL }}' }
+        run: |
+          if [ -z "$DB" ]; then echo "::warning::SUPABASE_DB_URL ontbreekt nog."; exit 0; fi
+          command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          psql "$DB" -tAc "select 'profielen: ' || count(*) from public.profiles"
+          psql "$DB" -tAc "select 'mislukte geplande taken (24u): ' || count(*) from cron.job_run_details where status = 'failed' and start_time > now() - interval '24 hours'" || true

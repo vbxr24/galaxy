@@ -1,0 +1,47 @@
+# Galaxy – zet database-updates en server-functies automatisch in Supabase bij elke wijziging op GitHub.
+# Nodig (eenmalig, bij Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL        = de "Session pooler"-verbindingslink uit Supabase (Connect → Session pooler), met je databasewachtwoord erin
+#   SUPABASE_ACCESS_TOKEN  = een toegangssleutel van supabase.com/dashboard/account/tokens
+name: Supabase bijwerken
+on:
+  push:
+    branches: [main]
+    paths: ['server/**', 'supabase/functions/**', '.github/workflows/supabase.yml']
+  workflow_dispatch:
+concurrency: { group: supabase, cancel-in-progress: false }
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Database bijwerken
+        env: { DB: '${{ secrets.SUPABASE_DB_URL }}' }
+        run: |
+          if [ -z "$DB" ]; then echo "::warning::SUPABASE_DB_URL ontbreekt nog. Overgeslagen."; exit 0; fi
+          command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+          export PGCONNECT_TIMEOUT=20
+          psql "$DB" -v ON_ERROR_STOP=1 -qc "create table if not exists public._galaxy_migrations (name text primary key, sha text not null, at timestamptz not null default now()); alter table public._galaxy_migrations enable row level security;"
+          again=0
+          for f in $(grep -v '^#' server/volgorde.txt | grep -v '^$'); do
+            sha=$(sha256sum "server/$f" | cut -c1-64)
+            old=$(psql "$DB" -tAc "select sha from public._galaxy_migrations where name='$f'")
+            if [ "$again" = 1 ] || [ "$sha" != "$old" ]; then
+              echo "→ $f"
+              psql "$DB" -v ON_ERROR_STOP=1 -q -f "server/$f"
+              psql "$DB" -v ON_ERROR_STOP=1 -qc "insert into public._galaxy_migrations(name, sha) values ('$f', '$sha') on conflict (name) do update set sha = excluded.sha, at = now()"
+              again=1
+            else echo "✓ $f al up-to-date"; fi
+          done
+  functions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Server-functies uitrollen
+        env: { SUPABASE_ACCESS_TOKEN: '${{ secrets.SUPABASE_ACCESS_TOKEN }}' }
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::warning::SUPABASE_ACCESS_TOKEN ontbreekt nog. Overgeslagen."; exit 0; fi
+          for fn in push age-check; do
+            supabase functions deploy "$fn" --project-ref dqodwuemdpzyvvvxvgtz --no-verify-jwt
+          done

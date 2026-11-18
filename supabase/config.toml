@@ -1,0 +1,7 @@
+project_id = "dqodwuemdpzyvvvxvgtz"
+
+[functions.push]
+verify_jwt = false
+
+[functions.age-check]
+verify_jwt = false
