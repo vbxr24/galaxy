@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.age-check]
 verify_jwt = false
+
+[functions.help]
+verify_jwt = false

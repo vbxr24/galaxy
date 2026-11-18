@@ -232,9 +232,17 @@ ${VQ.length ? VQ.map(x => `<div class="rep"><b>${esc(x.name)}</b> <span class="s
     return `<div class="card"><h2>🧯 Fouten in de app (laatste 7 dagen)</h2><p class="sub">Elke keer dat de app bij iemand een fout geeft, komt die hier (max 5 per bezoek, zonder persoonlijke gegevens). Veel dezelfde fout = eerst oplossen.</p>
 ${CE.length ? CE.map(x => `<div class="rep"><b>${esc(x.msg)}</b><div class="sub">${esc(x.src || '')} · ${x.n}× bij ${x.users} gebruiker(s) · laatst ${when(x.last_at)}</div></div>`).join('') : '<p class="sub">🎉 Geen fouten gemeld.</p>'}</div>`;
   }
-  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden'], ['feed', '📰 Feed'], ['echt', '🪪 Echtheid'], ['zaken', '🍻 Aanmeldingen'], ['fouten', '🧯 Fouten']];
+  let HT = [];
+  async function loadHt() { const r = await sb.rpc('admin_support_tickets'); HT = r.data || [] }
+  const HST = { open: '🆕 Open', bezig: '⏳ Bezig', klaar: '✅ Klaar' };
+  function hulp() {
+    return `<div class="card"><h2>🆘 Hulpvragen (${HT.filter(x => x.status === 'open').length} open)</h2><p class="sub">Komen van de hulp-assistent op de website en in de app, als de assistent het niet zelf kon oplossen.</p>
+${HT.length ? HT.map(x => `<div class="rep"><b>${esc(x.topic)}</b> <span class="sub">${when(x.created_at)}${x.lang ? ' · ' + esc(x.lang) : ''}${x.uid ? ' · ingelogde gebruiker' : ''}</span><p style="white-space:pre-wrap;margin:6px 0">${esc(x.summary)}</p>${x.email ? `<div>✉️ <a style="color:#67e8f9" href="mailto:${esc(x.email)}?subject=Galaxy">${esc(x.email)}</a></div>` : '<div class="sub">Geen e-mail opgegeven</div>'}
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${Object.entries(HST).map(([k, n]) => `<button class="btn ${x.status === k ? 'ok' : ''}" onclick="ADM.hst('${x.id}','${k}')">${n}</button>`).join('')}</div></div>`).join('') : '<p class="sub">Nog geen hulpvragen.</p>'}</div>`;
+  }
+  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden'], ['feed', '📰 Feed'], ['echt', '🪪 Echtheid'], ['zaken', '🍻 Aanmeldingen'], ['hulp', '🆘 Hulpvragen'], ['fouten', '🧯 Fouten']];
   function draw() {
-    const body = { over, groei, users, geld, veilig, avonden, feed, echt, zaken, fouten }[tab]();
+    const body = { over, groei, users, geld, veilig, avonden, feed, echt, zaken, hulp, fouten }[tab]();
     $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}${k === 'zaken' && VQ.some(x => x.status === 'nieuw') ? ` (${VQ.filter(x => x.status === 'nieuw').length})` : ''}${k === 'feed' && FR && FR.counts && FR.counts.to_review ? ` (${FR.counts.to_review})` : ''}${k === 'echt' && Array.isArray(VR) && VR.length ? ` (${VR.length})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
     hover($('app')); if (tab === 'avonden') evQr(); if (tab === 'geld') { ['ru', 'rp', 'rc'].forEach(id => $(id).oninput = calc); calc() }
   }
@@ -253,9 +261,10 @@ ${CE.length ? CE.map(x => `<div class="rep"><b>${esc(x.msg)}</b><div class="sub"
     load(); setInterval(() => { if (document.visibilityState === 'visible' && tab !== 'geld') load() }, 60000);
   }
   window.ADM = {
+    async hst(id, st) { const r = await sb.rpc('admin_support_status', { p_id: id, p_status: st }); if (r.error) return alert(r.error.message); await loadHt(); draw() },
     async vst(id, st) { const r = await sb.rpc('admin_venue_status', { p_id: id, p_status: st }); if (r.error) return alert(r.error.message); await loadVq(); draw() },
     async vEv(id) { const x = VQ.find(v => v.id === id); if (!x) return; evEdit = { venue: x.name, address: [x.address, x.city].filter(Boolean).join(', ') }; tab = 'avonden'; await loadEv(); draw() },
-    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); if (k === 'feed') await loadFeed(); if (k === 'echt') await loadVerify(); if (k === 'zaken') await loadVq(); if (k === 'fouten') await loadCe(); draw() },
+    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); if (k === 'feed') await loadFeed(); if (k === 'echt') await loadVerify(); if (k === 'zaken') await loadVq(); if (k === 'fouten') await loadCe(); if (k === 'hulp') await loadHt(); draw() },
     async vDecide(u, ok) { let note = null; if (!ok) { note = prompt('Reden (de gebruiker ziet dit), bv. "Gebaar niet zichtbaar" of "Niet dezelfde persoon":', 'Gebaar niet duidelijk zichtbaar'); if (note === null) return }
       const v = (VR || []).find(x => x.uid === u); const r = await sb.rpc('admin_verify_decide', { u, ok, p_note: note }); if (r.error) return alert(r.error.message);
       if (v) await sb.storage.from('verify').remove([v.path]); await loadVerify(); draw() },

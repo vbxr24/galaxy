@@ -10,3 +10,4 @@ hardening.sql
 venues.sql
 errors.sql
 world.sql
+support.sql

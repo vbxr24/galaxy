@@ -48,7 +48,7 @@
 .bdg div.off{opacity:.38;filter:grayscale(1)}
 .bdg div small{display:block;color:var(--mut);font-size:11px;margin-top:3px}
 .realTick{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#0ea5e9;color:#fff;font-size:11px;font-weight:800;vertical-align:2px;margin-left:4px}
-#socProf{display:flex;gap:8px;margin-bottom:12px}
+#socProf{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
 #socProf button{flex:1;border-radius:16px;padding:12px 10px;background:var(--card);border:1px solid var(--line);color:var(--txt);font:inherit;text-align:left;display:flex;flex-direction:column;gap:2px}
 #socProf button b{font-size:15px}#socProf button span{font-size:12px;color:var(--mut)}
 .vidBox{position:relative;border-radius:18px;overflow:hidden;background:#000;margin:10px 0}
@@ -244,7 +244,7 @@
   function profileRow() {
     const v = $('v-profile'); if (!v || !v.classList.contains('on')) return;
     if (!$('socProf')) {
-      const a = $('avProf'); const html = `<div id="socProf"><button type="button" onclick="GLXSOC.badges()"><b>🏅 ${t('Badges', 'Badges')}</b><span id="spB">${t('Bekijk', 'View')}</span></button><button type="button" onclick="GLXSOC.verify()"><b>✅ ${t('Echt', 'Real')}</b><span id="spV">${t('Krijg je vinkje', 'Get your tick')}</span></button><button type="button" onclick="GLXSOC.video()"><b>🎬 ${t('Video', 'Video')}</b><span id="spVd">${t('Video-intro', 'Video intro')}</span></button></div>`;
+      const a = $('avProf'); const html = `<div id="socProf"><button type="button" onclick="GLXSOC.badges()"><b>🏅 ${t('Badges', 'Badges')}</b><span id="spB">${t('Bekijk', 'View')}</span></button><button type="button" onclick="GLXSOC.verify()"><b>✅ ${t('Echt', 'Real')}</b><span id="spV">${t('Krijg je vinkje', 'Get your tick')}</span></button><button type="button" onclick="GLXSOC.video()"><b>🎬 ${t('Video', 'Video')}</b><span id="spVd">${t('Video-intro', 'Video intro')}</span></button><button type="button" onclick="window.GLXHELP&&GLXHELP.open()"><b>🆘 ${t('Hulp', 'Help')}</b><span>${t('Vraag het', 'Ask us')}</span></button></div>`;
       if (a) a.insertAdjacentHTML('afterend', html); else v.insertAdjacentHTML('afterbegin', html);
       loadMine().then(m => { if (!m) return; const b = $('spB'), r = $('spV'); if (b) b.textContent = (m.badges || []).length + ' ' + t('verdiend', 'earned') + (m.streak ? ' · 🔥 ' + m.streak : ''); if (r && m.real) r.textContent = t('Geverifieerd', 'Verified') });
     }
