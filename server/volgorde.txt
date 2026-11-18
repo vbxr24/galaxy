@@ -7,3 +7,4 @@ more.sql
 auto.sql
 security.sql
 hardening.sql
+venues.sql

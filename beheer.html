@@ -217,16 +217,25 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
   function drawQr(cv, id, px) { const q = window.qrcode(0, 'M'); q.addData(evUrl(id)); q.make(); const n = q.getModuleCount(), c = cv.getContext('2d'), s = px / (n + 4); cv.width = cv.height = px; c.fillStyle = '#fff'; c.fillRect(0, 0, px, px); c.fillStyle = '#1a1240'; for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) c.fillRect(Math.round((k + 2) * s), Math.round((r + 2) * s), Math.ceil(s), Math.ceil(s)) }
   async function evQr() { try { await loadQr(); document.querySelectorAll('canvas.evQr').forEach(cv => drawQr(cv, cv.dataset.id, 120)) } catch (e) { } }
 
-  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden'], ['feed', '📰 Feed'], ['echt', '🪪 Echtheid']];
+  let VQ = [];
+  async function loadVq() { const r = await sb.rpc('admin_venue_requests'); VQ = r.data || [] }
+  const VST = { nieuw: '🆕 Nieuw', gecontacteerd: '📞 Gecontacteerd', actief: '✅ Actief', afgewezen: '✖️ Afgewezen' };
+  function zaken() {
+    return `<div class="card"><h2>🍻 Aanmeldingen van cafés en clubs (${VQ.filter(x => x.status === 'nieuw').length} nieuw)</h2><p class="sub">Zaken melden zich aan via <a href="voor-cafes.html" style="color:#f9a8d4">voor-cafes.html</a>. Neem contact op, maak een Galaxy-avond en stuur hen de link.</p>
+${VQ.length ? VQ.map(x => `<div class="rep"><b>${esc(x.name)}</b> <span class="sub">${esc(x.kind)} · ${esc(x.city || '')} · ${when(x.created_at)}</span><div class="sub">${esc(x.address || '')}</div>
+<div>👤 ${esc(x.contact_name || '–')} · ✉️ <a style="color:#67e8f9" href="mailto:${esc(x.email)}">${esc(x.email)}</a>${x.phone ? ` · 📞 <a style="color:#67e8f9" href="tel:${esc(x.phone)}">${esc(x.phone)}</a>` : ''}</div>${x.message ? `<p class="sub" style="white-space:pre-wrap">${esc(x.message)}</p>` : ''}
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${Object.entries(VST).map(([k, n]) => `<button class="btn ${x.status === k ? 'ok' : ''}" onclick="ADM.vst('${x.id}','${k}')">${n}</button>`).join('')}<button class="btn" onclick="ADM.vEv('${x.id}')">🎉 Maak avond</button></div></div>`).join('') : '<p class="sub">Nog geen aanmeldingen.</p>'}</div>`;
+  }
+  const TABS = [['over', '📊 Overzicht'], ['groei', '📈 Groei & gebruik'], ['users', '👥 Gebruikers'], ['geld', '💰 Geld'], ['veilig', '🛡️ Veiligheid'], ['avonden', '🎉 Avonden'], ['feed', '📰 Feed'], ['echt', '🪪 Echtheid'], ['zaken', '🍻 Aanmeldingen']];
   function draw() {
-    const body = { over, groei, users, geld, veilig, avonden, feed, echt }[tab]();
-    $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}${k === 'feed' && FR && FR.counts && FR.counts.to_review ? ` (${FR.counts.to_review})` : ''}${k === 'echt' && Array.isArray(VR) && VR.length ? ` (${VR.length})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
+    const body = { over, groei, users, geld, veilig, avonden, feed, echt, zaken }[tab]();
+    $('app').innerHTML = `<div class="tabs">${TABS.map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" onclick="ADM.tab('${k}')">${n}${k === 'veilig' && S.totals.open_reports ? ` (${S.totals.open_reports})` : ''}${k === 'zaken' && VQ.some(x => x.status === 'nieuw') ? ` (${VQ.filter(x => x.status === 'nieuw').length})` : ''}${k === 'feed' && FR && FR.counts && FR.counts.to_review ? ` (${FR.counts.to_review})` : ''}${k === 'echt' && Array.isArray(VR) && VR.length ? ` (${VR.length})` : ''}</button>`).join('')}</div>${body}<p class="sub" style="margin-top:16px">Bijgewerkt: ${when(S.generated)}</p>`;
     hover($('app')); if (tab === 'avonden') evQr(); if (tab === 'geld') { ['ru', 'rp', 'rc'].forEach(id => $(id).oninput = calc); calc() }
   }
   async function load() {
     const [st, r] = await Promise.all([sb.rpc('admin_stats', { days }), sb.rpc('mod_reports', { only_open: openOnly })]);
     if (st.error) { $('app').innerHTML = `<div class="card">⚠️ Statistieken laden lukte niet: ${esc(st.error.message)}</div>`; return }
-    S = st.data; reps = r.data || []; if (tab === 'feed' || !FR) await loadFeed(); if (tab === 'echt' || !VR) await loadVerify(); draw();
+    S = st.data; reps = r.data || []; try { await loadVq() } catch (e) { } if (tab === 'feed' || !FR) await loadFeed(); if (tab === 'echt' || !VR) await loadVerify(); draw();
   }
   async function start() {
     sb = supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'glxAuth' } });
@@ -238,7 +247,9 @@ ${inp('evO', 'Voordeel voor wie incheckt', e.offer, 'placeholder="bv. -20% op je
     load(); setInterval(() => { if (document.visibilityState === 'visible' && tab !== 'geld') load() }, 60000);
   }
   window.ADM = {
-    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); if (k === 'feed') await loadFeed(); if (k === 'echt') await loadVerify(); draw() },
+    async vst(id, st) { const r = await sb.rpc('admin_venue_status', { p_id: id, p_status: st }); if (r.error) return alert(r.error.message); await loadVq(); draw() },
+    async vEv(id) { const x = VQ.find(v => v.id === id); if (!x) return; evEdit = { venue: x.name, address: [x.address, x.city].filter(Boolean).join(', ') }; tab = 'avonden'; await loadEv(); draw() },
+    async tab(k) { tab = k; if (k === 'avonden') await loadEv(); if (k === 'feed') await loadFeed(); if (k === 'echt') await loadVerify(); if (k === 'zaken') await loadVq(); draw() },
     async vDecide(u, ok) { let note = null; if (!ok) { note = prompt('Reden (de gebruiker ziet dit), bv. "Gebaar niet zichtbaar" of "Niet dezelfde persoon":', 'Gebaar niet duidelijk zichtbaar'); if (note === null) return }
       const v = (VR || []).find(x => x.uid === u); const r = await sb.rpc('admin_verify_decide', { u, ok, p_note: note }); if (r.error) return alert(r.error.message);
       if (v) await sb.storage.from('verify').remove([v.path]); await loadVerify(); draw() },
