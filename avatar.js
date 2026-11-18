@@ -14,17 +14,8 @@
 
   /* stijl -> bestand, materialen voor haar en per kledingstuk */
   const MODELS = {
-    m_casual: { f: 'Male_Casual_2', n: 'Casual man', hair: ['Hair', 'Eyebrows'], parts: [['T-shirt', 'LightBrown'], ['Broek', 'LightBlue'], ['Schoenen', 'Red_Dark']] },
-    f_casual: { f: 'Female_Casual', n: 'Casual vrouw', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Top', 'White'], ['Broek', 'Orange'], ['Schoenen', 'Grey']] },
-    m_hoodie: { f: 'Male_Casual_Hoodie', n: 'Hoodie man', hair: ['Hair', 'Eyebrows'], parts: [['Hoodie', 'Purple'], ['Short', 'LightBlue'], ['Schoenen', 'White']] },
-    f_formal: { f: 'Female_Formal', n: 'Jurk vrouw', hair: ['Red'], hairLbl: 'Haar en schoenen', parts: [['Jurk', 'LimeGreen'], ['Riem', 'Gold']] },
-    m_suit: { f: 'Male_Suit', n: 'Pak man', hair: ['Hair', 'Eyebrows'], parts: [['Broek', 'Suit'], ['Das', 'Tie'], ['Hemd', 'White']] },
-    f_suit: { f: 'Female_Suit', n: 'Pak vrouw', hair: ['Hair_Blond', 'Hair_Brown'], parts: [['Pak', 'Black'], ['Hemd', 'White']] },
-    m_beach: { f: 'Male_Beach', n: 'Zomer man', hair: ['Hair', 'Eyebrows'], parts: [['Top', 'LightBrown'], ['Short', 'Red_Dark']] },
-    f_punk: { f: 'Female_Punk', n: 'Punk vrouw', hair: ['Pink'], hairLbl: 'Haar en top', parts: [['Broek', 'Black'], ['Schoenen', 'Grey']] },
-    a_anime: { vrm: 'Anime_A', n: 'Anime vrouw', g: 'f', hairLbl: 'Haarkleur', skinM: ['Body_00_SKIN', 'Face_00_SKIN'], hairM: ['Hair_00_HAIR', 'HairBack_00_HAIR'], eyeM: ['EyeIris_00_EYE'], parts: [['Top', 'Tops_01_CLOTH'], ['Broekje', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], prints: [['Top', 'Tops_01_CLOTH', 'top', null, 0], ['Broekje', 'Bottoms_01_CLOTH', 'bot', null, 0, 1]], eyes: true },
-    a_boy: { vrm: 'Anime_B', n: 'Anime man', g: 'm', hairLbl: 'Haarkleur', skinM: ['body_bake'], hairM: ['hair'], eyeM: ['eye'], hide: /backpack|^arm_|armgear|anim_logo|green_emit|robo_face|glass/i, armZ: 1.36, shoes: 1, parts: [['Kleren', 'huku_bake'], ['Schoenen', 'glx_shoe']], prints: [['Shirt', 'huku_bake', 'top', [[0, .05, .24, .46], [.24, .05, .48, .46]], .5], ['Broek', 'huku_bake', 'bot', [[0, .46, .62, .95]], .5]], eyes: true },
-    m_punk: { f: 'Male_Punk', n: 'Punk man', hair: ['Red', 'Red_Dark'], parts: [['Top', 'White'], ['Vest', 'Black'], ['Broek', 'LightBlue']] }
+    a_anime: { vrm: 'Anime_A', n: 'Vrouw', g: 'f', hairLbl: 'Haarkleur', skinM: ['Body_00_SKIN', 'Face_00_SKIN'], hairM: ['Hair_00_HAIR', 'HairBack_00_HAIR'], eyeM: ['EyeIris_00_EYE'], parts: [['Top', 'Tops_01_CLOTH'], ['Broekje', 'Bottoms_01_CLOTH'], ['Schoenen', 'Shoes_01_CLOTH']], prints: [['Top', 'Tops_01_CLOTH', 'top', null, 0], ['Broekje', 'Bottoms_01_CLOTH', 'bot', null, 0, 1]], eyes: true },
+    a_boy: { vrm: 'Anime_B', n: 'Man', g: 'm', hairLbl: 'Haarkleur', skinM: ['body_bake'], hairM: ['hair'], eyeM: ['eye'], hide: /backpack|^arm_|armgear|anim_logo|green_emit|robo_face|glass/i, armZ: 1.36, shoes: 1, parts: [['Kleren', 'huku_bake'], ['Schoenen', 'glx_shoe']], prints: [['Shirt', 'huku_bake', 'top', [[0, .05, .24, .46], [.24, .05, .48, .46]], .5], ['Broek', 'huku_bake', 'bot', [[0, .46, .62, .95]], .5]], eyes: true },
   };
   const SKIN = ['#f8d9c4', '#f1c7a5', '#e0ac85', '#c98f66', '#a56f48', '#7d4f30', '#5a3620', '#3b2314'];
   const HAIRC = ['#17120f', '#3a2618', '#6b4226', '#a8703a', '#d8b46a', '#f2e3b0', '#b8402a', '#8e9099', '#f5f5f5', '#ec4899', '#3b82f6', '#22c55e', '#8b5cf6'];
@@ -156,8 +147,9 @@
       if (skip) skip(a);
     };
   }
-  const DEF = { model: 'm_casual', skin: null, hair: null, parts: {} };
-  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {}, prints: a.prints || {}, acc: a.acc || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
+  const DEF = { model: 'a_anime', skin: null, hair: null, parts: {} };
+  const OLD = m => MODELS[m] ? m : /^m_/.test(m || '') ? 'a_boy' : /^f_/.test(m || '') ? 'a_anime' : null;
+  function load() { try { const a = JSON.parse(localStorage[KEY] || 'null'); if (a && OLD(a.model) && OLD(a.model) !== a.model) { a.model = OLD(a.model); a.parts = {}; a.hair = null } if (a && MODELS[a.model]) return { model: a.model, skin: a.skin || null, hair: a.hair || null, eyes: a.eyes || null, face: a.face || null, parts: a.parts || {}, prints: a.prints || {}, acc: a.acc || {} } } catch (e) { } return JSON.parse(JSON.stringify(DEF)) }
   function has() { try { return !!localStorage[KEY] } catch (e) { return false } }
   let A = load();
 
@@ -345,7 +337,7 @@
   function panel() {
     const M = MODELS[A.model]; $('avTabs').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
     let h = '';
-    if (tab === 'stijl') h = `<div class="avOpts">${Object.entries(MODELS).map(([k, m]) => `<button class="${A.model === k ? 'on' : ''}" onclick="GLXAV.set('model','${k}')">${m.vrm ? '✨' : k[0] === 'f' ? '👩' : '👨'} ${m.n}</button>`).join('')}</div><p class="avLbl">Kies een stijl. Daarna pas je huid, haar en kleuren aan.${M.vrm ? ' ✨ Anime knippert met de ogen en toont gezichtjes.' : ''}</p>`;
+    if (tab === 'stijl') h = `<div class="avOpts">${Object.entries(MODELS).map(([k, m]) => `<button class="${A.model === k ? 'on' : ''}" onclick="GLXAV.set('model','${k}')">${m.g === 'f' ? '👩' : '👨'} ${m.n}</button>`).join('')}</div><p class="avLbl">Kies vrouw of man. Pas daarna huid, haar, kleren en extra's aan.</p>`;
     if (tab === 'gezicht') h = M.vrm ? `<div class="avLbl">Gezichtje</div><div class="avOpts">${FACES.map(([f, n]) => `<button class="${(A.face || 'neutral') === f ? 'on' : ''}" onclick="GLXAV.set('face','${f}')">${n}</button>`).join('')}</div><div class="avLbl">Oogkleur</div>${sw("set.bind(null,'eyes')", A.eyes, EYES)}` : `<p class="avLbl">Gezichtjes en oogkleur kan je kiezen bij de stijl ✨ Anime.</p>`;
     if (tab === 'extra') { const a = A.acc || {}, b = (k, v, l, on) => `<button class="${on ? 'on' : ''}" onclick="GLXAV.acc('${k}',${v == null ? 'null' : `'${v}'`})">${l}</button>`;
       h = ACC.map(([k, n, type, opts]) => { if (k === 'hanger' && !a.ketting) return ''; let o = '';
@@ -413,22 +405,25 @@
   const thumbs = new Map(); let tq = Promise.resolve(), tR = null, tS = null, tC = null;
   function hashStr(x) { let h = 2166136261; for (let i = 0; i < x.length; i++) { h ^= x.charCodeAt(i); h = Math.imul(h, 16777619) } return h >>> 0 }
   function defaultFor(seed) {
-    const h = hashStr(String(seed || 'x')), keys = ['m_casual', 'f_casual', 'm_hoodie', 'f_formal', 'a_anime', 'm_suit', 'f_suit', 'a_anime'].filter(k => MODELS[k]), pick = (a, n) => a[(h >>> n) % a.length];
+    const h = hashStr(String(seed || 'x')), keys = ['a_anime', 'a_boy'], pick = (a, n) => a[(h >>> n) % a.length];
     const SAFE = ['#f8fafc', '#1f2937', '#0b0a1f', '#2563eb', '#38bdf8', '#8b5cf6', '#ec4899', '#16a34a', '#14b8a6', '#ef4444', '#fbbf24', '#64748b'];
     const k = pick(keys, 0), parts = {}; MODELS[k].parts.forEach(([, m], i) => { parts[m] = pick(SAFE, 5 + i * 4) });
     return { model: k, skin: pick(SKIN, 7), hair: pick(HAIRC.slice(0, 9), 11), eyes: MODELS[k].vrm ? pick(EYES, 13) : null, face: MODELS[k].vrm ? 'happy' : null, parts };
   }
-  function clean(cfg, seed) { return cfg && MODELS[cfg.model] ? cfg : defaultFor(seed) }
+  function clean(cfg, seed) { if (cfg && !MODELS[cfg.model] && OLD(cfg.model)) { const d = defaultFor(seed); return Object.assign(d, { model: OLD(cfg.model), skin: cfg.skin || d.skin, acc: cfg.acc }) } return cfg && MODELS[cfg.model] ? cfg : defaultFor(seed) }
   function thumb(cfg, seed, scale) {
     cfg = clean(cfg, seed); const sc = scale || 1, key = sc + JSON.stringify(cfg);
     if (thumbs.has(key)) return thumbs.get(key);
-    const p = tq = tq.then(async () => {
+    const ck = location.origin + '/__glxthumb/' + hashStr('v1' + key).toString(36) + hashStr(key + 'x').toString(36);
+    const fromCache = async () => { try { if (!window.caches) return null; const r = await (await caches.open('glx-thumbs')).match(ck); if (!r) return null; const b = await r.blob(); return await new Promise(ok => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.readAsDataURL(b) }) } catch (e) { return null } };
+    const toCache = async url => { try { if (!window.caches || !url) return; const b = await (await fetch(url)).blob(); await (await caches.open('glx-thumbs')).put(ck, new Response(b, { headers: { 'content-type': b.type } })) } catch (e) { } };
+    const p = fromCache().then(hit => hit || (tq = tq.then(async () => {
       await lib();
       if (!tR || tR._sc !== sc) { tR = newRenderer(200 * sc, 260 * sc, true); tR._sc = sc; tR.setPixelRatio(1); tR.setSize(200 * sc, 260 * sc, false); tS = makeScene(true); tS.userData.env(tR); tC = new THREE.PerspectiveCamera(24, 200 / 260, .1, 50) }
       const f = await figure(cfg); f.root.rotation.y = .3; f.mixer.update(.016); tS.add(f.root);
-      { const hb = f.headY || 1.45; tC.position.set(0, hb - .05, 2.0); tC.lookAt(0, hb - .12, 0) } if (f.lookAt) f.lookAt(tC); tR.render(tS, tC); await new Promise(r => requestAnimationFrame(r)); f.mixer.update(.016); tR.render(tS, tC); const url = tR.domElement.toDataURL('image/png');
-      tS.remove(f.root); f.root.traverse(o => { if (o.isMesh && o.geometry && !o.isSkinnedMesh) { } }); return url;
-    }).catch(() => null);
+      { const hb = f.headY || 1.45; tC.position.set(0, hb - .05, 2.0); tC.lookAt(0, hb - .12, 0) } if (f.lookAt) f.lookAt(tC); tR.render(tS, tC); await new Promise(r => requestAnimationFrame(r)); f.mixer.update(.016); tR.render(tS, tC); let url = tR.domElement.toDataURL('image/webp', .86); if (!/^data:image\/webp/.test(url)) url = tR.domElement.toDataURL('image/png'); toCache(url);
+      tS.remove(f.root); return url;
+    }).catch(() => null)));
     thumbs.set(key, p); return p;
   }
 
